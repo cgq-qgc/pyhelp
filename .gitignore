@@ -99,3 +99,22 @@ ENV/
 
 # mypy
 .mypy_cache/
+
+# HELP settings
+/help1.8-Harold
+/HelpSrc
+/Exemple_Francois
+/CWEEDS
+.help_threads/
+*.D4
+*.D7
+*.D13
+*.D10
+*.D11
+*.OUT
+*.DAT
+Ken_Input.csv
+Ken_Input.xlsx
+H3OFS32F.exe
+
+
