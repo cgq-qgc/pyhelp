@@ -105,6 +105,7 @@ ENV/
 /HelpSrc
 /Exemple_Francois
 /CWEEDS
+/RADEAU2
 .help_threads/
 *.D4
 *.D7
