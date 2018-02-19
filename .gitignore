@@ -117,5 +117,7 @@ ENV/
 Ken_Input.csv
 Ken_Input.xlsx
 H3OFS32F.exe
+*.exe
+*.dll
 
 
