@@ -106,6 +106,7 @@ ENV/
 /Exemple_Francois
 /CWEEDS
 /RADEAU2
+backup/
 .help_threads/
 *.D4
 *.D7
@@ -120,5 +121,4 @@ H3OFS32F.exe
 *.exe
 *.dll
 make_help.bat
-
 
