@@ -5,7 +5,7 @@ C
 C    DIRECTS THE RUNNING OF THE SIMULATION AND PRINTING OF OUTPUT,
 C    AND PERFORMS THE ACCOUNTING ON THE RESULTS.
 C
-      PROGRAM HELP3O
+      SUBROUTINE run_simulation
 C
       PARAMETER (MXYR = 100)
       PARAMETER (MAXMO = 12)
@@ -1036,9 +1036,8 @@ C
 C
       CLOSE (8)
 C
-C
-      STOP  
-      END
+C 
+      END SUBROUTINE run_simulation
 C
 C
 C        *********************** LEAP ************************
@@ -8935,5 +8934,3 @@ C
  6100 FORMAT(1X/1X,78('*')/1X,78('*'),4(/))
       RETURN
       END
-C
-
