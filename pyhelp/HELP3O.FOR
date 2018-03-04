@@ -1,4 +1,6 @@
-C    LMYR : THE NUMBER OF YEARS OF SIMULATION.
+C    IDA IS THE DAY OF THE YEAR OF SIMULATION
+C    IYR IS THE NUMBER OF THE YEAR
+C    LMYR IS THE NUMBER OF YEARS OF SIMULATION
 C
 C******************************MAIN*************************
 C                         OUTPUT ROUTINE
