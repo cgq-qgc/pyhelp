@@ -1162,7 +1162,7 @@ C
 C
 C
 C
-C      ************************* READCD *************************
+C    ************************* READCD *************************
 C
 C    SUBROUTINE READCD READS A YEAR OF WEATHER DATA AT THE START
 C    OF EACH YEAR OF SIMULATION.
@@ -6369,7 +6369,7 @@ C
       END SUBROUTINE OUTDAY
 C
 C
-C      ************************ OUTMO *************************
+C     ************************ OUTMO *************************
 C
 C     SUBROUTINE OUTMO PRINTS MONTHLY TOTALS.
 C
@@ -6483,7 +6483,7 @@ C
 C
 C
 C
-C      ************************ OUTMO1 *************************
+C     ************************ OUTMO1 *************************
 C
 C     SUBROUTINE OUTMO PRINTS MONTHLY TOTALS in INCHES.
 C
@@ -6776,7 +6776,7 @@ C
 C
 C
 C
-C      ************************ OUTMO2 *************************
+C     ************************ OUTMO2 *************************
 C
 C     SUBROUTINE OUTMO PRINTS MONTHLY TOTALS in MM and CM.
 C
