@@ -178,15 +178,15 @@ C
 C    INITIALIZES ACCOUNTING VARIABLES.
 C
       SWULE = 0.0
-      DO 1010 J = 1, 7
+      DO J = 1, 7
         SWULE = SWULE + SWUL(J)
- 1010 CONTINUE
+      END DO
       OSWULE = 0.0
-      DO 1020 J = 1, NSEG
+      DO J = 1, NSEG
         OSWULE = OSWULE + SWUL(J)
         DSWUL(J) = SWUL(J)
         SWULI(J) = SWUL(J)
- 1020 CONTINUE
+      END DO
       NSEG1B = 1
       NSEG1E = NSEG1
       NSEG1D = NSEG1E
@@ -232,11 +232,11 @@ C
         LAY6B = LP(5) + 1
         LAY6E = LP(6)
       END IF
-      DO 1040 J = 1, 67
+      DO J = 1, 67
         BALT(J) = 0.0D0
         BALY(J) = 0.0D0
         ET(J) = 0.0
- 1040 CONTINUE
+      END DO
       IODAY = 0
       RUN = 0.0
       ES1T = 0.0
@@ -316,13 +316,13 @@ C
 C   INITIALIZING VARIABLES
 C
       OSWULE = 0.0
-      DO 2230 J = 1, NSEG
+      DO J = 1, NSEG
         OSWULE = OSWULE + DSWUL(J) 
- 2230 CONTINUE
+      END DO
       SWULE = 0.0
-      DO 1077 J = 1, 7
+      DO J = 1, 7
         SWULE = SWULE + SWUL(J)
- 1077 CONTINUE
+      END DO
       PSW = SWULE/EDEPTH
       DSW = SWULE/EDEPTH
       IMO = 0
@@ -377,12 +377,12 @@ C
       PREA2 = 0.0
       ETA2  = 0.0
       STOR2 = 0.0
-      DO 1081 K = 1, 20
+      DO K = 1, 20
         RCRIA(K) = 0.0
         RCRIA1(K) = 0.0
         RCRIA2(K) = 0.0
         SUBINA(K) = 0.0
- 1081 CONTINUE
+      END DO
       PPRC1 = 0.0
       PPRC2 = 0.0
       PPRC3 = 0.0
@@ -407,7 +407,7 @@ C
       PHED3 = 0.0
       PHED4 = 0.0
       PHED5 = 0.0
-      DO 1070 I = 1, MAXMO
+      DO I = 1, MAXMO
         PREM1(I)  = 0.0 
         RUNM1(I)  = 0.0 
         ETM1(I)   = 0.0 
@@ -432,12 +432,12 @@ C
         PRC4M1(I) = 0.0 
         PRC5M1(I) = 0.0
         PRC6M1(I) = 0.0
-        DO 1071 K = 1, 20
+        DO K = 1, 20
           RCRIM1(K,I) = 0.0
           RCRIM(K,I) = 0.0
           SUBINM(K,I) = 0.0
           RCRIM2(K,I) = 0.0
- 1071   CONTINUE
+        END DO
         PREM2(I)  = 0.0 
         RUNM2(I)  = 0.0 
         ETM2(I)   = 0.0 
@@ -462,7 +462,7 @@ C
         PRC4M2(I) = 0.0  
         PRC5M2(I) = 0.0
         PRC6M2(I) = 0.0
- 1070 CONTINUE
+      END DO
 C
 C    START YEARLY LOOP FOR SIMULATION. IYR IS THE NUMBER
 C    OF THE YEAR.
@@ -494,7 +494,8 @@ C
         ETA   = 0.0
         BAL   = 0.0
         STOR  = 0.0
-      DO 1072 I = 1, 12
+
+      DO I = 1, 12
         HED1M(I) = 0.0
         HED2M(I) = 0.0
         HED3M(I) = 0.0
@@ -511,9 +512,9 @@ C
         RCR3M(I) = 0.0
         RCR4M(I) = 0.0
         RCR5M(I) = 0.0
-        DO 1171 K = 1, 20
+        DO K = 1, 20
           RCRIM(K,I) = 0.0
- 1171   CONTINUE
+        END DO
         DRN1M(I) = 0.0
         DRN2M(I) = 0.0
         DRN3M(I) = 0.0
@@ -522,10 +523,10 @@ C
         RUNM(I) = 0.0
         PREM(I) = 0.0
         ETM(I) = 0.0
- 1072 CONTINUE
-      DO 1173 K = 1, 20
+      END DO
+      DO K = 1, 20
         RCRIA(K) = 0.0
- 1173 CONTINUE
+      END DO
 C  
 C    IMO IS THE NUMBER OF THE MONTH.
 C    MO1 IS THE NUMBER OF THE MONTH OF THE YEAR.
@@ -1173,12 +1174,12 @@ C
 C
 C    READS PRECIPITATION DATA.
 C
-      DO 1000 K = 1, 37
+      DO K = 1, 37
         J = 10*K
         I = J - 9
         READ (4, 5000) NYEAR, (PRE (N), N = I, J)
- 5000   FORMAT(I10,10F5.2)
- 1000 CONTINUE
+ 5000   FORMAT(I10, 10F5.2)
+      END DO
 C
 C    DETERMINES IF THE YEAR IS A LEAP YEAR.
 C
@@ -1187,7 +1188,7 @@ C
 C    READS DAILY TEMPERATURE VALUES AND DAILY RADIATION VALUES.
 C    TEMPERATURE IN DEG F, SOLAR RADIATION VALUES IN LANGLEYS PER DAY.
 C
-      DO 1010 K = 1, 37
+      DO K = 1, 37
         J = 10*K
         I = J - 9
         IF (J .GT. 366) J = 366
@@ -1196,7 +1197,7 @@ C
         IF (IU13 .NE. 1) READ (13, 5011) LYEAR, (RAD (N), N = I, J)
  5010    FORMAT(I5,10F6.1)
  5011    FORMAT(I5,10F6.0)
- 1010 CONTINUE
+      END DO
       IF (MYEAR .NE. NYEAR) WRITE (*, 6000) MYEAR, NYEAR
       IF (MYEAR .NE. NYEAR) WRITE (8, 6000) MYEAR, NYEAR
  6000 FORMAT(1X/' WARNING:  TEMPERATURE FOR YEAR',I5,' USED ',
@@ -1206,19 +1207,19 @@ C
  6010 FORMAT(1X/' WARNING:  SOLAR RADIATION FOR YEAR',I5,' USED ',
      1 'WITH PRECIPITATION FOR YEAR',I5/)
       IF (IU4 .NE. 1) THEN
-        DO 1030 N = 1, 366
+        DO N = 1, 366
           PRE(N) = PRE(N) / 25.4
- 1030   CONTINUE
+        END DO
       END IF
       IF (IU7 .NE. 1) THEN
-        DO 1040 N = 1, 366
+        DO N = 1, 366
           TMPF(N) = (TMPF(N) * 1.8) + 32.0
- 1040   CONTINUE
+        END DO
       END IF
       IF (IU13 .NE. 1) THEN
-        DO 1050 N = 1, 366
+        DO N = 1, 366
           RAD(N) = RAD(N) * 23.89
- 1050   CONTINUE
+        END DO
       END IF
       RETURN
       END
@@ -6407,7 +6408,7 @@ C     ACCUMULATES MONTHLY TOTALS FOR COMPUTING AVERAGES AND
 C       STANDARD DEVIATIONS.
 C
       IF (IOS .EQ. 1) THEN
-        DO 1010 I = 1, 12
+        DO I = 1, 12
           PREM1(I)  =  PREM1(I)  +  PREM(I)
           RUNM1(I)  =  RUNM1(I)  +  RUNM(I)
           ETM1(I)   =  ETM1(I)   +  ETM(I)
@@ -6432,9 +6433,9 @@ C
           PRC4M1(I) =  PRC4M1(I) +  PRC4M(I)
           PRC5M1(I) =  PRC5M1(I) +  PRC5M(I)
           PRC6M1(I) =  PRC6M1(I) +  PRC6M(I)
-          DO 1020 K = 1, 20
+          DO K = 1, 20
             RCRIM1(K,I) =  RCRIM1(K,I) +  RCRIM(K,I)
- 1020     CONTINUE
+          END DO
           PREM2(I)  =  PREM2(I)  +  PREM(I)  * PREM(I)
           RUNM2(I)  =  RUNM2(I)  +  RUNM(I)  * RUNM(I)
           ETM2(I)   =  ETM2(I)   +  ETM(I)   * ETM(I)
@@ -6459,10 +6460,10 @@ C
           PRC4M2(I) =  PRC4M2(I) +  PRC4M(I) * PRC4M(I) 
           PRC5M2(I) =  PRC5M2(I) +  PRC5M(I) * PRC5M(I) 
           PRC6M2(I) =  PRC6M2(I) +  PRC6M(I) * PRC6M(I) 
-          DO 1030 K = 1, 20
+          DO K = 1, 20
             RCRIM2(K,I) =  RCRIM2(K,I) +  RCRIM(K,I) * RCRIM(K,I)
- 1030     CONTINUE
- 1010   CONTINUE
+          END DO
+        END DO
       END IF
       IF (IOM .EQ. 0) RETURN
 C
