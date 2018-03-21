@@ -32,13 +32,11 @@ def _read_data_from_excel(filename):
     """
     Read the evapotranspiration and soil and design data from an excel sheet.
     """
-    print('\rReading data from Excel file...', end=' ')
     with xlrd.open_workbook(filename, on_demand=True) as wb:
         sheet = wb.sheet_by_index(0)
 
         data = [sheet.row_values(rowx, start_colx=0, end_colx=None) for
                 rowx in range(3, sheet.nrows)]
-    print('\rReading data from Excel file... done')
     return data
 
 
@@ -180,7 +178,9 @@ def format_d10d11_from_excel(filename):
     Format the evapotranspiration (D11) and soil and design data (D11) in a
     format that is compatible by HELP.
     """
+    print('\rReading data from Excel file...', end=' ')
     data = _read_data_from_excel(filename)
+    print('\rReading data from Excel file... done')
 
     d11dat = {}
     d10dat = {}
