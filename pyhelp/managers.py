@@ -26,6 +26,9 @@ from gwhat.meteo.weather_reader import (
         read_cweeds_file, join_daily_cweeds_wy2_and_wy3)
 
 
+FNAME_CONN_TABLES = 'connect_table.npy'
+
+
 class HELPInputManager(object):
     def __init__(self, path_inputdir, year_range, path_helpgrid=None):
         super(HELPInputManager, self).__init__()
@@ -42,6 +45,22 @@ class HELPInputManager(object):
 
         if path_helpgrid is not None:
             self.load_helpgrid_from_shapefile(path_helpgrid)
+        self._setup_connect_tables(self)
+
+    @property
+    def path_connect_tables(self):
+        return osp.join(self.path_inputdir, FNAME_CONN_TABLES)
+
+    def _setup_connect_tables(self):
+        """Setup the connect tables dictionary."""
+        if osp.exists(self.path_connect_tables):
+            self.connect_tables = np.load(self.path_connect_tables).item()
+        else:
+            self.connect_tables = {}
+
+    def _save_connect_tables(self):
+        """Save the connect tables dictionary to a numpy binary file."""
+        np.save(self.path_connect_tables, self.connect_tables)
 
     def load_helpgrid_from_shapefile(self, path_helpgrid):
         """
@@ -53,7 +72,7 @@ class HELPInputManager(object):
         print('done')
 
         if shp_help.crs != {'init': 'epsg:4269'}:
-            # Convert the geometry coordinates to lat long.
+            # Convert the geometry coordinates to lat/long.
             print('Converting HELP grid to lat/lon...')
             crs = ("+proj=longlat +ellps=GRS80 +datum=NAD83 "
                    "+towgs84=0,0,0,0,0,0,0 +no_defs")
@@ -97,6 +116,7 @@ class HELPInputManager(object):
         # Update the connection table.
         d13_connect_table = {cid: d13fpath for cid in self.cellnames}
         self.connect_tables['D13'] = d13_connect_table
+        self._save_connect_tables()
 
     def generate_d10d11_from_excel_grid(self, path_excel_grid):
         """
@@ -114,6 +134,7 @@ class HELPInputManager(object):
         # Update the connection table.
         self.connect_tables['D10'] = d10_conn_tbl
         self.connect_tables['D11'] = d11_conn_tbl
+        self._save_connect_tables()
 
     def generate_d4d7_from_MDELCC_grid(self, path_netcdf_dir):
         meteo_manager = NetCDFMeteoManager(path_netcdf_dir)
@@ -149,8 +170,9 @@ class HELPInputManager(object):
         # Update the connection table.
         self.connect_tables['D4'] = d4_conn_tbl
         self.connect_tables['D7'] = d7_conn_tbl
-       
-        
+        self._save_connect_tables()
+
+
 class NetCDFMeteoManager(object):
     def __init__(self, dirpath_netcdf):
         super(NetCDFMeteoManager, self).__init__()
