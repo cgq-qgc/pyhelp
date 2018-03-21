@@ -38,7 +38,7 @@ def _read_data_from_excel(filename):
 
         data = [sheet.row_values(rowx, start_colx=0, end_colx=None) for
                 rowx in range(3, sheet.nrows)]
-    print('\rReading data from Excell file... done')
+    print('\rReading data from Excel file... done')
     return data
 
 
