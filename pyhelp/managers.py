@@ -15,6 +15,7 @@ import os.path as osp
 
 import numpy as np
 import geopandas as gpd
+import netCDF4
 
 # ---- Local Libraries Imports
 
@@ -146,3 +147,55 @@ class HELPInputManager(object):
         # Update the connection table.
         self.connect_tables['D4'] = d4_conn_tbl
         self.connect_tables['D7'] = d7_conn_tbl
+       
+        
+class NetCDFMeteoManager(object):
+    def __init__(self, dirpath_netcdf):
+        super(NetCDFMeteoManager, self).__init__()
+        self.dirpath_netcdf = dirpath_netcdf
+        self.lat = []
+        self.lon = []
+        self.setup_ncfile_list()
+        self.setup_latlon_grid()
+
+    def setup_ncfile_list(self):
+        """Read all the available netCDF files in dirpath_netcdf."""
+        self.ncfilelist = []
+        for file in os.listdir(self.dirpath_netcdf):
+            if file.endswith('.nc'):
+                self.ncfilelist.append(osp.join(self.dirpath_netcdf, file))
+
+    def setup_latlon_grid(self):
+        if self.ncfilelist:
+            netcdf_dset = netCDF4.Dataset(self.ncfilelist[0], 'r+')
+            self.lat = np.array(netcdf_dset['lat'])
+            self.lon = np.array(netcdf_dset['lon'])
+            netcdf_dset.close()
+
+    def get_idx_from_latlon(self, lat, lon):
+        lat_idx = np.argmin(np.abs(self.lat - lat))
+        lon_idx = np.argmin(np.abs(self.lon - lon))
+        return lat_idx, lon_idx
+
+    def get_data_from_idx(self, lat_idx, lon_idx):
+        stack_tasmax = []
+        stack_tasmin = []
+        stack_precip = []
+        stack_years = []
+        for year in range(2000, 2015):
+            filename = osp.join(self.dirpath_netcdf, 'GCQ_v2_%d.nc' % year)
+            netcdf_dset = netCDF4.Dataset(filename, 'r+')
+            stack_tasmax.append(
+                    np.array(netcdf_dset['tasmax'])[:, lat_idx, lon_idx])
+            stack_tasmin.append(
+                    np.array(netcdf_dset['tasmin'])[:, lat_idx, lon_idx])
+            stack_precip.append(
+                    np.array(netcdf_dset['pr'])[:, lat_idx, lon_idx])
+            stack_years.append(
+                    np.zeros(len(stack_precip[-1])).astype(int) + year)
+            netcdf_dset.close()
+        tasmax = np.hstack(stack_tasmax)
+        tasmin = np.hstack(stack_tasmin)
+        precip = np.hstack(stack_precip)
+        years = np.hstack(stack_years)
+        return (tasmax + tasmin)/2, precip, years
