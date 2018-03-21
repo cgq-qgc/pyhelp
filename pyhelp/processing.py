@@ -15,6 +15,7 @@ from multiprocessing import Pool
 import multiprocessing as mp
 import time
 import csv
+import calendar
 
 # ---- Third Party imports
 
@@ -137,3 +138,76 @@ def read_monthly_help_output(filename):
             'percolation': np.vstack(vstack_percol),
             'recharge': np.vstack(vstack_rechg)}
     return data
+
+
+def read_daily_help_output(filename):
+    """
+    Read the daily output from .OUT HELP file and return the data as
+    numpy arrays stored in a dictionary.
+    """
+    with open(filename, 'r') as csvfile:
+        csvread = list(csv.reader(csvfile))
+
+    nlay = None
+    arr_years = []
+    arr_days = []
+    arr_rain = []
+    arr_ru = []
+    arr_et = []
+    arr_ezone = []
+    arr_headfirst = []
+    arr_drainfirst = []
+    arr_leakfirst = []
+    arr_leaklast = []
+
+    year = None
+    nlay = nsub = None
+    for i, line in enumerate(csvread):
+        if line:
+            line = line[0]
+            if 'TOTAL NUMBER OF LAYERS' in line:
+                nlay = int(line.split()[-1])
+            elif 'TOTAL NUMBER OF SUBPROFILES' in line:
+                nsub = int(line.split()[-1])
+            if 'DAILY OUTPUT FOR YEAR' in line:
+                year = int(line.split()[-1])
+                days_in_year = 366 if calendar.isleap(year) else 365
+            elif year is not None:
+                try:
+                    day = int(line[2:5])
+                    rain = float(line[13:19])
+                    ru = float(line[19:26])
+                    et = float(line[26:33])
+                    ezone = float(line[33:41])
+                    headfirst = float(line[41:51])
+                    drainfirst = float(line[51:61])
+                    leakfirst = float(line[61:71])
+                    leaklast = float(line[-10:])
+                except ValueError:
+                    pass
+                else:
+                    arr_years.append(year)
+                    arr_days.append(day)
+                    arr_rain.append(rain)
+                    arr_ru.append(ru)
+                    arr_et.append(et)
+                    arr_ezone.append(ezone)
+                    arr_headfirst.append(headfirst)
+                    arr_drainfirst.append(drainfirst)
+                    arr_leakfirst.append(leakfirst)
+                    arr_leaklast.append(leaklast)
+                    if day == days_in_year:
+                        year = None
+
+    dataf = {'years': np.array(arr_years).astype('uint16'),
+             'days': np.array(arr_days).astype('uint16'),
+             'rain': np.array(arr_rain).astype('float32'),
+             'runoff': np.array(arr_ru).astype('float32'),
+             'et': np.array(arr_et).astype('float32'),
+             'ezone': np.array(arr_ezone).astype('float32'),
+             'head first': np.array(arr_headfirst).astype('float32'),
+             'drain first': np.array(arr_drainfirst).astype('float32'),
+             'leak first': np.array(arr_leakfirst).astype('float32'),
+             'leak last': np.array(arr_leaklast).astype('float32')
+             }
+    return dataf
