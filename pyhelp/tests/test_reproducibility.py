@@ -25,7 +25,11 @@ from pyhelp.help_utils import read_monthly_help_output
 
 
 def test_help_reproducibility():
-    dirname = "C:\\users\\jsgosselin\\pyhelp\\pyhelp\\tests"
+    """
+    Assert that our version of HELP is able to reproduce results that are
+    consistent with the officiel version of the program.
+    """
+    dirname = osp.dirname(__file__)
     fpath_precip = osp.join(dirname, "RCRA.D4")
     fpath_tasavg = osp.join(dirname, "RCRA.D7")
     fpath_solrad = osp.join(dirname, "RCRA.D13")
