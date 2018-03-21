@@ -21,6 +21,8 @@ import netCDF4
 
 from pyhelp.preprocessing import (write_d10d11_allcells,
                                   format_d10d11_from_excel)
+from pyhelp.processing import run_help_allcells
+from pyhelp.utils import savedata_to_hdf5
 from gwhat.meteo.weather_reader import (
         save_precip_to_HELP, save_airtemp_to_HELP, save_solrad_to_HELP,
         read_cweeds_file, join_daily_cweeds_wy2_and_wy3)
@@ -29,9 +31,9 @@ from gwhat.meteo.weather_reader import (
 FNAME_CONN_TABLES = 'connect_table.npy'
 
 
-class HELPInputManager(object):
+class HELPManager(object):
     def __init__(self, path_inputdir, year_range, path_helpgrid=None):
-        super(HELPInputManager, self).__init__()
+        super(HELPManager, self).__init__()
         self.path_helpgrid = path_helpgrid
         self.path_inputdir = path_inputdir
         if not osp.exists(path_inputdir):
@@ -174,6 +176,45 @@ class HELPInputManager(object):
         self.connect_tables['D4'] = d4_conn_tbl
         self.connect_tables['D7'] = d7_conn_tbl
         self._save_connect_tables()
+
+    def run_help_for(self, path_outfile, cellnames):
+        """
+        Run help for the cells listed in cellnames and save the result in
+        an hdf5 file.
+        """
+        tempdir = osp.join(self.path_inputdir, ".temp")
+        if not osp.exists(tempdir):
+            os.makedirs(tempdir)
+
+        if cellnames is None:
+            cellnames = self.cellnames
+
+        cellparams = {}
+        for cellname in self.cellnames:
+            fpath_d4 = self.connect_tables['D4'][cellname]
+            fpath_d7 = self.connect_tables['D7'][cellname]
+            fpath_d13 = self.connect_tables['D13'][cellname]
+            fpath_d10 = self.connect_tables['D10'][cellname]
+            fpath_d11 = self.connect_tables['D11'][cellname]
+            fpath_out = osp.abspath(osp.join(tempdir, cellname + '.OUT'))
+
+            daily_out = 0
+            monthly_out = 1
+            yearly_out = 0
+            summary_out = 0
+
+            unit_system = 2  # IP if 1 else SI
+            simu_nyear = 15
+
+            cellparams[cellname] = (fpath_d4, fpath_d7, fpath_d13, fpath_d11,
+                                    fpath_d10, fpath_out, daily_out,
+                                    monthly_out, yearly_out, summary_out,
+                                    unit_system, simu_nyear)
+
+        # Run HELP and save the result to an hdf5 file.
+
+        output = run_help_allcells(cellparams)
+        savedata_to_hdf5(output, path_outfile)
 
 
 class NetCDFMeteoManager(object):
