@@ -19,8 +19,8 @@ import netCDF4
 
 # ---- Local Libraries Imports
 
-from pyhelp.preprocess import (read_d10d11_file, write_d10d11_allcells,
-                               format_d10d11_from_excel)
+from pyhelp.preprocessing import (write_d10d11_allcells,
+                                  format_d10d11_from_excel)
 from gwhat.meteo.weather_reader import (
         save_precip_to_HELP, save_airtemp_to_HELP, save_solrad_to_HELP,
         read_cweeds_file, join_daily_cweeds_wy2_and_wy3)
