@@ -1,2 +1,2 @@
 # PyHELP
-Python library for the Hydrologic Evaluation of Landfill Performance (HELP) model to assess groundwater recharge at the regional scale.
+PyHELP is a [Python](https://www.python.org/) library for the evaluation of groundwater recharge at the regional scale with the [Hydrologic Evaluation of Landfill Performance](https://www.epa.gov/land-research/hydrologic-evaluation-landfill-performance-help-model) (HELP) model.
