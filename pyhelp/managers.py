@@ -79,8 +79,12 @@ class HELPInputManager(object):
             shp_help.to_file(path_helpgrid)
             print('done')
 
-        # Store a list of all the cell ids that are going to be run in HELP.
-        self.cellnames = shp_help['cid'][shp_help['run'] == 1]
+        # Store a list of all the cell names, lat, and lon that are going to
+        # be run in HELP.
+        indx = np.where(shp_help['run'] == 1)[0]
+        self.cellnames = shp_help['cid'][shp_help['run'] == 1].tolist()
+        self.celllat = np.array([p.y for p in shp_help.geometry])[indx]
+        self.celllon = np.array([p.x for p in shp_help.geometry])[indx]
 
     def generate_D13_from_cweeds(self, d13fname, fpath_cweed2, fpath_cweed3):
         """
