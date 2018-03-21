@@ -19,8 +19,8 @@ import netCDF4
 
 # ---- Local Libraries Imports
 
-from pyhelp.preprocess import read_d10d11_file, write_d10d11_allcells
-from pyhelp.help_utils import NetCDFMeteoManager
+from pyhelp.preprocess import (read_d10d11_file, write_d10d11_allcells,
+                               format_d10d11_from_excel)
 from gwhat.meteo.weather_reader import (
         save_precip_to_HELP, save_airtemp_to_HELP, save_solrad_to_HELP,
         read_cweeds_file, join_daily_cweeds_wy2_and_wy3)
@@ -97,6 +97,23 @@ class HELPInputManager(object):
         # Update the connection table.
         d13_connect_table = {cid: d13fpath for cid in self.cellnames}
         self.connect_tables['D13'] = d13_connect_table
+
+    def generate_d10d11_from_excel_grid(self, path_excel_grid):
+        """
+        Prepare the D10 and D11 input datafiles for each cell from data saved
+        in an Excel input grid.
+        """
+        path_d10d11_input = osp.join(self.path_inputdir, 'd10d11_input_files')
+        if not osp.exists(path_d10d11_input):
+            os.makedirs(path_d10d11_input)
+
+        d10data, d11data = format_d10d11_from_excel(path_excel_grid)
+        d10_conn_tbl, d11_conn_tbl = write_d10d11_allcells(
+            path_d10d11_input, d10data, d11data)
+
+        # Update the connection table.
+        self.connect_tables['D10'] = d10_conn_tbl
+        self.connect_tables['D11'] = d11_conn_tbl
 
     def generate_d10d11_from_lcnp_files(self, path_d10file, path_d11file):
         """
