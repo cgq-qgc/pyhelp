@@ -149,9 +149,9 @@ class HELPInputManager(object):
 
             lat_idx, lon_idx = meteo_manager.get_idx_from_latlon(
                     self.celllat[i], self.celllon[i])
-            d4fname = osp.join(self.path_inputdir,
+            d4fname = osp.join(self.path_inputdir, 'd4d7_input_files',
                                '%03d_%03d.D4' % (lat_idx, lon_idx))
-            d7fname = osp.join(self.path_inputdir,
+            d7fname = osp.join(self.path_inputdir, 'd4d7_input_files',
                                '%03d_%03d.D7' % (lat_idx, lon_idx))
 
             d4_conn_tbl[self.cellnames[i]] = d4fname
