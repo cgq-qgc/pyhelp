@@ -115,21 +115,6 @@ class HELPInputManager(object):
         self.connect_tables['D10'] = d10_conn_tbl
         self.connect_tables['D11'] = d11_conn_tbl
 
-    def generate_d10d11_from_lcnp_files(self, path_d10file, path_d11file):
-        """
-        Prepare the D10 and D11 input datafiles for each cell.
-        """
-        print('Reading LCNP D10 and D11 files...', end=' ')
-        d10data, d11data = read_d10d11_file(path_d10file, path_d11file)
-        print('done')
-
-        d10_conn_tbl, d11_conn_tbl = write_d10d11_allcells(
-            self.path_inputdir, d10data, d11data)
-
-        # Update the connection table.
-        self.connect_tables['D10'] = d10_conn_tbl
-        self.connect_tables['D11'] = d11_conn_tbl
-
     def generate_d4d7_from_MDELCC_grid(self, path_netcdf_dir):
         meteo_manager = NetCDFMeteoManager(path_netcdf_dir)
         d4_conn_tbl = {}
