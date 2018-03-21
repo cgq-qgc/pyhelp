@@ -198,3 +198,48 @@ def format_d10d11_from_excel(filename):
 
     return d10dat, d11dat
 
+
+def read_concatenated_d10d11_file(path_d10file, path_d11file):
+    """
+    Read the concatenated D10 and D11 files that contain the D10 and D11 inputs
+    for all the cells. Return a formatted dictionary where the data
+    relative to each cell is saved as a list at the key that correspond to the
+    unique id of the cell.
+    """
+
+    enc = 'iso-8859-1'
+
+    # ---- Read and Format D11 File
+
+    with open(path_d11file, 'r', encoding=enc) as csvfile:
+        d11reader = list(csv.reader(csvfile))
+
+    d11dat = OrderedDict()
+    cellnames = []
+    for i in range(0, len(d11reader), 3):
+        cell_name, zone_name = d11reader[i+1][0].split()
+        d11dat[cell_name] = [d11reader[i],
+                             d11reader[i+1],
+                             d11reader[i+2]]
+        cellnames.append(cell_name)
+
+    # ---- Read and Format D10 File
+
+    with open(path_d10file, 'r', encoding=enc) as csvfile:
+        d10reader = list(csv.reader(csvfile))
+
+    d10dat = OrderedDict()
+    i = 0
+    curcell = None
+    nextcell = cellnames[i]
+    for line in d10reader:
+        if nextcell in line[0]:
+            d10dat[nextcell] = [line]
+            curcell = nextcell
+            nextcell = 'None' if i >= len(cellnames)-1 else cellnames[i+1]
+            i += 1
+        else:
+            d10dat[curcell].append(line)
+
+    return d10dat, d11dat
+
