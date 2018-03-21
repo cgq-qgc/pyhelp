@@ -243,3 +243,55 @@ def read_concatenated_d10d11_file(path_d10file, path_d11file):
 
     return d10dat, d11dat
 
+
+def write_d10d11_singlecell(packed_data):
+    fname, cid, d10data = packed_data
+    if not osp.exists(fname):
+        with open(fname, 'w') as csvfile:
+            writer = csv.writer(csvfile, lineterminator='\n')
+            writer.writerows(d10data)
+    return {cid: fname}
+
+
+def write_d10d11_allcells(dirpath, d10data, d11data, ncore=None):
+    """
+    Write the content of each cell in individual D10 and D11 files.
+    """
+    ncore = max(mp.cpu_count() if ncore is None else ncore, 1)
+    pool = Pool(ncore)
+
+    # Prepare soil and design input files :
+
+    tic = time.clock()
+    iterable = [(osp.join(dirpath, cid + '.D10'), cid, d10data[cid]) for
+                cid in d10data.keys()]
+    d10_connect_table = {}
+    calcul_progress = 0
+    N = len(iterable)
+    for i in pool.imap_unordered(write_d10d11_singlecell, iterable):
+        d10_connect_table.update(i)
+        calcul_progress += 1
+        progress_pct = calcul_progress/N*100
+        print("\rCreating D10 input file for cell %d of %d (%0.1f%%)" %
+              (calcul_progress, N, progress_pct), end=' ')
+    tac = time.clock()
+    print('\nTask completed in %0.2f sec' % (tac-tic))
+
+    # Prepare evapotranspiration input files :
+
+    tic = time.clock()
+    iterable = [(osp.join(dirpath, cid + '.D11'), cid, d11data[cid]) for
+                cid in d10data.keys()]
+    d11_connect_table = {}
+    calcul_progress = 0
+    N = len(iterable)
+    for i in pool.imap_unordered(write_d10d11_singlecell, iterable):
+        d11_connect_table.update(i)
+        calcul_progress += 1
+        progress_pct = calcul_progress/N*100
+        print("\rCreating D11 input file for cell %d of %d (%0.1f%%)" %
+              (calcul_progress, N, progress_pct), end=' ')
+    tac = time.clock()
+    print('\nTask completed in %0.2f sec' % (tac-tic))
+
+    return d10_connect_table, d11_connect_table
