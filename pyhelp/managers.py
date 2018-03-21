@@ -38,14 +38,13 @@ class HELPInputManager(object):
             os.makedirs(path_inputdir)
         self.year_range = year_range
 
-        self.connect_tables = {}
         self.cellnames = []
         self.celllat = []
         self.celllon = []
 
         if path_helpgrid is not None:
             self.load_helpgrid_from_shapefile(path_helpgrid)
-        self._setup_connect_tables(self)
+        self._setup_connect_tables()
 
     @property
     def path_connect_tables(self):
