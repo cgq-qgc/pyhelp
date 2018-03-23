@@ -6855,13 +6855,13 @@ C
      1    J=MONTHB,MONTH6), K, (RCRIM (K,J) * 25.4, J=MONTH7,MONTHE)
  2010 CONTINUE
         IF (LD(1) .GT. 0) THEN
-          WRITE (8, 6062) (DRN1M (J) * 25.4, J=MONTHB,MONTH6), 
-     1    LD(1), (DRN1M (J) * 25.4, J = MONTH7, MONTHE)
+          WRITE (8, 6062) LD(1), (DRN1M (J) * 25.4, J=MONTHB,MONTH6), 
+     1    (DRN1M (J) * 25.4, J = MONTH7, MONTHE)
           IF (LAYR(LD(1)) .GT. 0) WRITE (8, 6067) (RCR1M (J) * 25.4, 
      1    J=MONTHB,MONTH6), LD(1), (RCR1M (J) * 25.4, J=MONTH7,MONTHE)
         END IF  
-        WRITE (8, 6072) (PRC1M (J) * 25.4, J = MONTHB, MONTH6),
-     1   LP(1), (PRC1M (J) * 25.4, J = MONTH7, MONTHE)
+        WRITE (8, 6072) LP(1), (PRC1M (J) * 25.4, J = MONTHB, MONTH6),
+     1   (PRC1M (J) * 25.4, J = MONTH7, MONTHE)
       IF (LP(2) .GT. 0) THEN
         DO 2020 K = LP(1)+1, LP(2)
           IF (LSIN(K) .GT. 0) THEN
@@ -6876,13 +6876,13 @@ C
      1      J=MONTHB,MONTH6), K, (RCRIM (K,J) * 25.4, J=MONTH7,MONTHE)
  2020   CONTINUE
           IF (LD(2) .GT. 0) THEN
-            WRITE (8, 6062) (DRN2M (J) * 25.4, J=MONTHB,MONTH6), 
-     1      LD(2), (DRN2M (J) * 25.4, J = MONTH7, MONTHE)
+            WRITE (8, 6062) LD(2), (DRN2M (J) * 25.4, J=MONTHB,MONTH6), 
+     1      (DRN2M (J) * 25.4, J = MONTH7, MONTHE)
             IF (LAYR(LD(2)) .GT. 0) WRITE (8, 6067) (RCR2M (J) * 25.4, 
      1      J=MONTHB,MONTH6), LD(2), (RCR2M(J) * 25.4, J=MONTH7,MONTHE)
           END IF  
-          WRITE (8, 6072) (PRC2M (J) * 25.4, J = MONTHB, MONTH6),
-     1     LP(2), (PRC2M (J) * 25.4, J = MONTH7, MONTHE)
+          WRITE (8, 6072) LP(2), (PRC2M (J) * 25.4, J = MONTHB, MONTH6),
+     1     (PRC2M (J) * 25.4, J = MONTH7, MONTHE)
       END IF
       IF (LP(3) .GT. 0) THEN
         DO 2030 K = LP(2)+1, LP(3)
@@ -6898,13 +6898,13 @@ C
      1      J=MONTHB,MONTH6), K, (RCRIM (K,J) * 25.4, J=MONTH7,MONTHE)
  2030   CONTINUE
           IF (LD(3) .GT. 0) THEN
-            WRITE (8, 6062) (DRN3M (J) * 25.4, J=MONTHB,MONTH6), 
-     1      LD(3), (DRN3M (J) * 25.4, J = MONTH7, MONTHE)
+            WRITE (8, 6062) LD(3), (DRN3M (J) * 25.4, J=MONTHB,MONTH6), 
+     1      (DRN3M (J) * 25.4, J = MONTH7, MONTHE)
             IF (LAYR(LD(3)) .GT. 0) WRITE (8, 6067) (RCR3M (J) * 25.4, 
      1      J=MONTHB,MONTH6), LD(3), (RCR3M(J) * 25.4, J=MONTH7,MONTHE)
           END IF  
-          WRITE (8, 6072) (PRC3M (J) * 25.4, J = MONTHB, MONTH6),
-     1     LP(3), (PRC3M (J) * 25.4, J = MONTH7, MONTHE)
+          WRITE (8, 6072) LP(3), (PRC3M (J) * 25.4, J = MONTHB, MONTH6),
+     1     (PRC3M (J) * 25.4, J = MONTH7, MONTHE)
       END IF
       IF (LP(4) .GT. 0) THEN
         DO 2040 K = LP(3)+1, LP(4)
@@ -6920,13 +6920,13 @@ C
      1      J=MONTHB,MONTH6), K, (RCRIM (K,J) * 25.4, J=MONTH7,MONTHE)
  2040   CONTINUE
           IF (LD(4) .GT. 0) THEN
-            WRITE (8, 6062) (DRN4M (J) * 25.4, J=MONTHB,MONTH6), 
-     1      LD(4), (DRN4M (J) * 25.4, J = MONTH7, MONTHE)
+            WRITE (8, 6062) LD(4), (DRN4M (J) * 25.4, J=MONTHB,MONTH6), 
+     1      (DRN4M (J) * 25.4, J = MONTH7, MONTHE)
             IF (LAYR(LD(4)) .GT. 0) WRITE (8, 6067) (RCR4M (J) * 25.4, 
      1      J=MONTHB,MONTH6), LD(4), (RCR4M(J) * 25.4, J=MONTH7,MONTHE)
           END IF  
-          WRITE (8, 6072) (PRC4M (J) * 25.4, J = MONTHB, MONTH6),
-     1     LP(4), (PRC4M (J) * 25.4, J = MONTH7, MONTHE)
+          WRITE (8, 6072) LP(4), (PRC4M (J) * 25.4, J = MONTHB, MONTH6),
+     1     (PRC4M (J) * 25.4, J = MONTH7, MONTHE)
       END IF
       IF (LP(5) .GT. 0) THEN
         DO 2050 K = LP(4)+1, LP(5)
@@ -6942,13 +6942,13 @@ C
      1      J=MONTHB,MONTH6), K, (RCRIM (K,J) * 25.4, J=MONTH7,MONTHE)
  2050   CONTINUE
           IF (LD(5) .GT. 0) THEN
-            WRITE (8, 6062) (DRN5M (J) * 25.4, J=MONTHB,MONTH6), 
-     1      LD(5), (DRN5M (J) * 25.4, J = MONTH7, MONTHE)
+            WRITE (8, 6062) LD(5), (DRN5M (J) * 25.4, J=MONTHB,MONTH6), 
+     1      (DRN5M (J) * 25.4, J = MONTH7, MONTHE)
             IF (LAYR(LD(5)) .GT. 0) WRITE (8, 6067) (RCR5M (J) * 25.4, 
      1      J=MONTHB,MONTH6), LD(5), (RCR5M(J) * 25.4, J=MONTH7,MONTHE)
           END IF  
-          WRITE (8, 6072) (PRC5M (J) * 25.4, J = MONTHB, MONTH6),
-     1     LP(5), (PRC5M (J) * 25.4, J = MONTH7, MONTHE)
+          WRITE (8, 6072) LP(5), (PRC5M (J) * 25.4, J = MONTHB, MONTH6),
+     1     (PRC5M (J) * 25.4, J = MONTH7, MONTHE)
       END IF
       IF (LP(6) .GT. 0) THEN
         DO 2060 K = LP(5)+1, LP(6)
