@@ -6481,8 +6481,8 @@ C
         CALL OUTMO2
       END IF
       WRITE (8, 6110)
- 6000 FORMAT(1X///1X,79('*'))
- 6110 FORMAT(1X/1X,79('*')//)
+ 6000 FORMAT(1X//1X, 126('*'))
+ 6110 FORMAT(1X, 126('*')//)
       RETURN
       END SUBROUTINE OUTMO
 C
@@ -6855,13 +6855,13 @@ C
      1    J=MONTHB,MONTH6), K, (RCRIM (K,J) * 25.4, J=MONTH7,MONTHE)
  2010 CONTINUE
         IF (LD(1) .GT. 0) THEN
-          WRITE (8, 6062) (DRN1M (J) * 25.4, J=MONTHB,MONTH6), 
-     1    LD(1), (DRN1M (J) * 25.4, J = MONTH7, MONTHE)
+          WRITE (8, 6062) LD(1), (DRN1M (J) * 25.4, J=MONTHB,MONTH6), 
+     1    (DRN1M (J) * 25.4, J = MONTH7, MONTHE)
           IF (LAYR(LD(1)) .GT. 0) WRITE (8, 6067) (RCR1M (J) * 25.4, 
      1    J=MONTHB,MONTH6), LD(1), (RCR1M (J) * 25.4, J=MONTH7,MONTHE)
         END IF  
-        WRITE (8, 6072) (PRC1M (J) * 25.4, J = MONTHB, MONTH6),
-     1   LP(1), (PRC1M (J) * 25.4, J = MONTH7, MONTHE)
+        WRITE (8, 6072) LP(1), (PRC1M (J) * 25.4, J = MONTHB, MONTH6),
+     1   (PRC1M (J) * 25.4, J = MONTH7, MONTHE)
       IF (LP(2) .GT. 0) THEN
         DO 2020 K = LP(1)+1, LP(2)
           IF (LSIN(K) .GT. 0) THEN
@@ -6876,13 +6876,13 @@ C
      1      J=MONTHB,MONTH6), K, (RCRIM (K,J) * 25.4, J=MONTH7,MONTHE)
  2020   CONTINUE
           IF (LD(2) .GT. 0) THEN
-            WRITE (8, 6062) (DRN2M (J) * 25.4, J=MONTHB,MONTH6), 
-     1      LD(2), (DRN2M (J) * 25.4, J = MONTH7, MONTHE)
+            WRITE (8, 6062) LD(2), (DRN2M (J) * 25.4, J=MONTHB,MONTH6), 
+     1      (DRN2M (J) * 25.4, J = MONTH7, MONTHE)
             IF (LAYR(LD(2)) .GT. 0) WRITE (8, 6067) (RCR2M (J) * 25.4, 
      1      J=MONTHB,MONTH6), LD(2), (RCR2M(J) * 25.4, J=MONTH7,MONTHE)
           END IF  
-          WRITE (8, 6072) (PRC2M (J) * 25.4, J = MONTHB, MONTH6),
-     1     LP(2), (PRC2M (J) * 25.4, J = MONTH7, MONTHE)
+          WRITE (8, 6072) LP(2), (PRC2M (J) * 25.4, J = MONTHB, MONTH6),
+     1     (PRC2M (J) * 25.4, J = MONTH7, MONTHE)
       END IF
       IF (LP(3) .GT. 0) THEN
         DO 2030 K = LP(2)+1, LP(3)
@@ -6898,13 +6898,13 @@ C
      1      J=MONTHB,MONTH6), K, (RCRIM (K,J) * 25.4, J=MONTH7,MONTHE)
  2030   CONTINUE
           IF (LD(3) .GT. 0) THEN
-            WRITE (8, 6062) (DRN3M (J) * 25.4, J=MONTHB,MONTH6), 
-     1      LD(3), (DRN3M (J) * 25.4, J = MONTH7, MONTHE)
+            WRITE (8, 6062) LD(3), (DRN3M (J) * 25.4, J=MONTHB,MONTH6), 
+     1      (DRN3M (J) * 25.4, J = MONTH7, MONTHE)
             IF (LAYR(LD(3)) .GT. 0) WRITE (8, 6067) (RCR3M (J) * 25.4, 
      1      J=MONTHB,MONTH6), LD(3), (RCR3M(J) * 25.4, J=MONTH7,MONTHE)
           END IF  
-          WRITE (8, 6072) (PRC3M (J) * 25.4, J = MONTHB, MONTH6),
-     1     LP(3), (PRC3M (J) * 25.4, J = MONTH7, MONTHE)
+          WRITE (8, 6072) LP(3), (PRC3M (J) * 25.4, J = MONTHB, MONTH6),
+     1     (PRC3M (J) * 25.4, J = MONTH7, MONTHE)
       END IF
       IF (LP(4) .GT. 0) THEN
         DO 2040 K = LP(3)+1, LP(4)
@@ -6920,13 +6920,13 @@ C
      1      J=MONTHB,MONTH6), K, (RCRIM (K,J) * 25.4, J=MONTH7,MONTHE)
  2040   CONTINUE
           IF (LD(4) .GT. 0) THEN
-            WRITE (8, 6062) (DRN4M (J) * 25.4, J=MONTHB,MONTH6), 
-     1      LD(4), (DRN4M (J) * 25.4, J = MONTH7, MONTHE)
+            WRITE (8, 6062) LD(4), (DRN4M (J) * 25.4, J=MONTHB,MONTH6), 
+     1      (DRN4M (J) * 25.4, J = MONTH7, MONTHE)
             IF (LAYR(LD(4)) .GT. 0) WRITE (8, 6067) (RCR4M (J) * 25.4, 
      1      J=MONTHB,MONTH6), LD(4), (RCR4M(J) * 25.4, J=MONTH7,MONTHE)
           END IF  
-          WRITE (8, 6072) (PRC4M (J) * 25.4, J = MONTHB, MONTH6),
-     1     LP(4), (PRC4M (J) * 25.4, J = MONTH7, MONTHE)
+          WRITE (8, 6072) LP(4), (PRC4M (J) * 25.4, J = MONTHB, MONTH6),
+     1     (PRC4M (J) * 25.4, J = MONTH7, MONTHE)
       END IF
       IF (LP(5) .GT. 0) THEN
         DO 2050 K = LP(4)+1, LP(5)
@@ -6942,13 +6942,13 @@ C
      1      J=MONTHB,MONTH6), K, (RCRIM (K,J) * 25.4, J=MONTH7,MONTHE)
  2050   CONTINUE
           IF (LD(5) .GT. 0) THEN
-            WRITE (8, 6062) (DRN5M (J) * 25.4, J=MONTHB,MONTH6), 
-     1      LD(5), (DRN5M (J) * 25.4, J = MONTH7, MONTHE)
+            WRITE (8, 6062) LD(5), (DRN5M (J) * 25.4, J=MONTHB,MONTH6), 
+     1      (DRN5M (J) * 25.4, J = MONTH7, MONTHE)
             IF (LAYR(LD(5)) .GT. 0) WRITE (8, 6067) (RCR5M (J) * 25.4, 
      1      J=MONTHB,MONTH6), LD(5), (RCR5M(J) * 25.4, J=MONTH7,MONTHE)
           END IF  
-          WRITE (8, 6072) (PRC5M (J) * 25.4, J = MONTHB, MONTH6),
-     1     LP(5), (PRC5M (J) * 25.4, J = MONTH7, MONTHE)
+          WRITE (8, 6072) LP(5), (PRC5M (J) * 25.4, J = MONTHB, MONTH6),
+     1     (PRC5M (J) * 25.4, J = MONTH7, MONTHE)
       END IF
       IF (LP(6) .GT. 0) THEN
         DO 2060 K = LP(5)+1, LP(6)
@@ -6963,106 +6963,105 @@ C
             IF (LRIN(K) .GT. 0) WRITE(8,6065) (RCRIM(K,J) * 25.4,
      1      J=MONTHB,MONTH6), K, (RCRIM (K,J) * 25.4, J=MONTH7,MONTHE)
  2060   CONTINUE
-          WRITE (8, 6072) (PRC6M (J) * 25.4, J = MONTHB, MONTH6),
-     1     LP(6), (PRC6M (J), J = MONTH7, MONTHE)
+          WRITE (8, 6072) LP(6), (PRC6M (J) * 25.4, J = MONTHB, MONTH6),
+     1     (PRC6M (J), J = MONTH7, MONTHE)
       END IF
-      IF (LP(1) .GT. 0) THEN
-        IF (LAYER (LP(1)) .GT. 2) THEN
-          WRITE (8, 6082)
-          IF (LAYER(LP(1)-1) .LE. 2) THEN
-            WRITE (8, 6090) (HED1M (J) * 2.54, J = MONTHB, MONTH6),
-     1       LP(1), (HED1M (J) * 2.54, J = MONTH7, MONTHE)
-            WRITE (8, 6100) (SHED1 (J) * 2.54, J = 1, 6),
-     1       LP(1), (SHED1 (J) * 2.54, J = 7, 12)
-          ELSE
-            WRITE (8, 6090) (HED1M (J) * 2.54, J = MONTHB, MONTH6),
-     1       LP(1)-1, (HED1M (J) * 2.54, J = MONTH7, MONTHE)
-            WRITE (8, 6100) (SHED1 (J) * 2.54, J = 1, 6),
-     1       LP(1)-1, (SHED1 (J) * 2.54, J = 7, 12)
-          END IF
-        END IF
-      END IF
-      IF (LP(2) .GT. 0) THEN
-        IF (LAYER (LP(2)) .GT. 2) THEN
-          IF (LAYER(LP(2)-1) .LE. 2) THEN
-            WRITE (8, 6090) (HED2M (J) * 2.54, J = MONTHB, MONTH6),
-     1       LP(2), (HED2M (J) * 2.54, J = MONTH7, MONTHE)
-            WRITE (8, 6100) (SHED2 (J) * 2.54, J = 1, 6),
-     1       LP(2), (SHED2 (J) * 2.54, J = 7, 12)
-          ELSE
-            WRITE (8, 6090) (HED2M (J) * 2.54, J = MONTHB, MONTH6),
-     1       LP(2)-1, (HED2M (J) * 2.54, J = MONTH7, MONTHE)
-            WRITE (8, 6100) (SHED2 (J) * 2.54, J = 1, 6),
-     1       LP(2)-1, (SHED2 (J) * 2.54, J = 7, 12)
-          END IF
-        END IF
-      END IF
-      IF (LP(3) .GT. 0) THEN
-        IF (LAYER (LP(3)) .GT. 2) THEN
-          IF (LAYER(LP(3)-1) .LE. 2) THEN
-            WRITE (8, 6090) (HED3M (J) * 2.54, J = MONTHB, MONTH6),
-     1       LP(3), (HED3M (J) * 2.54, J = MONTH7, MONTHE)
-            WRITE (8, 6100) (SHED3 (J) * 2.54, J = 1, 6),
-     1       LP(3), (SHED3 (J) * 2.54, J = 7, 12)
-          ELSE
-            WRITE (8, 6090) (HED3M (J) * 2.54, J = MONTHB, MONTH6),
-     1       LP(3)-1, (HED3M (J) * 2.54, J = MONTH7, MONTHE)
-            WRITE (8, 6100) (SHED3 (J) * 2.54, J = 1, 6),
-     1       LP(3)-1, (SHED3 (J) * 2.54, J = 7, 12)
-          END IF
-        END IF
-      END IF
-      IF (LP(4) .GT. 0) THEN
-        IF (LAYER (LP(4)) .GT. 2) THEN
-          IF (LAYER(LP(4)-1) .LE. 2) THEN
-            WRITE (8, 6090) (HED4M (J) * 2.54, J = MONTHB, MONTH6),
-     1       LP(4), (HED4M (J) * 2.54, J = MONTH7, MONTHE)
-            WRITE (8, 6100) (SHED4 (J) * 2.54, J = 1, 6),
-     1       LP(4), (SHED4 (J) * 2.54, J = 7, 12)
-          ELSE
-            WRITE (8, 6090) (HED4M (J) * 2.54, J = MONTHB, MONTH6),
-     1       LP(4)-1, (HED4M (J) * 2.54, J = MONTH7, MONTHE)
-            WRITE (8, 6100) (SHED4 (J) * 2.54, J = 1, 6),
-     1       LP(4)-1, (SHED4 (J) * 2.54, J = 7, 12)
-          END IF
-        END IF
-      END IF
-      IF (LP(5) .GT. 0) THEN
-        IF (LAYER (LP(5)) .GT. 2) THEN
-          IF (LAYER(LP(5)-1) .LE. 2) THEN
-            WRITE (8, 6090) (HED5M (J) * 2.54, J = MONTHB, MONTH6),
-     1       LP(5), (HED5M (J) * 2.54, J = MONTH7, MONTHE)
-            WRITE (8, 6100) (SHED5 (J) * 2.54, J = 1, 6),
-     1       LP(5), (SHED5 (J) * 2.54, J = 7, 12)
-          ELSE
-            WRITE (8, 6090) (HED5M (J) * 2.54, J = MONTHB, MONTH6),
-     1       LP(5)-1, (HED5M (J) * 2.54, J = MONTH7, MONTHE)
-            WRITE (8, 6100) (SHED5 (J) * 2.54, J = 1, 6),
-     1       LP(5)-1, (SHED5 (J) * 2.54, J = 7, 12)
-          END IF
-        END IF
-      END IF
+c       IF (LP(1) .GT. 0) THEN
+c         IF (LAYER (LP(1)) .GT. 2) THEN
+c           WRITE (8, 6082)
+c           IF (LAYER(LP(1)-1) .LE. 2) THEN
+c             WRITE (8, 6090) (HED1M (J) * 2.54, J = MONTHB, MONTH6),
+c      1       LP(1), (HED1M (J) * 2.54, J = MONTH7, MONTHE)
+c             WRITE (8, 6100) (SHED1 (J) * 2.54, J = 1, 6),
+c      1       LP(1), (SHED1 (J) * 2.54, J = 7, 12)
+c           ELSE
+c             WRITE (8, 6090) (HED1M (J) * 2.54, J = MONTHB, MONTH6),
+c      1       LP(1)-1, (HED1M (J) * 2.54, J = MONTH7, MONTHE)
+c             WRITE (8, 6100) (SHED1 (J) * 2.54, J = 1, 6),
+c      1       LP(1)-1, (SHED1 (J) * 2.54, J = 7, 12)
+c           END IF
+c         END IF
+c       END IF
+c       IF (LP(2) .GT. 0) THEN
+c         IF (LAYER (LP(2)) .GT. 2) THEN
+c           IF (LAYER(LP(2)-1) .LE. 2) THEN
+c             WRITE (8, 6090) (HED2M (J) * 2.54, J = MONTHB, MONTH6),
+c      1       LP(2), (HED2M (J) * 2.54, J = MONTH7, MONTHE)
+c             WRITE (8, 6100) (SHED2 (J) * 2.54, J = 1, 6),
+c      1       LP(2), (SHED2 (J) * 2.54, J = 7, 12)
+c           ELSE
+c             WRITE (8, 6090) (HED2M (J) * 2.54, J = MONTHB, MONTH6),
+c      1       LP(2)-1, (HED2M (J) * 2.54, J = MONTH7, MONTHE)
+c             WRITE (8, 6100) (SHED2 (J) * 2.54, J = 1, 6),
+c      1       LP(2)-1, (SHED2 (J) * 2.54, J = 7, 12)
+c           END IF
+c         END IF
+c       END IF
+c       IF (LP(3) .GT. 0) THEN
+c         IF (LAYER (LP(3)) .GT. 2) THEN
+c           IF (LAYER(LP(3)-1) .LE. 2) THEN
+c             WRITE (8, 6090) (HED3M (J) * 2.54, J = MONTHB, MONTH6),
+c      1       LP(3), (HED3M (J) * 2.54, J = MONTH7, MONTHE)
+c             WRITE (8, 6100) (SHED3 (J) * 2.54, J = 1, 6),
+c      1       LP(3), (SHED3 (J) * 2.54, J = 7, 12)
+c           ELSE
+c             WRITE (8, 6090) (HED3M (J) * 2.54, J = MONTHB, MONTH6),
+c      1       LP(3)-1, (HED3M (J) * 2.54, J = MONTH7, MONTHE)
+c             WRITE (8, 6100) (SHED3 (J) * 2.54, J = 1, 6),
+c      1       LP(3)-1, (SHED3 (J) * 2.54, J = 7, 12)
+c           END IF
+c         END IF
+c       END IF
+c       IF (LP(4) .GT. 0) THEN
+c         IF (LAYER (LP(4)) .GT. 2) THEN
+c           IF (LAYER(LP(4)-1) .LE. 2) THEN
+c             WRITE (8, 6090) (HED4M (J) * 2.54, J = MONTHB, MONTH6),
+c      1       LP(4), (HED4M (J) * 2.54, J = MONTH7, MONTHE)
+c             WRITE (8, 6100) (SHED4 (J) * 2.54, J = 1, 6),
+c      1       LP(4), (SHED4 (J) * 2.54, J = 7, 12)
+c           ELSE
+c             WRITE (8, 6090) (HED4M (J) * 2.54, J = MONTHB, MONTH6),
+c      1       LP(4)-1, (HED4M (J) * 2.54, J = MONTH7, MONTHE)
+c             WRITE (8, 6100) (SHED4 (J) * 2.54, J = 1, 6),
+c      1       LP(4)-1, (SHED4 (J) * 2.54, J = 7, 12)
+c           END IF
+c         END IF
+c       END IF
+c       IF (LP(5) .GT. 0) THEN
+c         IF (LAYER (LP(5)) .GT. 2) THEN
+c           IF (LAYER(LP(5)-1) .LE. 2) THEN
+c             WRITE (8, 6090) (HED5M (J) * 2.54, J = MONTHB, MONTH6),
+c      1       LP(5), (HED5M (J) * 2.54, J = MONTH7, MONTHE)
+c             WRITE (8, 6100) (SHED5 (J) * 2.54, J = 1, 6),
+c      1       LP(5), (SHED5 (J) * 2.54, J = 7, 12)
+c           ELSE
+c             WRITE (8, 6090) (HED5M (J) * 2.54, J = MONTHB, MONTH6),
+c      1       LP(5)-1, (HED5M (J) * 2.54, J = MONTH7, MONTHE)
+c             WRITE (8, 6100) (SHED5 (J) * 2.54, J = 1, 6),
+c      1       LP(5)-1, (SHED5 (J) * 2.54, J = 7, 12)
+c           END IF
+c         END IF
+c       END IF
  6012  FORMAT(1X/22X,'MONTHLY TOTALS (MM) FOR YEAR',I5/
-     1  1X,79('-'))
- 6020 FORMAT(1X,/33X,'JAN/JUL FEB/AUG MAR/SEP ',
-     1 'APR/OCT MAY/NOV JUN/DEC'/32X,6(' -------'))
- 6032   FORMAT(1X,/' PRECIPITATION         ',
-     1   10X,F5.1,5(3X,F5.1)/30X,6(3X,F5.1))
- 6042   FORMAT(1X/' RUNOFF         ',15X,
-     1   6(2X,F6.2)/31X,6(2X,F6.2))
- 6052   FORMAT(1X/' EVAPOTRANSPIRATION',12X,6(2X,F6.2)/1X,
-     1   5X,'        ',17X,6(2X,F6.2))
+     1  1X, 126('-'))
+ 6020 FORMAT(1X, /34X, 'JAN', 5X, 'FEB', 5X, 'MAR',
+     1  5X, 'APR', 5X, 'MAY', 5X, 'JUN', 5X, 'JUL',
+     2  5X, 'AUG', 5X, 'SEP', 5X, 'OCT', 5X, 'NOV',
+     3  5X, 'DEC', /31X, 12(1X, '-------'))
+ 6032 FORMAT(' PRECIPITATION', 17X, 12(1X, F7.3))
+ 6042 FORMAT(' RUNOFF', 24X, 12(1X, F7.3))
+ 6052 FORMAT(' EVAPOTRANSPIRATION', 12X, 12(1X, F7.3), /)
+ 6062 FORMAT(' LAT. DRAINAGE IN LAYER', I3, 5X, 12(1X, F7.3))
+ 6072 FORMAT(' PERCOLATION THROUGH LAYER', I3, 2X, 12(1X, F7.3), /)
+
  6077 FORMAT(1X/' SUBSURFACE INFLOW INTO  ',7X,6F8.3/3X,
      1 'LAYER',I3,'         ',12X,6F8.3)
  6065 FORMAT(1X,/' LATERAL DRAINAGE RECIRCULATED',2X,6F8.3/3X,
      1 'INTO LAYER',I3,'         ',7X,6F8.3)
  6067 FORMAT(1X,/' LATERAL DRAINAGE RECIRCULATED',2X,6F8.3/3X,
      1 'FROM LAYER',I3,'         ',7X,6F8.3)
- 6062 FORMAT(1X,/' LATERAL DRAINAGE COLLECTED   ',2X,6F8.3/3X,
-     1 'FROM LAYER',I3,'         ',7X,6F8.3)
- 6072 FORMAT(1X/' PERCOLATION/LEAKAGE THROUGH   ',1X,6F8.3/3X,
-     1 'LAYER',I3,'         ',12X,6F8.3)
- 6082       FORMAT(1X//1X,79('-')/22X,
+ 
+ 6082 FORMAT(1X//1X,79('-')/22X,
      1       'MONTHLY SUMMARIES FOR DAILY HEADS (CM)'/1X,79('-')/)
  6090 FORMAT(1X/' AVERAGE DAILY HEAD ON ',8X,6F8.3/3X,
      1 'TOP OF LAYER',I3,'  ',11X,6F8.3)

@@ -25,16 +25,17 @@ import numpy as np
 
 from pyhelp import HELP3O
 
+DEL_TEMPFILES = True
 
 # ---- Run HELP
 
 def run_help_singlecell(item):
     """Run HELP for a single cell."""
     cellname, outparam = item
-    if not osp.exists(outparam[5]):
-        HELP3O.run_simulation(*outparam)
+    HELP3O.run_simulation(*outparam)
     results = read_monthly_help_output(outparam[5])
-    os.remove(outparam[5])
+    if DEL_TEMPFILES:
+        os.remove(outparam[5])
     return (cellname, results)
 
 
@@ -65,7 +66,8 @@ def run_help_allcells(cellparams, ncore=None):
 def read_monthly_help_output(filename):
     """
     Read the monthly output from .OUT HELP file and return the data as
-    numpy arrays stored in a dictionary.
+    numpy arrays stored in a dictionary. Support the output format that was
+    modified from HELP 3.07.
     """
     with open(filename, 'r') as csvfile:
         csvread = list(csv.reader(csvfile))
@@ -74,7 +76,8 @@ def read_monthly_help_output(filename):
     vstack_precip = []
     vstack_runoff = []
     vstack_evapo = []
-    vstack_subrunoff = []
+    vstack_subrun1 = []
+    vstack_subrun2 = []
     vstack_percol = []
     vstack_rechg = []
 
@@ -91,40 +94,45 @@ def read_monthly_help_output(filename):
         if 'MONTHLY TOTALS' in line:
             year = int(line.split()[-1])
             arr_years.append(year)
-            subrunoff = None
+            subrun1 = None
+            subrun2 = np.zeros(12).astype('float32')
             percol = None
             while True:
                 i += 1
                 if len(csvread[i]) == 0:
                     continue
                 line = csvread[i][0]
+
                 if '**********' in line:
                     break
-                if len(csvread[i+1]) == 0:
-                    continue
-
-                nline = csvread[i+1][0]
-                if 'PRECIPITATION' in line:
-                    precip = line.split()[-6:] + nline.split()[-6:]
+                elif 'PRECIPITATION' in line:
+                    precip = np.array(line.split()[-12:]).astype('float32')
                 elif 'RUNOFF' in line:
-                    runoff = line.split()[-6:] + nline.split()[-6:]
+                    runoff = np.array(line.split()[-12:]).astype('float32')
                 elif 'EVAPOTRANSPIRATION' in line:
-                    evapo = line.split()[-6:] + nline.split()[-6:]
-                elif 'LATERAL DRAINAGE' in line and subrunoff is None:
-                    subrunoff = line.split()[-6:] + nline.split()[-6:]
+                    evapo = np.array(line.split()[-12:]).astype('float32')
+                elif 'LAT. DRAINAGE' in line:
+                    if subrun1 is None:
+                        subrun1 = np.array(
+                            line.split()[-12:]).astype('float32')
+                    else:
+                        subrun2 += np.array(
+                            line.split()[-12:]).astype('float32')
                 elif 'PERCOLATION' in line:
                     if percol is None:
-                        percol = line.split()[-6:] + nline.split()[-6:]
-                    rechg = line.split()[-6:] + nline.split()[-6:]
-            vstack_precip.append(np.array(precip).astype('float32'))
-            vstack_runoff.append(np.array(runoff).astype('float32'))
+                        percol = np.array(line.split()[-12:]).astype('float32')
+                    rechg = np.array(line.split()[-12:]).astype('float32')
+
+            vstack_precip.append(precip)
+            vstack_runoff.append(runoff)
             vstack_evapo.append(np.array(evapo).astype('float32'))
             vstack_rechg.append(np.array(rechg).astype('float32'))
             vstack_percol.append(np.array(percol).astype('float32'))
-            if subrunoff is None:
-                vstack_subrunoff.append(np.zeros(12).astype('float32'))
+            if subrun1 is None:
+                vstack_subrun1.append(np.zeros(12).astype('float32'))
             else:
-                vstack_subrunoff.append(np.array(subrunoff).astype('float32'))
+                vstack_subrun1.append(subrun1)
+            vstack_subrun2.append(subrun2)
         elif 'FINAL WATER STORAGE' in line:
             break
 
@@ -134,7 +142,8 @@ def read_monthly_help_output(filename):
             'rain': np.vstack(vstack_precip),
             'runoff': np.vstack(vstack_runoff),
             'evapo': np.vstack(vstack_evapo),
-            'sub-runoff': np.vstack(vstack_subrunoff),
+            'subrun1': np.vstack(vstack_subrun1),
+            'subrun2': np.vstack(vstack_subrun2),
             'percolation': np.vstack(vstack_percol),
             'recharge': np.vstack(vstack_rechg)}
     return data
