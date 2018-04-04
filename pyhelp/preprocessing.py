@@ -257,7 +257,7 @@ def write_d10d11_allcells(dirpath, d10data, d11data, ncore=None):
     # Prepare soil and design input files :
 
     tic = time.clock()
-    iterable = [(osp.join(dirpath, cid + '.D10'), cid, d10data[cid]) for
+    iterable = [(osp.join(dirpath, str(cid) + '.D10'), cid, d10data[cid]) for
                 cid in d10data.keys()]
     d10_connect_table = {}
     calcul_progress = 0
@@ -274,7 +274,7 @@ def write_d10d11_allcells(dirpath, d10data, d11data, ncore=None):
     # Prepare evapotranspiration input files :
 
     tic = time.clock()
-    iterable = [(osp.join(dirpath, cid + '.D11'), cid, d11data[cid]) for
+    iterable = [(osp.join(dirpath, str(cid) + '.D11'), cid, d11data[cid]) for
                 cid in d10data.keys()]
     d11_connect_table = {}
     calcul_progress = 0

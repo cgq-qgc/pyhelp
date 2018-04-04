@@ -18,7 +18,7 @@ def savedata_to_hdf5(data, hdf5_filename):
     """
     hdf5file = h5py.File(hdf5_filename, mode='w')
     for cid in data.keys():
-        cellgrp = hdf5file.create_group(cid)
+        cellgrp = hdf5file.create_group(str(cid))
         for key in data[cid].keys():
             cellgrp.create_dataset(key, data=data[cid][key])
     hdf5file.close()
