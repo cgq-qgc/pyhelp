@@ -11,7 +11,6 @@
 
 import csv
 import time
-import os
 import os.path as osp
 from collections import OrderedDict
 import multiprocessing as mp
@@ -20,9 +19,6 @@ from multiprocessing import Pool
 
 # ---- Third Party imports
 
-import numpy as np
-import geopandas as gpd
-import netCDF4
 import xlrd
 
 MINEDEPTH = 10
