@@ -48,8 +48,6 @@ def _format_d11_singlecell(row, sf_edepth, sf_ulai):
     city = row[0]
     ulat = float(row[3])
     ipl, ihv = int(row[9]), int(row[10])
-    ulai = float(row[12])
-    edepth = float(row[13])
     ulai = float(row[12]) * sf_ulai
     edepth = max(float(row[13]) * sf_edepth, 10)
     wind = float(row[4])
