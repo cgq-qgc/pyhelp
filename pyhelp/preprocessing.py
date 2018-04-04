@@ -154,21 +154,15 @@ def _format_d10_singlecell(row):
         #   SUBIN (J), PHOLE (J), DEFEC (J), IPQ (J), TRANS (J)
         # 5130 FORMAT(F7.0,2F6.0,I3,F13.0,2F7.0,I2,G14.6)
 
-        if layer == 3:
-            line_layr += '{0:>7.0f}'.format(xleng)
-            line_layr += '{0:>6.2f}'.format(slope)
-        else:
-            line_layr += '{0:>7}'.format('')
-            line_layr += '{0:>6}'.format('')
-        line_layr += ('{0:>6}'.format(recir) +
-                      '{0:>3}'.format(layr) +
-                      '{0:>13}'.format(subin) +
-                      '{0:>7}'.format(phole) +
-                      '{0:>7}'.format(defec) +
-                      '{0:>2}'.format(ipq) +
-                      '{0:>14}'.format(trans)
-                      )
-        d10dat.append([line_layr])
+        d10dat.append(['{0:>7.0f}'.format(xleng) +
+                       '{0:>6.2f}'.format(slope) +
+                       '{0:>6}'.format(recir) +
+                       '{0:>3}'.format(layr) +
+                       '{0:>13}'.format(subin) +
+                       '{0:>7}'.format(phole) +
+                       '{0:>7}'.format(defec) +
+                       '{0:>2}'.format(ipq) +
+                       '{0:>14}'.format(trans)])
 
     return d10dat
 
