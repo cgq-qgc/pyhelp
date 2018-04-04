@@ -172,9 +172,9 @@ def format_d10d11_from_excel(filename, sf_edepth=1, sf_ulai=1):
     Format the evapotranspiration (D11) and soil and design data (D11) in a
     format that is compatible by HELP.
     """
-    print('\rReading data from Excel file...', end=' ')
+    print('\rReading D10 an D11 data from Excel file...', end=' ')
     data = _read_data_from_excel(filename)
-    print('\rReading data from Excel file... done')
+    print('done')
 
     d11dat = {}
     d10dat = {}
