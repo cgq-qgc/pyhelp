@@ -33,8 +33,8 @@ from PyQt5.QtWidgets import QApplication
 
 # ---- Local Libraries Imports
 
-import HELP3O
-from gwhat.meteo.weather_reader import (
+from pyhelp import HELP3O
+from pyhelp.meteo.weather_reader import (
         save_precip_to_HELP, save_airtemp_to_HELP, save_solrad_to_HELP,
         read_cweeds_file, join_daily_cweeds_wy2_and_wy3)
 
