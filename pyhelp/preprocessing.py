@@ -25,6 +25,9 @@ import geopandas as gpd
 import netCDF4
 import xlrd
 
+MINEDEPTH = 10
+MINTHICK = 10
+
 
 # ---- Evapotranspiration and Soil and Design data (D10 and D11)
 
@@ -52,9 +55,10 @@ def _format_d11_singlecell(row, sf_edepth, sf_ulai):
     iu11 = 2
     city = row[0]
     ulat = float(row[3])
-    ipl, ihv = int(row[9]), int(row[10])
+    ipl = int(row[9])
+    ihv = int(row[10])
     ulai = float(row[12]) * sf_ulai
-    edepth = max(float(row[13]) * sf_edepth, 10)
+    edepth = max(float(row[13]) * sf_edepth, MINEDEPTH)
     wind = float(row[4])
     hum1 = float(row[5])
     hum2 = float(row[6])
@@ -130,11 +134,10 @@ def _format_d10_singlecell(row):
 
     # Format the layer properties.
 
-    nlayers = int(row[11])
     layers = row[15:]
     for lay in range(nlayers):
         layer = int(layers.pop(0))
-        thick = float(layers.pop(0))
+        thick = max(float(layers.pop(0)), MINTHICK)
         isoil = 0
         poro = float(layers.pop(0))
         fc = float(layers.pop(0))
@@ -156,9 +159,9 @@ def _format_d10_singlecell(row):
                        '{0:>6.3f}'.format(wp) +
                        '{0:>6}'.format(sw) +
                        '{0:>16.14f}'.format(rc)])
+
         recir = subin = phole = defec = ipq = trans = ''
         layr = 0
-
 
         # READ (10, 5130) XLENG (J), SLOPE (J), RECIR (J), LAYR (J),
         #   SUBIN (J), PHOLE (J), DEFEC (J), IPQ (J), TRANS (J)
