@@ -40,7 +40,7 @@ def _read_data_from_excel(filename):
     return data
 
 
-def _format_d11_singlecell(row):
+def _format_d11_singlecell(row, sf_edepth, sf_ulai):
     """
     Format the D11 input data for a single cell (one row in the excel file).
     """
@@ -50,6 +50,8 @@ def _format_d11_singlecell(row):
     ipl, ihv = int(row[9]), int(row[10])
     ulai = float(row[12])
     edepth = float(row[13])
+    ulai = float(row[12]) * sf_ulai
+    edepth = max(float(row[13]) * sf_edepth, 10)
     wind = float(row[4])
     hum1 = float(row[5])
     hum2 = float(row[6])
@@ -167,7 +169,7 @@ def _format_d10_singlecell(row):
     return d10dat
 
 
-def format_d10d11_from_excel(filename):
+def format_d10d11_from_excel(filename, sf_edepth=1, sf_ulai=1):
     """
     Format the evapotranspiration (D11) and soil and design data (D11) in a
     format that is compatible by HELP.
@@ -184,7 +186,7 @@ def format_d10d11_from_excel(filename):
               (i+1, N, (i+1)/N*100), end=' ')
 
         cellname = row[0]
-        d11dat[cellname] = _format_d11_singlecell(row)
+        d11dat[cellname] = _format_d11_singlecell(row, sf_edepth, sf_ulai)
         d10dat[cellname] = _format_d10_singlecell(row)
 
     print("\rFormatting D10 and D11 data for cell %d of %d (%0.1f%%)" %
