@@ -44,6 +44,11 @@ def _format_d11_singlecell(row, sf_edepth, sf_ulai):
     """
     Format the D11 input data for a single cell (one row in the excel file).
     """
+    nlayers = int(row[11])
+    if nlayers == 0:
+        # This means this cell cannot be run in HELP.
+        return None
+
     iu11 = 2
     city = row[0]
     ulat = float(row[3])
