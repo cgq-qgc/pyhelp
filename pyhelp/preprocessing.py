@@ -86,6 +86,11 @@ def _format_d10_singlecell(row):
     """
     Format the D10 input data for a single cell (one row in the excel file).
     """
+    nlayers = int(row[11])
+    if nlayers == 0:
+        # This means this cell cannot be run in HELP.
+        return None
+
     title = row[0]
     iu10 = 2
     ipre = 0
@@ -148,7 +153,7 @@ def _format_d10_singlecell(row):
                        '{0:>16.14f}'.format(rc)])
         recir = subin = phole = defec = ipq = trans = ''
         layr = 0
-        line_layr = ''
+
 
         # READ (10, 5130) XLENG (J), SLOPE (J), RECIR (J), LAYR (J),
         #   SUBIN (J), PHOLE (J), DEFEC (J), IPQ (J), TRANS (J)
