@@ -104,7 +104,6 @@ def _format_d10_singlecell(row):
     osno = 0     # initial snow water
     area = 6.25  # area projected on horizontal plane
     frunof = 100
-    irun = 1
     runof = float(row[14])
 
     d10dat = []
