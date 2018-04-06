@@ -7,15 +7,17 @@ Created on Tue Feb 27 08:33:14 2018
 # ---- Third Party imports
 
 import matplotlib.pyplot as plt
+import matplotlib.transforms as transforms
 import h5py
 import geopandas as gpd
 import numpy as np
 import os.path as osp
 import os
 
-rname = 'RVC-0403'
+rname = "RDC-0406_edepth60"
 figname_sufix = rname
 CONTEXT = True
+riv = 2
 
 os.chdir("C:\\Users\\User\\pyhelp\\RADEAU2\\Calage_27mars2018")
 workdir = "C:\\Users\\User\\pyhelp\\RADEAU2\\Calage_27mars2018\\%s\\" % rname
@@ -47,6 +49,7 @@ avg_monthly_subrun2 = np.zeros((Ny, 12))
 avg_monthly_rechg = np.zeros((Ny, 12))
 nan_cells = []
 
+
 for i, cellname in enumerate(cellnames):
     print("\rProcessing cell %d of %d..." % (i+1, Np), end=' ')
     data = help_output[cellname]
@@ -57,17 +60,19 @@ for i, cellname in enumerate(cellnames):
     avg_monthly_precip += data['rain'].value
     avg_monthly_evapo += data['evapo'].value
     avg_monthly_perco += data['percolation'].value
-    avg_monthly_runoff += data['runoff'].value + data['subrun1'].value
-    avg_monthly_subrun2 += data['subrun2'].value
+    avg_monthly_runoff += data['runoff'].value
+    avg_monthly_subrun2 += data['subrun2'].value + data['subrun1'].value
     if grid['context'][int(cellname)] == 2 and CONTEXT:
         # Convert recharge to runoff.
-        if np.sum(data['subrun2'].value) == 0:
-            # Convert recharge as surficial runoff.
-            avg_monthly_runoff += data['recharge'].value
-        else:
-            # This means there is a layer of sand above the clay layer.
-            # Convert recharge as deep runoff.
-            avg_monthly_subrun2 += data['recharge'].value
+        avg_monthly_subrun2 += data['recharge'].value
+        # # avg_monthly_subrun2 += data['recharge'].value
+        # if np.sum(data['subrun2'].value) == 0:
+        #     # Convert recharge as surficial runoff.
+        #     avg_monthly_runoff += data['recharge'].value
+        # else:
+        #     # This means there is a layer of sand above the clay layer.
+        #     # Convert recharge as deep runoff.
+        #     avg_monthly_subrun2 += data['recharge'].value
     else:
         avg_monthly_rechg += data['recharge'].value
 print("done")
@@ -112,6 +117,159 @@ summary = [np.mean(avg_yearly_precip),
            np.mean(avg_yearly_subrun2),
            np.mean(avg_yearly_rechg)]
 
+# %% Plot debits
+
+if riv == 1:
+    years_debits = np.array([
+        1965, 1966, 1967, 1968, 1969,
+        1970, 1971, 1972, 1973, 1974, 1975, 1976, 1977, 1978, 1979,
+        1980, 1981, 1982, 1983, 1984, 1985, 1986, 1987, 1988, 1989,
+        1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
+        2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009,
+        2010, 2011, 2012, 2013, 2014])
+    qcehq_tot = np.array([
+        562, 583, 701, 477, 676,
+        579, 533, 913, 827, 769, 676, 782, 642, 587, 884,
+        657, 827, 533, 799, 672, 553, 622, 514, 706, 583,
+        691, 569, 633, 736, 689, 537, 858, 616, 604, 668,
+        696, 497, 522, 715, 556, 727, 1004, 538, 825, 848,
+        641, 739, 505, 760, 812])
+    qcehq_base = np.array([
+        282, 290, 350, 241, 337,
+        291, 265, 456, 412, 386, 335, 395, 319, 295, 437,
+        333, 414, 261, 404, 335, 279, 311, 256, 353, 292,
+        343, 287, 316, 367, 346, 269, 426, 312, 300, 333,
+        348, 248, 263, 353, 279, 366, 499, 271, 408, 429,
+        319, 369, 254, 381, 404])
+elif riv == 2:
+    years_debits = np.array([
+        1973, 1974, 1975, 1976, 1977, 1978, 1979,
+        1980, 1981, 1982, 1983, 1984, np.nan,
+        2011, 2012, 2013, 2014])
+    qcehq_tot = np.array([
+        646, 572, 584, 615, 514, 482, 631,
+        398, 639, 417, 640, 551, np.nan,
+        637, 372, 631, 617])
+    qcehq_base = np.array([
+        321, 286, 293, 309, 256, 242, 308,
+        205, 320, 203, 322, 277, np.nan,
+        316, 190, 316, 303])
+
+qhelp_total = avg_yearly_runoff + avg_yearly_subrun2 + avg_yearly_rechg
+qhelp_base = avg_yearly_subrun2 + avg_yearly_rechg
+
+fwidth, fheight = 9, 5.5
+fig, ax = plt.subplots()
+fig.set_size_inches(fwidth, fheight)
+
+left_margin = 1.5/fwidth
+right_margin = 0.25/fwidth
+top_margin = 0.5/fheight
+bot_margin = 0.7/fheight
+ax.set_position([left_margin, bot_margin,
+                 1 - left_margin - right_margin, 1 - top_margin - bot_margin])
+
+# Streamflow total
+
+l1, = ax.plot(years_debits, qcehq_tot, marker=None, mec='white',
+              lw=2, linestyle='--',  clip_on=True, color='#3690c0')
+
+l2, = ax.plot(years, qhelp_total, marker=None, mec='white', clip_on=True,
+              lw=2, linestyle='-', color='#034e7b')
+
+# Streamflow base
+
+l3, = ax.plot(years_debits, qcehq_base, marker=None, mec='white',
+              lw=2, linestyle='--',  clip_on=True, color='#ef6548')
+
+l4, = ax.plot(years, qhelp_base, marker=None, mec='white', clip_on=True,
+              lw=2, linestyle='-', color='#990000')
+
+
+ax.tick_params(axis='both', direction='out', labelsize=12)
+ax.set_ylabel('Débit par unité de surface\n(mm/an)',
+              fontsize=16, labelpad=10)
+ax.set_xlabel('Années', fontsize=16, labelpad=10)
+ax.axis(ymin=0, ymax=1600)
+ax.grid(axis='y', color=[0.35, 0.35, 0.35], ls='-', lw=0.5)
+ax.axis([1960, 2017, 0, 1200])
+
+lines = [l1, l2, l3, l4]
+labels = ["CEHQ débit total", "HELP débit total",
+          "CEHQ débit base", "HELP débit base"]
+legend = ax.legend(lines, labels, numpoints=1, fontsize=12,
+                   borderaxespad=0, loc='upper left', borderpad=0.5,
+                   bbox_to_anchor=(0, 1), ncol=2)
+legend.draw_frame(False)
+
+# Add a graph title.
+offset = transforms.ScaledTranslation(0/72, 12/72, fig.dpi_scale_trans)
+ax.text(0.5, 1, figname_sufix, fontsize=16, ha='center', va='bottom',
+        transform=ax.transAxes+offset)
+
+fig.savefig('debit_temps_%s_V2.pdf' % figname_sufix)
+
+# %%
+
+# Calcul the RMSE
+
+years_debits = years_debits[~np.isnan(years_debits)]
+qcehq_tot = qcehq_tot[~np.isnan(qcehq_tot)]
+qcehq_base = qcehq_base[~np.isnan(qcehq_base)]
+
+indx = np.digitize(years_debits, years, right=True)
+rmse_qtot = np.mean((qcehq_tot - qhelp_total[indx])**2)**0.5
+me_qtot = np.mean(qhelp_total[indx] - qcehq_tot)
+rmse_qbase = np.mean((qcehq_base - qhelp_base[indx])**2)**0.5
+me_qbase = np.mean(qhelp_base[indx] - qcehq_base)
+
+# Plot the results
+
+fwidth, fheight = 5, 5
+fig, ax = plt.subplots()
+fig.set_size_inches(fwidth, fheight)
+
+left_margin = 1/fwidth
+right_margin = 0.5/fwidth
+top_margin = 0.5/fheight
+bot_margin = 1/fheight
+ax.set_position([left_margin, bot_margin,
+                 1 - left_margin - right_margin, 1 - top_margin - bot_margin])
+
+xymin, xymax = 300, 650
+ax.axis([xymin, xymax, xymin, xymax])
+ax.set_ylabel('Débits HELP (mm/an)', fontsize=16, labelpad=20)
+ax.set_xlabel('Débits CEHQ (mm/an)', fontsize=16, labelpad=20)
+
+ax.tick_params(axis='both', direction='out', labelsize=12)
+
+ax.plot([xymin, xymax], [xymin, xymax], '--', color='red')
+ax.plot(qcehq_tot, qhelp_total[indx], '.')
+
+dx, dy = 3, -3
+offset = transforms.ScaledTranslation(dx/72, dy/72, fig.dpi_scale_trans)
+ax.text(0, 1, "RMSE débit total = %0.1f mm/an" % rmse_qtot,
+        transform=ax.transAxes+offset, ha='left', va='top')
+dy += -12
+offset = transforms.ScaledTranslation(dx/72, dy/72, fig.dpi_scale_trans)
+ax.text(0, 1, "ME débit total = %0.1f mm/an" % me_qtot,
+        transform=ax.transAxes+offset, ha='left', va='top')
+
+dy += -18
+offset = transforms.ScaledTranslation(dx/72, dy/72, fig.dpi_scale_trans)
+ax.text(0, 1, "RMSE débit base = %0.1f mm/an" % rmse_qbase,
+        transform=ax.transAxes+offset, ha='left', va='top')
+dy += -12
+offset = transforms.ScaledTranslation(dx/72, dy/72, fig.dpi_scale_trans)
+ax.text(0, 1, "ME débit base = %0.1f mm/an" % me_qbase,
+        transform=ax.transAxes+offset, ha='left', va='top')
+
+# Add a graph title.
+offset = transforms.ScaledTranslation(0/72, 12/72, fig.dpi_scale_trans)
+ax.text(0.5, 1, figname_sufix, fontsize=16, ha='center', va='bottom',
+        transform=ax.transAxes+offset)
+
+fig.savefig('calage_'+rname+'.pdf')
 
 # %% Yearly averages time series
 
@@ -142,15 +300,21 @@ l5, = ax.plot(years, avg_yearly_subrun2, marker='o', mec='white',
 
 # Plot the observations
 
-# Riv. du Chêne
-base_years = np.array([1980, 1981, 1982, 1983, 1984, 2011, 2012, 2013, 2014])
-base_evapo = [642.6, 498.5, 509.2, 545.8, 331.0, 551.2, 593.9, 490.5, 519.4]
-
-# Riv. du Nord
-# base_years = [2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009,
-#               2010, 2011, 2012, 2013, 2014]
-# base_evapo = [424.2, 400.8, 452.1, 517.4, 398.7, 381.4, 380.8, 521.0, 453.5,
-#               262.5, 503.6, 459.4, 572.9, 411.8, 417.6]
+if riv == 2:
+    # Riv. du Chêne
+    base_years = np.array([1980, 1981, 1982, 1983, 1984, np.nan,
+                           2011, 2012, 2013, 2014])
+    base_evapo = [642.6, 498.5, 509.2, 545.8, 331.0, np.nan,
+                  551.2, 593.9, 490.5, 519.4]
+elif riv == 1:
+    # Riv. du Nord
+    base_years = [2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009,
+                  2010, 2011, 2012, 2013, 2014]
+    base_evapo = [424.2, 400.8, 452.1, 517.4, 398.7, 381.4, 380.8, 521.0,
+                  453.5, 262.5, 503.6, 459.4, 572.9, 411.8, 417.6]
+else:
+    base_years = []
+    base_evapo = []
 
 l6, = ax.plot(base_years, base_evapo, marker='^', mec='white',
               clip_on=False, lw=2, linestyle='--')
@@ -170,6 +334,9 @@ legend = ax.legend(lines, labels, numpoints=1, fontsize=12,
                    borderaxespad=0, loc='lower left', borderpad=0.5,
                    bbox_to_anchor=(0, 1), ncol=2)
 legend.draw_frame(False)
+
+# Figure Title
+
 fig.savefig("bilan_hydro_annuel_%s.pdf" % figname_sufix)
 
 # %% Yearly Average Barplot
@@ -225,42 +392,6 @@ legend = ax.legend(lines, labels, numpoints=1, fontsize=12,
 legend.draw_frame(False)
 fig.savefig("bilan_hydro_moyen_annuel_%s.pdf" % figname_sufix)
 
-# %% Comparison with stream hydrograph
-
-plt.close('all')
-
-base_years = [2011, 2012, 2013, 2014]
-base_evapo = [551.2, 593.9, 490.5, 519.4]
-base_runoff = [320.6, 182.4, 315.1, 313.9]
-base_baseflow = [316.0, 189.9, 315.7, 304.0] 
-
-fwidth, fheight = 9, 6.5
-fig, ax = plt.subplots()
-fig.set_size_inches(fwidth, fheight)
-
-# Setup axe margins :
-
-left_margin = 1.5/fwidth
-right_margin = 0.25/fwidth
-top_margin = 1./fheight
-bot_margin = 0.7/fheight
-ax.set_position([left_margin, bot_margin,
-                 1 - left_margin - right_margin, 1 - top_margin - bot_margin])
-
-l0, = ax.plot(years, avg_yearly_precip, marker='o', mec='white', clip_on=False,
-              lw=2)
-    
-l1, = ax.plot(years, avg_yearly_evapo, marker='o', mec='white', clip_on=False,
-              lw=2, color='green')
-l1b, = ax.plot(base_years, base_evapo, marker='s', mec='white', clip_on=False,
-               lw=2, linestyle='--', color='green')
-
-
-# l1, = ax.plot(years, avg_yearly_evapo, marker='o', mec='white', clip_on=False,
-#               lw=2)
-# l1b, = ax.plot(base_years, base_evapo, marker='o', mec='white', clip_on=False,
-#                lw=2, linestyle='--')
-
 # %%
 
 plt.close('all')
@@ -272,7 +403,7 @@ fig.set_size_inches(fwidth, fheight)
 
 left_margin = 1.5/fwidth
 right_margin = 0.25/fwidth
-top_margin = 1./fheight
+top_margin = 1/fheight
 bot_margin = 0.7/fheight
 ax.set_position([left_margin, bot_margin,
                  1 - left_margin - right_margin, 1 - top_margin - bot_margin])
