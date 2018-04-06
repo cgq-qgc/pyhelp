@@ -21,7 +21,8 @@ from multiprocessing import Pool
 
 import xlrd
 
-MINEDEPTH = 10
+MINEDEPTH = 3
+MAXEDEPTH = 80
 MINTHICK = 10
 
 
@@ -54,7 +55,7 @@ def _format_d11_singlecell(row, sf_edepth, sf_ulai):
     ipl = int(row[9])
     ihv = int(row[10])
     ulai = float(row[12]) * sf_ulai
-    edepth = max(float(row[13]) * sf_edepth, MINEDEPTH)
+    edepth = min(max(float(row[13]) * sf_edepth, MINEDEPTH), MAXEDEPTH)
     wind = float(row[4])
     hum1 = float(row[5])
     hum2 = float(row[6])
