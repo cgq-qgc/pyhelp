@@ -240,14 +240,19 @@ class NetCDFMeteoManager(object):
             self.lon = np.array(netcdf_dset['lon'])
             netcdf_dset.close()
 
-    def get_idx_from_latlon(self, latitudes, longitudes):
+    def get_idx_from_latlon(self, latitudes, longitudes, unique=False):
         """
         Get the i and j indexes of the grid meshes from a list of latitude
-        and longitude coordinates.
+        and longitude coordinates. If unique is True, only the unique pairs of
+        i and j indexes will be returned.
         """
         try:
             lat_idx = [np.argmin(np.abs(self.lat - lat)) for lat in latitudes]
             lon_idx = [np.argmin(np.abs(self.lon - lon)) for lon in longitudes]
+            if unique:
+                ijdx = np.vstack({(i, j) for i, j in zip(lat_idx, lon_idx)})
+                lat_idx = ijdx[:, 0].tolist()
+                lon_idx = ijdx[:, 1].tolist()
         except TypeError:
             lat_idx = np.argmin(np.abs(self.lat - latitudes))
             lon_idx = np.argmin(np.abs(self.lon - longitudes))
