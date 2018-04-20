@@ -258,6 +258,14 @@ class NetCDFMeteoManager(object):
             lon_idx = np.argmin(np.abs(self.lon - longitudes))
         
         return lat_idx, lon_idx
+    
+    def get_data_from_latlon(self, latitudes, longitudes, years):
+        """
+        Return the daily minimum, maximum and average air temperature and daily
+        precipitation
+        """
+        lat_idx, lon_idx = self.get_idx_from_latlon(latitudes, longitudes)
+        return self.get_data_from_idx(lat_idx, lon_idx, years)
 
     def get_data_from_idx(self, lat_idx, lon_idx):
         stack_tasmax = []
