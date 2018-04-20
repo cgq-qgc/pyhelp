@@ -240,9 +240,18 @@ class NetCDFMeteoManager(object):
             self.lon = np.array(netcdf_dset['lon'])
             netcdf_dset.close()
 
-    def get_idx_from_latlon(self, lat, lon):
-        lat_idx = np.argmin(np.abs(self.lat - lat))
-        lon_idx = np.argmin(np.abs(self.lon - lon))
+    def get_idx_from_latlon(self, latitudes, longitudes):
+        """
+        Get the i and j indexes of the grid meshes from a list of latitude
+        and longitude coordinates.
+        """
+        try:
+            lat_idx = [np.argmin(np.abs(self.lat - lat)) for lat in latitudes]
+            lon_idx = [np.argmin(np.abs(self.lon - lon)) for lon in longitudes]
+        except TypeError:
+            lat_idx = np.argmin(np.abs(self.lat - latitudes))
+            lon_idx = np.argmin(np.abs(self.lon - longitudes))
+        
         return lat_idx, lon_idx
 
     def get_data_from_idx(self, lat_idx, lon_idx):
