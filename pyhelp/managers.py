@@ -240,39 +240,64 @@ class NetCDFMeteoManager(object):
             self.lon = np.array(netcdf_dset['lon'])
             netcdf_dset.close()
 
-    def get_idx_from_latlon(self, latitudes, longitudes):
+    def get_idx_from_latlon(self, latitudes, longitudes, unique=False):
         """
         Get the i and j indexes of the grid meshes from a list of latitude
-        and longitude coordinates.
+        and longitude coordinates. If unique is True, only the unique pairs of
+        i and j indexes will be returned.
         """
         try:
             lat_idx = [np.argmin(np.abs(self.lat - lat)) for lat in latitudes]
             lon_idx = [np.argmin(np.abs(self.lon - lon)) for lon in longitudes]
+            if unique:
+                ijdx = np.vstack({(i, j) for i, j in zip(lat_idx, lon_idx)})
+                lat_idx = ijdx[:, 0].tolist()
+                lon_idx = ijdx[:, 1].tolist()
         except TypeError:
             lat_idx = np.argmin(np.abs(self.lat - latitudes))
             lon_idx = np.argmin(np.abs(self.lon - longitudes))
         
         return lat_idx, lon_idx
+    
+    def get_data_from_latlon(self, latitudes, longitudes, years):
+        """
+        Return the daily minimum, maximum and average air temperature and daily
+        precipitation
+        """
+        lat_idx, lon_idx = self.get_idx_from_latlon(latitudes, longitudes)
+        return self.get_data_from_idx(lat_idx, lon_idx, years)
 
-    def get_data_from_idx(self, lat_idx, lon_idx):
-        stack_tasmax = []
-        stack_tasmin = []
-        stack_precip = []
-        stack_years = []
-        for year in range(2000, 2015):
+    def get_data_from_idx(self, lat_idx, lon_idx, years):
+        try:
+            len(lat_idx)
+        except TypeError:
+            lat_idx, lon_idx = [lat_idx], [lon_idx]
+
+        tasmax_stacks = []
+        tasmin_stacks = []
+        precip_stacks = []
+        years_stack = []
+        for year in years:
+            print('\rFetching daily weather data for year %d...' % year,
+                  end=' ')
             filename = osp.join(self.dirpath_netcdf, 'GCQ_v2_%d.nc' % year)
             netcdf_dset = netCDF4.Dataset(filename, 'r+')
-            stack_tasmax.append(
-                    np.array(netcdf_dset['tasmax'])[:, lat_idx, lon_idx])
-            stack_tasmin.append(
-                    np.array(netcdf_dset['tasmin'])[:, lat_idx, lon_idx])
-            stack_precip.append(
-                    np.array(netcdf_dset['pr'])[:, lat_idx, lon_idx])
-            stack_years.append(
-                    np.zeros(len(stack_precip[-1])).astype(int) + year)
+
+            tasmax_stacks.append(
+                np.array(netcdf_dset['tasmax'])[:, lat_idx, lon_idx])
+            tasmin_stacks.append(
+                np.array(netcdf_dset['tasmin'])[:, lat_idx, lon_idx])
+            precip_stacks.append(
+                np.array(netcdf_dset['pr'])[:, lat_idx, lon_idx])
+            years_stack.append(
+                np.zeros(len(precip_stacks[-1][:])).astype(int) + year)
+
             netcdf_dset.close()
-        tasmax = np.hstack(stack_tasmax)
-        tasmin = np.hstack(stack_tasmin)
-        precip = np.hstack(stack_precip)
-        years = np.hstack(stack_years)
+        print('done')
+
+        tasmax = np.vstack(tasmax_stacks)
+        tasmin = np.vstack(tasmin_stacks)
+        precip = np.vstack(precip_stacks)
+        years = np.hstack(years_stack)
+
         return (tasmax + tasmin)/2, precip, years
