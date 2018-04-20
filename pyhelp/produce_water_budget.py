@@ -14,7 +14,7 @@ import numpy as np
 import os.path as osp
 import os
 
-rname = "RDC-0406_edepth60"
+rname = "BVRDC-0406_edepth60_TFSOIL-3"
 figname_sufix = rname
 CONTEXT = True
 riv = 2
@@ -27,8 +27,8 @@ path_surf_output = workdir + "surface_%s.out" % rname
 # %% Load the HELP grid
 
 grid = gpd.read_file("C:\\Users\\User\\pyhelp\\RADEAU2\\Calage_27mars2018" +
-                     "\\XYgrille0327\\XYgrille0327.shp")
-grid.set_index(['cid'], drop=False, inplace=True)
+                     "\\XYgrille0405\\XYgrille0405.shp")
+grid.set_index(['maille'], drop=False, inplace=True)
 
 # %% Compute yearly values
 
@@ -37,6 +37,10 @@ grid.set_index(['cid'], drop=False, inplace=True)
 help_output = h5py.File(path_help_output, mode='r+')
 cellnames = list(help_output.keys())
 years = help_output[cellnames[0]]['years'].value
+
+# urbancells = grid['maille'][grid['Urbain'] == 1][grid['run'] == 1][grid['BT'] == 1].tolist()
+# # ruralcells = grid['maille'][grid['Urbain'] == 0][grid['BT'] == 1]
+# urbancells = grid['maille'][grid['Urbain'] == 1][grid['Contexte'] == 0][grid['BT'] == 1].tolist()
 
 Np = len(cellnames)
 Ny = len(years)
@@ -51,6 +55,7 @@ nan_cells = []
 
 
 for i, cellname in enumerate(cellnames):
+    cellname = str(int(cellname))
     print("\rProcessing cell %d of %d..." % (i+1, Np), end=' ')
     data = help_output[cellname]
     if np.any(np.isnan(data['recharge'].value)):
@@ -62,9 +67,10 @@ for i, cellname in enumerate(cellnames):
     avg_monthly_perco += data['percolation'].value
     avg_monthly_runoff += data['runoff'].value
     avg_monthly_subrun2 += data['subrun2'].value + data['subrun1'].value
-    if grid['context'][int(cellname)] == 2 and CONTEXT:
+    if grid['Contexte'][int(cellname)] == 2 and CONTEXT:
         # Convert recharge to runoff.
         avg_monthly_subrun2 += data['recharge'].value
+
         # # avg_monthly_subrun2 += data['recharge'].value
         # if np.sum(data['subrun2'].value) == 0:
         #     # Convert recharge as surficial runoff.
@@ -88,10 +94,12 @@ avg_yearly_subrun2 = np.sum(avg_monthly_subrun2, axis=1)
 
 surf_output = h5py.File(path_surf_output, mode='r+')
 surf_cellnames = list(surf_output.keys())
+# surf_cellnames = grid['maille'][grid['Urbain'] == 1][grid['Contexte'] == 0][grid['BT'] == 1].tolist()
 
 Nsc = len(surf_cellnames)
 
 for i, cellname in enumerate(surf_cellnames):
+    cellname = str(int(cellname))
     print("\rProcessing surf. cell %d of %d..." % (i+1, Nsc), end=' ')
     data = surf_output[cellname]
     avg_yearly_precip += data['rain'].value
@@ -209,7 +217,7 @@ ax.text(0.5, 1, figname_sufix, fontsize=16, ha='center', va='bottom',
 
 fig.savefig('debit_temps_%s_V2.pdf' % figname_sufix)
 
-# %%
+# %% PLot debits scatter
 
 # Calcul the RMSE
 
@@ -236,15 +244,18 @@ bot_margin = 1/fheight
 ax.set_position([left_margin, bot_margin,
                  1 - left_margin - right_margin, 1 - top_margin - bot_margin])
 
-xymin, xymax = 300, 650
+xymin, xymax = 100, 700
 ax.axis([xymin, xymax, xymin, xymax])
 ax.set_ylabel('Débits HELP (mm/an)', fontsize=16, labelpad=20)
 ax.set_xlabel('Débits CEHQ (mm/an)', fontsize=16, labelpad=20)
 
 ax.tick_params(axis='both', direction='out', labelsize=12)
 
-ax.plot([xymin, xymax], [xymin, xymax], '--', color='red')
-ax.plot(qcehq_tot, qhelp_total[indx], '.')
+l1, = ax.plot([xymin, xymax], [xymin, xymax], '--', color='black', lw=1)
+l2, = ax.plot(qcehq_tot, qhelp_total[indx], '.', color='#3690c0')
+l3, = ax.plot(qcehq_base, qhelp_base[indx], '.', color='#990000')
+
+# Plot the model fit stats.
 
 dx, dy = 3, -3
 offset = transforms.ScaledTranslation(dx/72, dy/72, fig.dpi_scale_trans)
@@ -268,6 +279,15 @@ ax.text(0, 1, "ME débit base = %0.1f mm/an" % me_qbase,
 offset = transforms.ScaledTranslation(0/72, 12/72, fig.dpi_scale_trans)
 ax.text(0.5, 1, figname_sufix, fontsize=16, ha='center', va='bottom',
         transform=ax.transAxes+offset)
+
+# Add a legend.
+lines = [l1, l2, l3]
+labels = ["1:1", "Débit total", "Débit base"]
+legend = ax.legend(lines, labels, numpoints=1, fontsize=12,
+                   borderaxespad=0, loc='lower right', borderpad=0.5,
+                   bbox_to_anchor=(1, 0), ncol=1)
+legend.draw_frame(False)
+
 
 fig.savefig('calage_'+rname+'.pdf')
 
@@ -300,6 +320,7 @@ l5, = ax.plot(years, avg_yearly_subrun2, marker='o', mec='white',
 
 # Plot the observations
 
+riv = 0
 if riv == 2:
     # Riv. du Chêne
     base_years = np.array([1980, 1981, 1982, 1983, 1984, np.nan,
@@ -316,8 +337,8 @@ else:
     base_years = []
     base_evapo = []
 
-l6, = ax.plot(base_years, base_evapo, marker='^', mec='white',
-              clip_on=False, lw=2, linestyle='--')
+# l6, = ax.plot(base_years, base_evapo, marker='^', mec='white',
+              # clip_on=False, lw=2, linestyle='--')
 
 ax.tick_params(axis='both', direction='out', labelsize=12)
 ax.set_ylabel('Composantes du bilan hydrologique\n(mm/an)',
@@ -326,10 +347,12 @@ ax.set_xlabel('Années', fontsize=16, labelpad=10)
 ax.axis(ymin=0, ymax=1600)
 ax.grid(axis='y', color=[0.35, 0.35, 0.35], ls='-', lw=0.5)
 
-lines = [l1, l2, l3, l4, l5, l6]
+lines = [l1, l2, l3, l4, l5]
 labels = ["Précipitations totales", "Recharge au roc",
           "Ruissellement de surface", "Évapotranspiration",
-          "Ruissellement hypodermique", "Évapotranspiration observée"]
+          "Ruissellement hypodermique"]
+
+
 legend = ax.legend(lines, labels, numpoints=1, fontsize=12,
                    borderaxespad=0, loc='lower left', borderpad=0.5,
                    bbox_to_anchor=(0, 1), ncol=2)
@@ -390,7 +413,7 @@ legend = ax.legend(lines, labels, numpoints=1, fontsize=12,
                    borderaxespad=0, loc='upper right', borderpad=0.5,
                    bbox_to_anchor=(1, 1), ncol=2)
 legend.draw_frame(False)
-fig.savefig("bilan_hydro_moyen_annuel_%s.pdf" % figname_sufix)
+fig.savefig("hist_bilan_hydro_moyen_annuel_%s.pdf" % figname_sufix)
 
 # %%
 

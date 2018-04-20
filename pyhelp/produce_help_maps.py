@@ -8,58 +8,105 @@ Created on Tue Feb 27 08:33:14 2018
 
 import matplotlib.pyplot as plt
 import h5py
-import netCDF4
 import geopandas as gpd
 import numpy as np
 import os
 import os.path as osp
 
+rname = "BT-0406_edepth60"
+
+os.chdir("C:\\Users\\User\\pyhelp\\RADEAU2\\Calage_27mars2018")
+workdir = "C:\\Users\\User\\pyhelp\\RADEAU2\\Calage_27mars2018\\%s\\" % rname
+path_help_output = workdir + "help_%s.out" % rname
+path_surf_output = workdir + "surface_%s.out" % rname
+
 # %% Read HELP results
 
-path_hdf5 = "E:/pyhelp/RADEAU2/help_output_grid0320_BT.out"
-hdf5 = h5py.File(path_hdf5, mode='r+')
-cellnames = list(hdf5.keys())
+help_output = h5py.File(path_help_output, mode='r+')
+helpcells = list(help_output.keys())
+years = help_output[helpcells[0]]['years'].value
+
+surf_output = h5py.File(path_surf_output, mode='r+')
+surfcells = list(surf_output.keys())
 
 # %% Read HELP grid
 
 print('\rReading HELP grid shapefile...', end=' ')
-path_shp_help = "E:/pyhelp/RADEAU2/grid_helpXYZ/grid_helpXYZ_bassin.shp"
-shp_help = gpd.read_file(path_shp_help)
+path_shp = ("C:\\Users\\User\\pyhelp\\RADEAU2\\Calage_27mars2018" +
+            "\\XYgrille0405\\XYgrille0405.shp")
+shp_help = gpd.read_file(path_shp)
 print('\rReading HELP grid shapefile... done')
 
 # %% Add the results to the dataframe
 
 # Fields : years, rain, runoff, evapo, sub-runoff, percolation, recharge
 
-avg_yearly_precip = np.zeros(len(shp_help['cid']))
-avg_yearly_rechg = np.zeros(len(shp_help['cid']))
-avg_yearly_runoff = np.zeros(len(shp_help['cid']))
-avg_yearly_evapo = np.zeros(len(shp_help['cid']))
-avg_year_perco = np.zeros(len(shp_help['cid']))
-avg_year_subrun1 = np.zeros(len(shp_help['cid']))
-avg_year_subrun2 = np.zeros(len(shp_help['cid']))
+ncells = len(shp_help['maille'])
+nyears = len(years)
 
-N = 15
-for i, cellname in enumerate(cellnames):
-    print("\rProcessing cell %d of %d" % (i, len(cellnames)), end=' ')
-    cid = int(cellname[3:])
+avg_yearly_precip = np.zeros(ncells) * np.nan
+avg_yearly_rechg = np.zeros(ncells) * np.nan
+avg_yearly_runoff = np.zeros(ncells) * np.nan
+avg_yearly_evapo = np.zeros(ncells) * np.nan
+avg_year_perco = np.zeros(ncells) * np.nan
+avg_year_subrun1 = np.zeros(ncells) * np.nan
+avg_year_subrun2 = np.zeros(ncells) * np.nan
 
-    data = hdf5[cellname]
-    rain = data['rain'].value
-    recharge = data['recharge'].value
-    runoff = data['runoff'].value
-    evapo = data['evapo'].value
-    perco = data['percolation'].value
-    subrun1 = data['subrun1'].value
-    subrun2 = data['subrun2'].value
+# Handle HELP results.
 
-    avg_yearly_precip[cid] = np.sum(rain)/N
-    avg_yearly_rechg[cid] = np.sum(recharge)/N
-    avg_yearly_runoff[cid] = np.sum(runoff)/N
-    avg_yearly_evapo[cid] = np.sum(evapo)/N
-    avg_year_perco[cid] = np.sum(perco)/N
-    avg_year_subrun1[cid] = np.sum(subrun1)/N
-    avg_year_subrun2[cid] = np.sum(subrun2)/N
+for i, cellname in enumerate(helpcells):
+    print("\rProcessing cell %d of %d..." % (i, len(helpcells)), end=' ')
+    cid = int(cellname)
+
+    data = help_output[cellname]
+    rain = np.sum(data['rain'].value) / nyears
+    runoff = np.sum(data['runoff'].value) / nyears
+    evapo = np.sum(data['evapo'].value) / nyears
+    perco = np.sum(data['percolation'].value) / nyears
+    subrun1 = np.sum(data['subrun1'].value) / nyears
+    subrun2 = np.sum(data['subrun2'].value) / nyears
+    recharge = np.sum(data['recharge'].value) / nyears
+
+    avg_yearly_precip[cid] = rain
+    avg_yearly_runoff[cid] = runoff
+    avg_yearly_evapo[cid] = evapo
+    avg_year_perco[cid] = perco
+
+    if shp_help['Contexte'][cid] == 2:
+        # Convert recharge to runoff when cells are close to a stream.
+        if subrun2 == 0:
+            # Convert recharge as surficial subrunoff.
+            subrun1 = subrun1 + recharge
+        else:
+            # This means there is a layer of sand above the clay layer.
+            # Convert recharge as deep runoff.
+            subrun2 = subrun2 + recharge
+        recharge = 0
+
+    avg_year_subrun1[cid] = subrun1
+    avg_year_subrun2[cid] = subrun2
+    avg_yearly_rechg[cid] = recharge
+print("done")
+
+# Handle Surface Water results.
+
+for i, cellname in enumerate(surfcells):
+    print("\rProcessing surface cell %d of %d..." % (i, len(surfcells)),
+          end=' ')
+    cid = int(cellname)
+
+    data = surf_output[cellname]
+    avg_yearly_precip[cid] = np.sum(data['rain'].value) / nyears
+    avg_yearly_runoff[cid] = np.sum(data['runoff'].value) / nyears
+    avg_yearly_evapo[cid] = np.sum(data['evapo'].value) / nyears
+
+    avg_year_perco[cid] = 0
+    avg_year_subrun1[cid] = 0
+    avg_year_subrun2[cid] = 0
+    avg_yearly_rechg[cid] = 0
+print("done")
+
+# Add the results to the shapefile.
 
 shp_help['precip'] = avg_yearly_precip
 shp_help['rechg'] = avg_yearly_rechg
@@ -72,13 +119,14 @@ shp_help['subrun2'] = avg_year_subrun2
 # %% Save results in a shapefile
 
 crs = "+proj=longlat +ellps=GRS80 +datum=NAD83 +towgs84=0,0,0,0,0,0,0 +no_defs"
+
 print('\rSaving HELP results in a shapefile...', end=' ')
-path_shp_out = ("E:/pyhelp/RADEAU2/"
-                "grid_help_result_grid0320/"
-                "grid_help_result_grid0320_80reduc_etp.shp")
+path_shp_out = ("C:/Users/User/pyhelp/RADEAU2/"
+                "help_result_BT-0406_edepth60/"
+                "help_result_BT-0406_edepth60.shp")
 if not osp.exists(osp.dirname(path_shp_out)):
     os.makedirs(osp.dirname(path_shp_out))
-shp_help.to_file(path_shp_out, driver='ESRI Shapefile', crs_wkt=crs)
+shp_help.to_file(path_shp_out, driver='ESRI Shapefile')
 print('\rSaving HELP results in a shapefile... done')
 
 # %% Produce yearly time series
