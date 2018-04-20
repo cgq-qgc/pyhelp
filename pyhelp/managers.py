@@ -47,6 +47,17 @@ class HELPManager(object):
         if path_helpgrid is not None:
             self.load_helpgrid_from_shapefile(path_helpgrid)
         self._setup_connect_tables()
+    @property
+    def workdir(self):
+        """Return the path to the current working directory."""
+        return os.getcwd()
+
+    def set_workdir(self, dirname):
+        """Set the working directory of the manager."""
+        if not osp.exists(dirname):
+            os.makedirs(dirname)
+        os.chdir(dirname)
+
 
     @property
     def path_connect_tables(self):
