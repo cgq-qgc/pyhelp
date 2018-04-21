@@ -225,7 +225,79 @@ class HELPManager(object):
         # Run HELP and save the result to an hdf5 file.
 
         output = run_help_allcells(cellparams)
-        savedata_to_hdf5(output, path_outfile)
+
+        if path_outfile:
+            savedata_to_hdf5(output, path_outfile)
+
+        return output
+
+    def calc_surf_water_cells(self, evp_surf, path_netcdf_dir,
+                              path_outfile=None, cellnames=None):
+        cellnames = self.get_water_cellnames(cellnames)
+        lat_dd, lon_dd = self.get_latlon_for_cellnames(cellnames)
+
+        meteo_manager = NetCDFMeteoManager(path_netcdf_dir)
+
+        N = len(cellnames)
+        lat_indx = np.empty(N).astype(int)
+        lon_indx = np.empty(N).astype(int)
+        for i, cellname in enumerate(cellnames):
+            lat_indx[i], lon_indx[i] = meteo_manager.get_idx_from_latlon(
+                lat_dd[i], lon_dd[i])
+
+        year_range = np.arange(
+            self.year_range[0], self.year_range[1] + 1).astype(int)
+        tasavg, precip, years = meteo_manager.get_data_from_idx(
+            lat_indx, lon_indx, year_range)
+
+        # Fill -999 with 0 in daily precip.
+        precip[precip == -999] = 0
+
+        nyr = len(year_range)
+        output = {}
+        for i, cellname in enumerate(cellnames):
+            data = {}
+            data['years'] = year_range
+            data['rain'] = np.zeros(nyr)
+            data['evapo'] = np.zeros(nyr) + evp_surf
+            data['runoff'] = np.zeros(nyr)
+            for k, year in enumerate(year_range):
+                indx = np.where(years == year)[0]
+                data['rain'][k] = np.sum(precip[indx, i])
+                data['runoff'][k] = data['rain'][k] - evp_surf
+            output[cellname] = data
+
+        if path_outfile:
+            savedata_to_hdf5(output, path_outfile)
+
+        return output
+
+        # # For cells for which the context is 2, convert recharge and deep
+        # # subrunoff into superfical subrunoff.
+        # cellnames_con_2 = cellnames[self.grid[fcon] == 2].tolist()
+        # for cellname in cellnames_con_2:
+        #     output[cellname]['subrun1'] += output[cellname]['subrun2']
+        #     output[cellname]['subrun1'] += output[cellname]['recharge']
+        #     output[cellname]['subrun2'][:] = 0
+        #     output[cellname]['recharge'][:] = 0
+
+        # # For cells for which the context is 3, convert recharge into
+        # # deep runoff.
+        # cellnames_con_3 = cellnames[self.grid[fcon] == 3].tolist()
+        # for cellname in cellnames_con_3:
+        #     output[cellname]['subrun2'] += output[cellname]['recharge']
+        #     output[cellname]['recharge'][:] = 0
+
+        # # Comput water budget for cells for which the context is 0.
+        # cellnames_con_2 = cellnames[self.grid[fcon] == 0].tolist()
+
+        # # meteo_manager = NetCDFMeteoManager(path_netcdf_dir)
+        # # for cellname in cellnames_run0:
+
+        # Save the result to an hdf5 file.
+
+    # ---- Utilities
+
     def get_water_cellnames(self, cellnames):
         """
         Take a list of cellnames and return only those that are considered
