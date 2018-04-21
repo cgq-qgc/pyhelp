@@ -226,6 +226,22 @@ class HELPManager(object):
 
         output = run_help_allcells(cellparams)
         savedata_to_hdf5(output, path_outfile)
+    def get_water_cellnames(self, cellnames):
+        """
+        Take a list of cellnames and return only those that are considered
+        to be in a surface water area.
+        """
+        if cellnames is None:
+            cellnames = self.cellnames
+        else:
+            # Keep only the cells that are in the grid.
+            cellnames = self.grid['cid'][self.grid['cid'].isin(cellnames)]
+
+        # Only keep the cells for which context is 0.
+        cellnames = self.grid['cid'][cellnames][self.grid['context'] == 0]
+
+        return cellnames.tolist()
+
     def get_run_cellnames(self, cellnames):
         """
         Take a list of cellnames and return only those that are in the grid
