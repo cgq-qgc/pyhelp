@@ -226,6 +226,22 @@ class HELPManager(object):
 
         output = run_help_allcells(cellparams)
         savedata_to_hdf5(output, path_outfile)
+    def get_run_cellnames(self, cellnames):
+        """
+        Take a list of cellnames and return only those that are in the grid
+        and for which HELP can be run.
+        """
+        if cellnames is None:
+            cellnames = self.cellnames
+        else:
+            # Keep only the cells that are in the grid.
+            cellnames = self.grid['cid'][self.grid['cid'].isin(cellnames)]
+
+        # Only keep the cells that are going to be run in HELP because we
+        # don't need the D4 or D7 input files for those that aren't.
+        cellnames = self.grid['cid'][cellnames][self.grid['run'] == 1].tolist()
+
+        return cellnames
 
     def get_latlon_for_cellnames(self, cells):
         """
