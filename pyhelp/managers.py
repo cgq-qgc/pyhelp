@@ -32,13 +32,16 @@ FNAME_CONN_TABLES = 'connect_table.npy'
 
 
 class HELPManager(object):
-    def __init__(self, path_inputdir, year_range, path_helpgrid=None):
+    def __init__(self, workdir, year_range, path_togrid=None):
         super(HELPManager, self).__init__()
-        self.path_helpgrid = path_helpgrid
-        self.path_inputdir = path_inputdir
-        if not osp.exists(path_inputdir):
-            os.makedirs(path_inputdir)
         self.year_range = year_range
+        self.set_workdir(workdir)
+        self._setup_connect_tables()
+
+        if path_togrid is not None:
+            self.load_grid(path_togrid)
+        else:
+            self.grid = None
 
         self.cellnames = []
         self.celllat = []
