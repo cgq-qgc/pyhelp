@@ -43,6 +43,17 @@ class HELPManager(object):
         self.cellnames = []
         self.celllat = []
         self.celllon = []
+    @property
+    def inputdir(self):
+        """
+        Return the path to the folder where the HELP input files are going to
+        be saved in the working directory. This folder is created in case it
+        doesn't already exist in the file system.
+        """
+        inputdir = osp.join(self.workdir, 'help_input_files')
+        if not osp.exists(inputdir):
+            os.makedirs(inputdir)
+        return inputdir
 
         if path_helpgrid is not None:
             self.load_helpgrid_from_shapefile(path_helpgrid)
