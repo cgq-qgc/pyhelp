@@ -227,6 +227,16 @@ class HELPManager(object):
         output = run_help_allcells(cellparams)
         savedata_to_hdf5(output, path_outfile)
 
+    def get_latlon_for_cellnames(self, cells):
+        """
+        Return a numpy array with latitudes and longitudes of the provided
+        cells cid. Latitude and longitude for cids that are missing from
+        the grid are set to nan.
+        """
+        lat = np.array(self.grid['lat_dd'].reindex(cells).tolist())
+        lon = np.array(self.grid['lon_dd'].reindex(cells).tolist())
+        return lat, lon
+
 
 class NetCDFMeteoManager(object):
     def __init__(self, dirpath_netcdf):
