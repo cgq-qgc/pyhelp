@@ -94,23 +94,10 @@ class HELPManager(object):
 
     def load_grid(self, path_togrid):
         """
-        Load the csv that contains the infos required to evaluate regional
+        Load the grid that contains the infos required to evaluate regional
         groundwater recharge with HELP.
         """
-        print('Reading HELP grid...', end=' ')
-        grid = pd.read_csv(path_togrid)
-        print('done')
-
-        fname = osp.basename(path_togrid)
-        req_keys = ['cid', 'lat_dd', 'lon_dd', 'run']
-        for key in req_keys:
-            if key not in grid.keys():
-                raise KeyError("No attribute '%s' found in %s" % (key, fname))
-
-        # Set 'cid' as the index of the dataframe.
-        grid.set_index(['cid'], drop=False, inplace=True)
-
-        self.grid = grid
+        self.grid = load_grid_from_csv(path_togrid)
         return self.grid
 
     # ---- Input files creation
@@ -499,3 +486,27 @@ class NetCDFMeteoManager(object):
         years = np.hstack(years_stack)
 
         return (tasmax + tasmin)/2, precip, years
+
+
+def load_grid_from_csv(self, path_togrid):
+    """
+    Load the csv that contains the infos required to evaluate regional
+    groundwater recharge with HELP.
+    """
+    print('Reading HELP grid from csv...', end=' ')
+    grid = pd.read_csv(path_togrid)
+    print('done')
+
+    fname = osp.basename(path_togrid)
+    req_keys = ['cid', 'lat_dd', 'lon_dd', 'run']
+    for key in req_keys:
+        if key not in grid.keys():
+            raise KeyError("No attribute '%s' found in %s" % (key, fname))
+
+    # Make sure that cid is a str.
+    grid['cid'] = np.array(grid['cid']).astype(str)
+
+    # Set 'cid' as the index of the dataframe.
+    grid.set_index(['cid'], drop=False, inplace=True)
+
+    return grid
