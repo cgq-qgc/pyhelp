@@ -15,20 +15,20 @@ import os.path as osp
 import os
 from pyhelp.managers import HELPManager
 
-rname = "inputHELP_0416all2"
+rname = "BTinputHELP_0416base_0.35edepth"
 figname_sufix = rname
-CONTEXT = True
 riv = 2
 
 rootdir = "C:\\Users\\User\\pyhelp\\RADEAU2\\inputHELP_0416"
 os.chdir(rootdir)
+
 workdir = osp.join(rootdir, rname)
 path_help_output = osp.join(workdir, "help_%s.out" % rname)
 path_surf_output = osp.join(workdir, "surface_%s.out" % rname)
 
 # %% Load the HELP grid
 
-path_togrid = osp.join(rootdir, rname + '.csv')
+path_togrid = osp.join(rootdir, 'inputHELP_0416t3.csv')
 helpm = HELPManager(workdir, year_range=(1965, 2014))
 grid = helpm.load_grid(path_togrid)
 
@@ -69,7 +69,7 @@ for i, cellname in enumerate(cellnames):
     avg_monthly_perco += data['percolation'].value
     avg_monthly_runoff += data['runoff'].value
     avg_monthly_subrun += data['subrun2'].value + data['subrun1'].value
-    if grid['context'][int(cellname)] == 2 and CONTEXT:
+    if grid['context'][int(cellname)] == 2:
         # Convert recharge to subsurface runoff.
         avg_monthly_subrun += data['recharge'].value
 
@@ -252,10 +252,10 @@ bot_margin = 1/fheight
 ax.set_position([left_margin, bot_margin,
                  1 - left_margin - right_margin, 1 - top_margin - bot_margin])
 
-xymin, xymax = 100, 700
+xymin, xymax = 100, 1100
 ax.axis([xymin, xymax, xymin, xymax])
-ax.set_ylabel('Débits HELP (mm/an)', fontsize=16, labelpad=20)
-ax.set_xlabel('Débits CEHQ (mm/an)', fontsize=16, labelpad=20)
+ax.set_ylabel('Débits HELP (mm/an)', fontsize=16, labelpad=15)
+ax.set_xlabel('Débits CEHQ (mm/an)', fontsize=16, labelpad=15)
 
 ax.tick_params(axis='both', direction='out', labelsize=12)
 
@@ -358,7 +358,7 @@ ax.text(0.5, 1, figname_sufix, fontsize=16, ha='center', va='bottom',
 
 fig.savefig("hist_bilan_hydro_moyen_annuel_%s.pdf" % figname_sufix)
 
-# %%
+# %% bilan_hydro_mensuel_
 
 plt.close('all')
 fwidth, fheight = 9, 6.5
@@ -437,7 +437,6 @@ l5, = ax.plot(years, avg_yearly_subrun, marker='o', mec='white',
 
 # Plot the observations
 
-riv = 0
 if riv == 2:
     # Riv. du Chêne
     base_years = np.array([1980, 1981, 1982, 1983, 1984, np.nan,
