@@ -441,9 +441,9 @@ class NetCDFMeteoManager(object):
         except TypeError:
             lat_idx = np.argmin(np.abs(self.lat - latitudes))
             lon_idx = np.argmin(np.abs(self.lon - longitudes))
-        
+
         return lat_idx, lon_idx
-    
+
     def get_data_from_latlon(self, latitudes, longitudes, years):
         """
         Return the daily minimum, maximum and average air temperature and daily
@@ -488,7 +488,7 @@ class NetCDFMeteoManager(object):
         return (tasmax + tasmin)/2, precip, years
 
 
-def load_grid_from_csv(self, path_togrid):
+def load_grid_from_csv(path_togrid):
     """
     Load the csv that contains the infos required to evaluate regional
     groundwater recharge with HELP.

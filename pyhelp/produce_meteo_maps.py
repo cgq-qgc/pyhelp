@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Feb 27 10:54:25 2018
-
 @author: jsgosselin
 """
 
