@@ -15,14 +15,14 @@ import os.path as osp
 import os
 from pyhelp.managers import HELPManager
 
-rname = "BTinputHELP_0416base_0.35edepth"
+rname = "LAUALL_inputHELP_0416t3_0.15edepth"
 figname_sufix = rname
 riv = 2
 
 rootdir = "C:\\Users\\User\\pyhelp\\RADEAU2\\inputHELP_0416"
-os.chdir(rootdir)
-
 workdir = osp.join(rootdir, rname)
+os.chdir(workdir)
+
 path_help_output = osp.join(workdir, "help_%s.out" % rname)
 path_surf_output = osp.join(workdir, "surface_%s.out" % rname)
 
@@ -72,15 +72,6 @@ for i, cellname in enumerate(cellnames):
     if grid['context'][int(cellname)] == 2:
         # Convert recharge to subsurface runoff.
         avg_monthly_subrun += data['recharge'].value
-
-        # # avg_monthly_subrun2 += data['recharge'].value
-        # if np.sum(data['subrun2'].value) == 0:
-        #     # Convert recharge as surficial runoff.
-        #     avg_monthly_runoff += data['recharge'].value
-        # else:
-        #     # This means there is a layer of sand above the clay layer.
-        #     # Convert recharge as deep runoff.
-        #     avg_monthly_subrun2 += data['recharge'].value
     else:
         avg_monthly_rechg += data['recharge'].value
 print("done")
