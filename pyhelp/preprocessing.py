@@ -17,10 +17,6 @@ import multiprocessing as mp
 from multiprocessing import Pool
 
 
-# ---- Third Party imports
-
-import xlrd
-
 MINEDEPTH = 3
 MAXEDEPTH = 80
 MINTHICK = 10
@@ -28,39 +24,31 @@ MINTHICK = 10
 
 # ---- Evapotranspiration and Soil and Design data (D10 and D11)
 
-def _read_data_from_excel(filename):
-    """
-    Read the evapotranspiration and soil and design data from an excel sheet.
-    """
-    with xlrd.open_workbook(filename, on_demand=True) as wb:
-        sheet = wb.sheet_by_index(0)
-
-        data = [sheet.row_values(rowx, start_colx=0, end_colx=None) for
-                rowx in range(3, sheet.nrows)]
-    return data
-
-
 def _format_d11_singlecell(row, sf_edepth, sf_ulai):
     """
     Format the D11 input data for a single cell (one row in the excel file).
     """
-    nlayers = int(row[11])
+    nlayers = int(row['nlayer'])
     if nlayers == 0:
         # This means this cell cannot be run in HELP.
         return None
 
     iu11 = 2
-    city = row[0]
-    ulat = float(row[3])
-    ipl = int(row[9])
-    ihv = int(row[10])
-    ulai = float(row[12]) * sf_ulai
-    edepth = min(max(float(row[13]) * sf_edepth, MINEDEPTH), MAXEDEPTH)
-    wind = float(row[4])
-    hum1 = float(row[5])
-    hum2 = float(row[6])
-    hum3 = float(row[7])
-    hum4 = float(row[8])
+    try:
+        city = str(int(row['cid']))
+    except ValueError:
+        city = str(row['cid'])
+    ulat = float(row['lat_dd'])
+    ipl = int(row['growth_start'])
+    ihv = int(row['growth_end'])
+    ulai = float(row['LAI']) * sf_ulai
+    edepth = float(row['EZD']) * sf_edepth
+    edepth = min(max(edepth, MINEDEPTH), MAXEDEPTH)
+    wind = float(row['wind'])
+    hum1 = float(row['hum1'])
+    hum2 = float(row['hum2'])
+    hum3 = float(row['hum3'])
+    hum4 = float(row['hum4'])
 
     d11dat = []
 
@@ -92,19 +80,21 @@ def _format_d10_singlecell(row):
     """
     Format the D10 input data for a single cell (one row in the excel file).
     """
-    nlayers = int(row[11])
+    nlayers = int(row['nlayer'])
     if nlayers == 0:
         # This means this cell cannot be run in HELP.
         return None
-
-    title = row[0]
+    try:
+        title = str(int(row['cid']))
+    except ValueError:
+        title = str(row['cid'])
     iu10 = 2
     ipre = 0
     irun = 1
     osno = 0     # initial snow water
     area = 6.25  # area projected on horizontal plane
     frunof = 100
-    runof = float(row[14])
+    runof = float(row['CN'])
 
     d10dat = []
 
@@ -129,19 +119,18 @@ def _format_d10_singlecell(row):
     d10dat.append(['{0:>7.0f}'.format(runof)])
 
     # Format the layer properties.
-
-    layers = row[15:]
-    for lay in range(nlayers):
-        layer = int(layers.pop(0))
-        thick = max(float(layers.pop(0)), MINTHICK)
+    for i in range(nlayers):
+        lay = str(i+1)
+        layer = int(row['lay_type'+lay])
+        thick = max(float(row['thick'+lay]), MINTHICK)
         isoil = 0
-        poro = float(layers.pop(0))
-        fc = float(layers.pop(0))
-        wp = float(layers.pop(0))
+        poro = float(row['poro'+lay])
+        fc = float(row['fc'+lay])
+        wp = float(row['wp'+lay])
         sw = ''
-        rc = float(layers.pop(0))
-        xleng = float(layers.pop(0))
-        slope = float(layers.pop(0))
+        rc = float(row['ksat'+lay])
+        xleng = float(row['dist_dr'+lay])
+        slope = float(row['slope'+lay])
 
         # READ (10, 5120) LAYER (J), THICK (J), ISOIL (J),
         #   PORO (J), FC (J), WP (J), SW (J), RC (J)
@@ -176,25 +165,21 @@ def _format_d10_singlecell(row):
     return d10dat
 
 
-def format_d10d11_from_excel(filename, sf_edepth=1, sf_ulai=1):
+def format_d10d11_inputs(grid, cellnames, sf_edepth=1, sf_ulai=1):
     """
     Format the evapotranspiration (D11) and soil and design data (D11) in a
     format that is compatible by HELP.
     """
-    print('\rReading D10 an D11 data from Excel file...', end=' ')
-    data = _read_data_from_excel(filename)
-    print('done')
-
     d11dat = {}
     d10dat = {}
-    N = len(data)
-    for i, row in enumerate(data):
+    N = len(cellnames)
+    for i, cid in enumerate(cellnames):
         print("\rFormatting D10 and D11 data for cell %d of %d (%0.1f%%)" %
               (i+1, N, (i+1)/N*100), end=' ')
 
-        cellname = row[0]
-        d11dat[cellname] = _format_d11_singlecell(row, sf_edepth, sf_ulai)
-        d10dat[cellname] = _format_d10_singlecell(row)
+        row = grid[grid['cid'] == cid]
+        d11dat[cid] = _format_d11_singlecell(row.iloc[0], sf_edepth, sf_ulai)
+        d10dat[cid] = _format_d10_singlecell(row.iloc[0])
 
     print("\rFormatting D10 and D11 data for cell %d of %d (%0.1f%%)" %
           (i+1, N, (i+1)/N*100))
@@ -249,10 +234,9 @@ def read_concatenated_d10d11_file(path_d10file, path_d11file):
 
 def write_d10d11_singlecell(packed_data):
     fname, cid, d10data = packed_data
-    if not osp.exists(fname):
-        with open(fname, 'w') as csvfile:
-            writer = csv.writer(csvfile, lineterminator='\n')
-            writer.writerows(d10data)
+    with open(fname, 'w') as csvfile:
+        writer = csv.writer(csvfile, lineterminator='\n')
+        writer.writerows(d10data)
     return {cid: fname}
 
 
