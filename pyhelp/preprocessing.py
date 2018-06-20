@@ -234,10 +234,9 @@ def read_concatenated_d10d11_file(path_d10file, path_d11file):
 
 def write_d10d11_singlecell(packed_data):
     fname, cid, d10data = packed_data
-    if not osp.exists(fname):
-        with open(fname, 'w') as csvfile:
-            writer = csv.writer(csvfile, lineterminator='\n')
-            writer.writerows(d10data)
+    with open(fname, 'w') as csvfile:
+        writer = csv.writer(csvfile, lineterminator='\n')
+        writer.writerows(d10data)
     return {cid: fname}
 
 
