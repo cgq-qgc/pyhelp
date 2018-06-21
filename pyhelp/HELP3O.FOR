@@ -3,6 +3,8 @@ C    IYR IS THE NUMBER OF THE YEAR
 C    LMYR IS THE NUMBER OF YEARS OF SIMULATION
 C    OSNO IS THE INITIAL SNOW WATER
 C    AREA IS AREA PROJECTED ON HORIZONTAL PLANE
+C    TFSOIL is the average air temperature, in Fahrenheit degrees,
+C           below which the soil is assumed to be freezing
 C
 C******************************MAIN*************************
 C                         OUTPUT ROUTINE
@@ -12,7 +14,7 @@ C    AND PERFORMS THE ACCOUNTING ON THE RESULTS.
 C
       SUBROUTINE run_simulation (fpath_precip, fpath_tasavg,
      1 fpath_solrad, fpath_evapo, fpath_soil, fpath_output,
-     2 IOD, IOM, IOA, IOS, IU8, LMYR)
+     2 IOD, IOM, IOA, IOS, IU8, LMYR, TFSOIL)
 C
       PARAMETER (MXYR = 100)
       PARAMETER (MAXMO = 12)
@@ -29,6 +31,7 @@ C
       INTEGER, INTENT(IN) :: IOS
       INTEGER, INTENT(IN) :: IU8
       INTEGER, INTENT(IN) :: LMYR
+      REAL, INTENT(IN) :: TFSOIL
 
       DOUBLE PRECISION BALY, BALT, DRIN, SWULY, DUMMY1, DUMMY2
 C    1  QDRN1, QDRN2, QDRN3, QDRN4, QDRN5, 
@@ -567,7 +570,7 @@ C
 C
 C    DETERMINES IF SOIL IS FROZEN
 C
-          CALL FRZCHK
+          CALL FRZCHK (TFSOIL)
 C
 C    SSTAR INDICATES FROZEN SOIL
 C
@@ -3658,7 +3661,9 @@ C
 C   SUBROUTINE FRZCHK DETERMINES THE OCCURENCE OF FROZEN SOIL
 C      MODIFIED FROM A CREAMS APPROACH
 C
-      SUBROUTINE FRZCHK
+      SUBROUTINE FRZCHK (TFSOIL)
+C      
+      REAL, INTENT(IN) :: TFSOIL
 C
       COMMON /BLK8/ PRE (370), TMPF (366), RAD (366)
       COMMON /BLK9/ PINF, ES1T, SMELT, GMRO, ADDRUN, OLDSNO, SNO, WF(7),
@@ -3672,17 +3677,17 @@ C    UPDATE AVERAGE TEMPERATURE OF PREVIOUS 30 DAYS
 C
       TMPSUM = TMPSUM - TAVG(30) + TMPF(IDA)
       TMPAVG = TMPSUM / 30
-      DO 1000 I = 1, 29
+      DO I = 1, 29
         J = 30 - I
         TAVG(J+1) = TAVG(J)
- 1000 CONTINUE
+      END DO
       TAVG(1) = TMPF(IDA)
 C
-      IF (TMPF(IDA) .LT. 32.0 .AND. KCNT .GT. 0) KCNT = KCNT - 1
-      IF (TMPF(IDA) .GE. 32.0 .AND. KCNT .LT. MXKCNT) KCNT = KCNT + 1
+      IF (TMPF(IDA) .LT. TFSOIL .AND. KCNT .GT. 0) KCNT = KCNT - 1
+      IF (TMPF(IDA) .GE. TFSOIL .AND. KCNT .LT. MXKCNT) KCNT = KCNT + 1
 C
       IF (IFREZ .EQ. 0) THEN
-        IF (TMPAVG .LT. 32.0 .AND. KCNT .EQ. 0) THEN
+        IF (TMPAVG .LT. TFSOIL .AND. KCNT .EQ. 0) THEN
           IFREZ = 1
           MXKCNT = IDFS
         END IF
