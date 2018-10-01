@@ -14,7 +14,6 @@ import os.path as osp
 # ---- Third Party imports
 
 import numpy as np
-import geopandas as gpd
 import netCDF4
 import pandas as pd
 
@@ -31,9 +30,9 @@ from pyhelp.weather_reader import (
 FNAME_CONN_TABLES = 'connect_table.npy'
 
 
-class HELPManager(object):
+class HelpManager(object):
     def __init__(self, workdir, year_range, path_togrid=None):
-        super(HELPManager, self).__init__()
+        super(HelpManager, self).__init__()
         self.year_range = year_range
         self.set_workdir(workdir)
         self._setup_connect_tables()
