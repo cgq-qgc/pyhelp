@@ -166,7 +166,22 @@ texinfo_documents = [
 imgmath_image_format = 'svg'
 imgmath_font_size = 12
 
+
+def linkcode_resolve(domain, info):
+    if domain != 'py':
+        return None
+    if not info['module']:
+        return None
+
+    filename = "https://github.com/jnsebgosselin/pyhelp/tree/master/pyhelp"
+    if info['fullname'] in ['HelpManager', 'NetCDFMeteoManager']:
+        filename += '/managers.py'
+    else:
+        filename = None
+    return filename
+
 # Additional stuff for the LaTeX preamble.
+
 
 imgmath_latex_preamble = r'''
 \usepackage{sansmathfonts}
