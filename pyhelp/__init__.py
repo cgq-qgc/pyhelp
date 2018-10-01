@@ -14,3 +14,6 @@ __releases_url__ = __project_url__ + "/releases"
 __releases_api__ = "https://api.github.com/repos/jnsebgosselin/pyhelp/releases"
 
 __rootdir__ = os.path.dirname(os.path.realpath(__file__))
+
+
+from pyhelp.managers import NetCDFMeteoManager, HelpManager
