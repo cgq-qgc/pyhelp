@@ -50,10 +50,8 @@ class HelpManager(object):
 
     @property
     def cellnames(self):
-        if self.grid is not None:
-            return self.grid['cid'].tolist()
-        else:
-            return []
+        """Return a list with the ID numbers of all cells in the grid."""
+        return [] if self.grid is None else self.grid['cid'].tolist()
 
     @property
     def inputdir(self):
