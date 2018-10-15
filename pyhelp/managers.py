@@ -31,6 +31,12 @@ FNAME_CONN_TABLES = 'connect_table.npy'
 
 
 class HelpManager(object):
+    """
+    The :attr:`~pyhelp.HelpManager` is a class whose main purpose
+    is to evaluate the component of the hydrologic water budget at the
+    regional scale with the HELP model.
+    """
+
     def __init__(self, workdir, year_range, path_togrid=None):
         super(HelpManager, self).__init__()
         self.year_range = year_range
