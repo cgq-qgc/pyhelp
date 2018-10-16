@@ -439,3 +439,42 @@ def load_grid_from_csv(path_togrid):
     return grid
 
 
+def load_weather_from_csv(filename):
+    """
+    Load daily precipitation, average air temperature, or global solar
+    radiation data from a correctly formatted PyHelp weather input files.
+    The latitudes, longitudes, dates, and weather data values are stored in
+    numpy arrays and returned as a dict with, respectively, the keys
+    'lat', 'lon', 'dates', and 'data'.
+    """
+    if not osp.exists(filename):
+        return None
+
+    lat, lon, datestrings, data = [], [], [], []
+    with open(filename, 'r') as csvfile:
+        reader = list(csv.reader(csvfile, delimiter=','))
+
+    for i, line in enumerate(reader):
+        if not line or not line[0]:
+            continue
+
+        if line[0] == 'Latitude (dd)':
+            lat = np.array(line[1:]).astype('float')
+        elif line[0] == 'Longitude (dd)':
+            lon = np.array(line[1:]).astype('float')
+        elif all((len(lat), len(lon))):
+            date_data = np.array(reader[i:])
+            datestrings = date_data[:, 0]
+            data = date_data[:, 1:].astype('float')
+            break
+
+    datetimes = [datetime.strptime(ds, "%d/%m/%Y") for ds in datestrings]
+    years = [dt.year for dt in datetimes]
+
+    if all((len(lat), len(lon), len(datestrings), len(data))):
+        return {'lat': lat, 'lon': lon, 'datestrings': datestrings,
+                'datetimes': datetimes, 'years': years, 'data': data}
+    else:
+        print("Failed to read data from {}.".format(osp.basename(filename)))
+        return None
+
