@@ -595,3 +595,12 @@ def calcul_rain_from_ptot(Tavg, Ptot, Tcrit=0):
     rain = np.copy(Ptot)
     rain[np.where(Tavg < Tcrit)[0]] = 0
     return rain
+
+
+if __name__ == '__main__':
+    outdir = "C:\\Users\\User\\pyhelp\\example"
+    cweed2_paths = osp.join(outdir, 'CWEEDS', '94792.WY2')
+    cweed3_paths = osp.join(
+        outdir, 'CWEEDS', 'CAN_QC_MONTREAL-INTL-A_7025251_CWEEDS2011_T_N.WY3')
+    year_range = [2010, 2014]
+    generate_input_from_cweeds(outdir, cweed2_paths, cweed3_paths, year_range)
