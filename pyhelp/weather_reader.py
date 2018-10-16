@@ -18,7 +18,98 @@ from time import strftime
 
 # ---- Third Party imports
 import numpy as np
+import netCDF4
 from xlrd.xldate import xldate_from_datetime_tuple
+
+# ---- Local imports
+from pyhelp import __namever__
+from pyhelp.utils import save_content_to_csv, nan_as_text_tolist
+
+
+class NetCDFMeteoManager(object):
+    def __init__(self, dirpath_netcdf):
+        super(NetCDFMeteoManager, self).__init__()
+        self.dirpath_netcdf = dirpath_netcdf
+        self.lat = []
+        self.lon = []
+        self.setup_ncfile_list()
+        self.setup_latlon_grid()
+
+    def setup_ncfile_list(self):
+        """Read all the available netCDF files in dirpath_netcdf."""
+        self.ncfilelist = []
+        for file in os.listdir(self.dirpath_netcdf):
+            if file.endswith('.nc'):
+                self.ncfilelist.append(osp.join(self.dirpath_netcdf, file))
+
+    def setup_latlon_grid(self):
+        if self.ncfilelist:
+            netcdf_dset = netCDF4.Dataset(self.ncfilelist[0], 'r+')
+            self.lat = np.array(netcdf_dset['lat'])
+            self.lon = np.array(netcdf_dset['lon'])
+            netcdf_dset.close()
+
+    def get_idx_from_latlon(self, latitudes, longitudes, unique=False):
+        """
+        Get the i and j indexes of the grid meshes from a list of latitude
+        and longitude coordinates. If unique is True, only the unique pairs of
+        i and j indexes will be returned.
+        """
+        try:
+            lat_idx = [np.argmin(np.abs(self.lat - lat)) for lat in latitudes]
+            lon_idx = [np.argmin(np.abs(self.lon - lon)) for lon in longitudes]
+            if unique:
+                ijdx = np.vstack({(i, j) for i, j in zip(lat_idx, lon_idx)})
+                lat_idx = ijdx[:, 0].tolist()
+                lon_idx = ijdx[:, 1].tolist()
+        except TypeError:
+            lat_idx = np.argmin(np.abs(self.lat - latitudes))
+            lon_idx = np.argmin(np.abs(self.lon - longitudes))
+
+        return lat_idx, lon_idx
+
+    def get_data_from_latlon(self, latitudes, longitudes, years):
+        """
+        Return the daily minimum, maximum and average air temperature and daily
+        precipitation
+        """
+        lat_idx, lon_idx = self.get_idx_from_latlon(latitudes, longitudes)
+        return self.get_data_from_idx(lat_idx, lon_idx, years)
+
+    def get_data_from_idx(self, lat_idx, lon_idx, years):
+        try:
+            len(lat_idx)
+        except TypeError:
+            lat_idx, lon_idx = [lat_idx], [lon_idx]
+
+        tasmax_stacks = []
+        tasmin_stacks = []
+        precip_stacks = []
+        years_stack = []
+        for year in years:
+            print('\rFetching daily weather data for year %d...' % year,
+                  end=' ')
+            filename = osp.join(self.dirpath_netcdf, 'GCQ_v2_%d.nc' % year)
+            netcdf_dset = netCDF4.Dataset(filename, 'r+')
+
+            tasmax_stacks.append(
+                np.array(netcdf_dset['tasmax'])[:, lat_idx, lon_idx])
+            tasmin_stacks.append(
+                np.array(netcdf_dset['tasmin'])[:, lat_idx, lon_idx])
+            precip_stacks.append(
+                np.array(netcdf_dset['pr'])[:, lat_idx, lon_idx])
+            years_stack.append(
+                np.zeros(len(precip_stacks[-1][:])).astype(int) + year)
+
+            netcdf_dset.close()
+        print('done')
+
+        tasmax = np.vstack(tasmax_stacks)
+        tasmin = np.vstack(tasmin_stacks)
+        precip = np.vstack(precip_stacks)
+        years = np.hstack(years_stack)
+
+        return (tasmax + tasmin)/2, precip, years
 
 
 
