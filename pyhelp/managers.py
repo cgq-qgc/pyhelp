@@ -496,6 +496,9 @@ def load_grid_from_csv(path_togrid):
     Load the csv that contains the infos required to evaluate regional
     groundwater recharge with HELP.
     """
+    if not osp.exists(path_togrid):
+        return None
+
     print('Reading HELP grid from csv...', end=' ')
     grid = pd.read_csv(path_togrid)
     print('done')
@@ -513,3 +516,5 @@ def load_grid_from_csv(path_togrid):
     grid.set_index(['cid'], drop=False, inplace=True)
 
     return grid
+
+
