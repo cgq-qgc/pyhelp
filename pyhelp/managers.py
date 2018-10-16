@@ -31,6 +31,10 @@ from pyhelp.weather_reader import (
 
 
 FNAME_CONN_TABLES = 'connect_table.npy'
+INPUT_PRECIP_FNAME = 'precip_input_data.csv'
+INPUT_AIRTEMP_FNAME = 'airtemp_input_data.csv'
+INPUT_SOLRAD_FNAME = 'solrad_input_data.csv'
+INPUT_GRID_FNAME = 'input_grid.csv'
 
 
 class HelpManager(object):
