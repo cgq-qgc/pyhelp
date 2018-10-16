@@ -50,10 +50,7 @@ class HelpManager(object):
         self.set_workdir(workdir)
         self._setup_connect_tables()
 
-        if path_togrid is not None:
-            self.load_grid(path_togrid)
-        else:
-            self.grid = None
+        self.load_input_grid()
 
     @property
     def cellnames(self):
@@ -366,7 +363,7 @@ class HelpManager(object):
 
         # Save the result to an hdf5 file.
 
-    # ---- Utilities
+    # ---- Grid Utilities
 
     def get_water_cellnames(self, cellnames):
         """
