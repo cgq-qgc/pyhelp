@@ -8,27 +8,18 @@
 
 
 # ---- Standard Library imports
-
+import os
 import os.path as osp
 import csv
 import calendar
 from calendar import monthrange
+import datetime
+from time import strftime
 
 # ---- Third Party imports
-
 import numpy as np
 from xlrd.xldate import xldate_from_datetime_tuple
 
-
-def save_content_to_csv(fname, fcontent, mode='w', delimiter=',',
-                        encoding='utf8'):
-    """
-    Save content in a csv file with the specifications provided
-    in arguments.
-    """
-    with open(fname, mode, encoding='utf8') as csvfile:
-        writer = csv.writer(csvfile, delimiter=delimiter, lineterminator='\n')
-        writer.writerows(fcontent)
 
 
 # ---- Read CWEEDS Files

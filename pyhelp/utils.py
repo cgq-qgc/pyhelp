@@ -6,6 +6,10 @@
 # This file is part of PyHelp.
 # Licensed under the terms of the GNU General Public License.
 
+# ---- Standard imports
+import os
+import os.path as osp
+import csv
 
 # ---- Third party imports
 import h5py
@@ -37,5 +41,16 @@ def nan_as_text_tolist(arr):
     else:
         list_ = arr.tolist()
     return list_
+
+
+def save_content_to_csv(fname, fcontent, mode='w', delimiter=',',
+                        encoding='utf8'):
+    """
+    Save fcontent in a csv file with the specifications provided
+    in arguments.
+    """
+    with open(fname, mode, encoding='utf8') as csvfile:
+        writer = csv.writer(csvfile, delimiter=delimiter, lineterminator='\n')
+        writer.writerows(fcontent)
 
 
