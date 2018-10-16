@@ -185,16 +185,14 @@ def read_cweeds_file(filename, format_to_daily=True):
     are formated to daily values. The data are kept in a hourly format if
     format_to_daily is set to False.
     """
-    # Determine if the CWEEDS file is in the WY2 or WY3 format :
-
+    # Determine if the CWEEDS file is in the WY2 or WY3 format.
     root, ext = osp.splitext(filename)
     ext = ext.replace('.', '')
     if ext not in ['WY2', 'WY3']:
         raise ValueError("%s is not a valid file extension. CWEEHDS files must"
                          " have either a WY2 or WY3 extension" % ext)
 
-    # Open and format the data from the CWEEDS file :
-
+    # Open and format the data from the CWEEDS file.
     with open(filename, 'r') as f:
         reader = list(csv.reader(f))
 
