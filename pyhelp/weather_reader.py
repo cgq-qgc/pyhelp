@@ -176,6 +176,55 @@ class NetCDFMeteoManager(object):
 
 
 # ---- Read CWEEDS Files
+def generate_input_from_cweeds(outdir, cweed2_paths, cweed3_paths, year_range):
+    """Generate an input PyHelp data file from CWEED files."""
+    print('Reading CWEEDS files...', end=' ')
+    cweed2_paths, cweed3_paths = list(cweed2_paths), list(cweed3_paths)
+    lat_dd = []
+    lon_dd = []
+    stations = []
+    data = []
+    for cweed2, cweed3 in zip(cweed2_paths, cweed3_paths):
+        daily_wy2 = read_cweeds_file(cweed2, format_to_daily=True)
+        daily_wy3 = read_cweeds_file(cweed3, format_to_daily=True)
+        wy23_df = join_daily_cweeds_wy2_and_wy3(daily_wy2, daily_wy3)
+
+        lat_dd.append(wy23_df['Latitude'])
+        lon_dd.append(wy23_df['Longitude'])
+        stations.append(wy23_df['Location'])
+
+        indexes = np.where((wy23_df['Years'] >= year_range[0]) &
+                           (wy23_df['Years'] <= year_range[1]))[0]
+        data.append(wy23_df['Irradiance'][indexes])
+    data = nan_as_text_tolist(np.array(data).astype(float).transpose())
+    print('done')
+
+    fname = osp.join(outdir, 'solrad_input_data.csv')
+    print('Saving {} data to {}...'.format('solrad', fname), end=' ')
+
+    # Create an array of datestring and lat/lon
+    Ndt = len(wy23_df['Years'][indexes])
+    start = datetime.datetime(year_range[0], 1, 1)
+    datetimes = [start + datetime.timedelta(days=i) for i in range(Ndt)]
+    datestrings = [dt.strftime("%d/%m/%Y") for dt in datetimes]
+
+    # Save the data to file.
+    fheader = [['Global solar irradiance in MJ/m²'],
+               ['', ''],
+               ['Created by ' + __namever__],
+               ['Created on ' + strftime("%d/%m/%Y")],
+               ['Created from CWEED files'],
+               ['', ''],
+               ['Stations'] + stations,
+               ['Latitude (dd)'] + lat_dd,
+               ['Longitude (dd)'] + lon_dd,
+               ['', '']]
+    fdata = [[datestrings[i]] + data[i] for i in range(Ndt)]
+    fcontent = fheader + fdata
+    save_content_to_csv(fname, fcontent)
+    print('done')
+    
+
 def read_cweeds_file(filename, format_to_daily=True):
     """
     Reads and formats data from a CWEEDS file, either version WY2 or WY3.
