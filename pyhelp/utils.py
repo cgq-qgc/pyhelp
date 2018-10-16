@@ -7,9 +7,9 @@
 # Licensed under the terms of the GNU General Public License.
 
 
-# ---- Third Party imports
-
+# ---- Third party imports
 import h5py
+import numpy as np
 
 
 def savedata_to_hdf5(data, hdf5_filename):
@@ -22,3 +22,20 @@ def savedata_to_hdf5(data, hdf5_filename):
         for key in data[cid].keys():
             cellgrp.create_dataset(key, data=data[cid][key])
     hdf5file.close()
+
+
+def nan_as_text_tolist(arr):
+    """
+    Convert the float nan to text while converting a numpy 2d array to a
+    list, so that it is possible to save to an Excel file.
+    """
+    if np.isnan(arr).any():
+        m, n = np.shape(arr)
+        list_ = []
+        for i in range(m):
+            list_.append(['nan' if np.isnan(x) else x for x in arr[i, :]])
+    else:
+        list_ = arr.tolist()
+    return list_
+
+
