@@ -9,11 +9,23 @@
 # ---- Standard imports
 import os
 import os.path as osp
+from time import strftime
+import datetime
 import csv
+from shutil import rmtree
 
 # ---- Third party imports
 import h5py
 import numpy as np
+
+def delete_folder_recursively(dirpath):
+    """Try to delete all files and sub-folders below the given dirpath."""
+    for filename in os.listdir(dirpath):
+        filepath = os.path.join(dirpath, filename)
+        try:
+            rmtree(filepath)
+        except OSError:
+            os.remove(filepath)
 
 
 def savedata_to_hdf5(data, hdf5_filename):
