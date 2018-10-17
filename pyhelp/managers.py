@@ -347,6 +347,11 @@ class HelpManager(object):
         lon = np.array(self.grid['lon_dd'].reindex(cells).tolist())
         return lat, lon
 
+    # ---- Input Data Utilities
+    def generate_weather_inputs_from_CWEEDS(
+            self, cweed2_paths, cweed3_paths, year_range=None):
+        year_range = self.year_range if year_range is None else year_range
+        generate_input_from_cweeds(cweed2_paths, cweed3_paths, year_range)
 
         """
 
