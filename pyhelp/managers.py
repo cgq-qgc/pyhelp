@@ -26,8 +26,7 @@ from pyhelp.utils import (savedata_to_hdf5, calc_dist_from_coord,
                           delete_folder_recursively)
 from pyhelp.weather_reader import (
     save_precip_to_HELP, save_airtemp_to_HELP, save_solrad_to_HELP,
-    read_cweeds_file, join_daily_cweeds_wy2_and_wy3, NetCDFMeteoManager,
-    generate_input_from_cweeds)
+    NetCDFMeteoManager, generate_input_from_cweeds)
 
 
 FNAME_CONN_TABLES = 'connect_table.npy'
