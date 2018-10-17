@@ -114,6 +114,10 @@ class HelpManager(object):
 
         """
         """
+    # ---- HELP input files creation
+    def clear_cache(self):
+        """Delete all HELP input data files from the input folder."""
+        delete_folder_recursively(self.inputdir)
 
     def generate_d10d11_input_files(self, cellnames=None, sf_edepth=1,
                                     sf_ulai=1):
