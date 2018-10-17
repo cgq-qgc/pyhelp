@@ -112,8 +112,20 @@ class HelpManager(object):
         self.grid = load_grid_from_csv(path_togrid)
         return self.grid
 
+    def load_weather_input_data(self):
         """
+        Load the daily precipitation, average air temperature, and global
+        solar radiation from the PyHelp weather inpy datafiles if they exists
+        in the working directory.
         """
+        self.precip_data = load_weather_from_csv(
+            osp.join(self.workdir, INPUT_PRECIP_FNAME))
+        self.airtemp_data = load_weather_from_csv(
+            osp.join(self.workdir, INPUT_AIRTEMP_FNAME))
+        self.solrad_data = load_weather_from_csv(
+            osp.join(self.workdir, INPUT_SOLRAD_FNAME))
+        return self.precip_data, self.airtemp_data, self.solrad_data
+
     # ---- HELP input files creation
     def clear_cache(self):
         """Delete all HELP input data files from the input folder."""
