@@ -456,3 +456,11 @@ def load_weather_from_csv(filename):
         print("Failed to read data from {}.".format(osp.basename(filename)))
         return None
 
+
+if __name__ == '__main__':
+    workdir = "C:/Users/User/pyhelp/example"
+    helpm = HelpManager(workdir, year_range=(2010, 2014))
+    precip_data = helpm.precip_data
+    airtemp_data = helpm.airtemp_data
+    helpm.clear_cache()
+    helpm._generate_d4d7d13_input_files()
