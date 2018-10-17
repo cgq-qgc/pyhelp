@@ -140,81 +140,58 @@ class HelpManager(object):
         self._save_connect_tables()
         print("done")
 
-    def generate_d4d7_from_MDELCC_grid(self, path_netcdf_dir, cellnames=None):
-        """
-        Prepare the D4 and D7 input datafiles for each cell from the
-        interpolated grid of the MDDELCC.
-        """
-        d4d7_inputdir = osp.join(self.inputdir, 'd4d7_input_files')
-        if not osp.exists(d4d7_inputdir):
-            os.makedirs(d4d7_inputdir)
+    def _generate_d4d7d13_input_files(self, cellnames=None):
+        """Generate the D4, D7, and D13 HELP input datafiles for each cell."""
+        if self.grid is None:
+            return
 
-        cellnames = self.get_run_cellnames(cellnames)
-        N = len(cellnames)
+        cellnames = self.cellnames if cellnames is None else cellnames
+        grid_lat, grid_lon = self.get_latlon_for_cellnames(cellnames)
 
-        # Get the latitudes and longitudes of the resulting cells.
-        lat_dd, lon_dd = self.get_latlon_for_cellnames(cellnames)
+        fformat = '{:3.1f}_{:3.1f}.{}'
+        args = (('precip', 'D4', save_precip_to_HELP, self.precip_data),
+                ('airtemp', 'D7', save_airtemp_to_HELP, self.airtemp_data),
+                ('solrad', 'D13', save_solrad_to_HELP, self.solrad_data))
+        for var, fext, to_help_func, data in args:
+            print('Generating the connectivity table for {}...'.format(
+                  var.lower()), end=' ')
 
-        # Generate the connectivity table between the HELP grid and the
-        # MDDELCC interpolated daily weather grid.
-        print('Generating the connectivity table for each cell...', end=' ')
-        meteo_manager = NetCDFMeteoManager(path_netcdf_dir)
-        d4_conn_tbl = {}
-        d7_conn_tbl = {}
-        data = []
-        for i, cellname in enumerate(cellnames):
-            lat_idx, lon_idx = meteo_manager.get_idx_from_latlon(
-                    lat_dd[i], lon_dd[i])
+            if data is None:
+                print('failed')
+                continue
 
-            d4fname = osp.join(
-                d4d7_inputdir, '%03d_%03d.D4' % (lat_idx, lon_idx))
-            d7fname = osp.join(
-                d4d7_inputdir, '%03d_%03d.D7' % (lat_idx, lon_idx))
+            help_inputdir = osp.join(self.inputdir, fext + '_input_files')
+            if not osp.exists(help_inputdir):
+                os.makedirs(help_inputdir)
 
-            d4_conn_tbl[cellnames[i]] = d4fname
-            d7_conn_tbl[cellnames[i]] = d7fname
+            file_conn_tbl = {}
+            index_conn_tbl = {}
+            for i, cellname in enumerate(cellnames):
+                dist = calc_dist_from_coord(grid_lat[i], grid_lon[i],
+                                            data['lat'], data['lon'])
+                argmin = np.argmin(dist)
 
-            data.append([lat_idx, lon_idx, d4fname, d7fname])
-        print('done')
+                lat, lon = data['lat'][argmin], data['lon'][argmin]
+                help_input_fname = osp.join(help_inputdir,
+                                            fformat.format(lat, lon, fext))
+                if not osp.exists(help_input_fname):
+                    city = '{} at {:3.1f} ; {:3.1f}'.format(var, lat, lon)
+                    if var in ('precip', 'airtemp'):
+                        to_help_func(help_input_fname, data['years'],
+                                     data['data'][:, argmin], city)
+                    elif var == 'solrad':
+                        to_help_func(help_input_fname, data['years'],
+                                     data['data'][:, argmin], city, lat)
 
-        # Fetch the daily weather data from the netCDF files.
-        data = np.unique(data, axis=0)
-        lat_indx = data[:, 0].astype(int)
-        lon_idx = data[:, 1].astype(int)
-        years = range(self.year_range[0], self.year_range[1]+1)
-        tasavg, precip, years = meteo_manager.get_data_from_idx(
-            lat_indx, lon_idx, years)
+                file_conn_tbl[cellname] = help_input_fname
+                index_conn_tbl[cellname] = argmin
 
-        # Convert and save the weather data to D4 and D7 HELP input files.
-        N = len(data)
-        for i in range(N):
-            print(("\rGenerating HELP D4 and D7 files for location " +
-                   "%d of %d (%0.1f%%)...") % (i+1, N, (i+1)/N * 100), end=' ')
-            lat = meteo_manager.lat[lat_indx[i]]
-            lon = meteo_manager.lon[lon_idx[i]]
-            d4fname, d7fname = data[i, 2], data[i, 3]
-            city = 'Meteo Grid at lat/lon %0.1f ; %0.1f' % (lat, lon)
+            self.connect_tables[fext] = file_conn_tbl
+            self.connect_tables[var] = index_conn_tbl
+            print('done')
 
-            # Fill -999 with 0 in daily precip.
-            precip_i = precip[:, i]
-            precip_i[precip_i == -999] = 0
-
-            # Fill -999 with linear interpolation in daily air temp.
-            tasavg_i = tasavg[:, i]
-            time_ = np.arange(len(tasavg_i))
-            indx = np.where(tasavg_i != -999)[0]
-            tasavg_i = np.interp(time_, time_[indx], tasavg_i[indx])
-
-            if not osp.exists(d4fname):
-                save_precip_to_HELP(d4fname, years, precip_i, city)
-            if not osp.exists(d7fname):
-                save_airtemp_to_HELP(d7fname, years, tasavg_i, city)
-        print('done')
-
-        # Update the connection table.
+        # Update the connectivity table.
         print("\rUpdating the connection table...", end=' ')
-        self.connect_tables['D4'] = d4_conn_tbl
-        self.connect_tables['D7'] = d7_conn_tbl
         self._save_connect_tables()
         print('done')
 
