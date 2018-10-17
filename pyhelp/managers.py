@@ -50,6 +50,11 @@ class HelpManager(object):
         self.set_workdir(workdir)
         self._setup_connect_tables()
 
+        self.grid = None
+        self.precip_data = None
+        self.airtemp_data = None
+        self.solrad_data = None
+
         self.load_input_grid()
 
     @property
