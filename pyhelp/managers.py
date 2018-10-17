@@ -135,6 +135,15 @@ class HelpManager(object):
         delete_folder_recursively(self.inputdir)
         print('done')
 
+    def build_help_input_files(self, sf_edepth=1, sf_ulai=1):
+        """
+        Clear old cached HELP input files and rebuild new input files from the
+        data.
+        """
+        self.clear_cache()
+        self._generate_d10d11_input_files(sf_edepth=sf_edepth,
+                                          sf_ulai=sf_ulai)
+        self._generate_d4d7d13_input_files()
 
     def _generate_d10d11_input_files(self, cellnames=None, sf_edepth=1,
                                      sf_ulai=1):
