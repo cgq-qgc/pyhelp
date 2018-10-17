@@ -62,6 +62,7 @@ class HelpManager(object):
         """Return a list with the ID numbers of all cells in the grid."""
         return [] if self.grid is None else self.grid['cid'].tolist()
 
+    # ---- Work and input dir
     @property
     def inputdir(self):
         """
@@ -132,8 +133,8 @@ class HelpManager(object):
         """Delete all HELP input data files from the input folder."""
         delete_folder_recursively(self.inputdir)
 
-    def generate_d10d11_input_files(self, cellnames=None, sf_edepth=1,
-                                    sf_ulai=1):
+    def _generate_d10d11_input_files(self, cellnames=None, sf_edepth=1,
+                                     sf_ulai=1):
         """Prepare the D10 and D11 input datafiles for each cell."""
         d10d11_inputdir = osp.join(self.inputdir, 'd10d11_input_files')
         if not osp.exists(d10d11_inputdir):
