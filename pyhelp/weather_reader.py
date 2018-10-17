@@ -178,9 +178,9 @@ class NetCDFMeteoManager(object):
 # ---- Read CWEEDS Files
 def generate_input_from_cweeds(outdir, cweed2_paths, cweed3_paths, year_range):
     """Generate an input PyHelp data file from CWEED files."""
-    if not isinstance(cweed2_paths,(list, tuple)):
+    if not isinstance(cweed2_paths, (list, tuple)):
         cweed2_paths = [cweed2_paths]
-    if not isinstance(cweed3_paths,(list, tuple)):
+    if not isinstance(cweed3_paths, (list, tuple)):
         cweed3_paths = [cweed3_paths]
 
     print('Reading CWEEDS files...', end=' ')
@@ -227,7 +227,7 @@ def generate_input_from_cweeds(outdir, cweed2_paths, cweed3_paths, year_range):
     fcontent = fheader + fdata
     save_content_to_csv(fname, fcontent)
     print('done')
-    
+
 
 def read_cweeds_file(filename, format_to_daily=True):
     """
