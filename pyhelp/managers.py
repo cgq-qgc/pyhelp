@@ -112,51 +112,8 @@ class HelpManager(object):
         self.grid = load_grid_from_csv(path_togrid)
         return self.grid
 
-    # ---- Input files creation
-
-    def generate_d13_from_cweeds(self, d13fname, fpath_cweed2, fpath_cweed3,
-                                 cellnames=None):
         """
-        Generate the HELP D13 input file for solar radiation from wy2 and
-        wy3 CWEEDS files at a given location.
         """
-        d13fpath = osp.join(self.inputdir, d13fname)
-        if cellnames is None:
-            cellnames = self.cellnames
-        else:
-            # Keep only the cells that are in the grid.
-            cellnames = self.grid['cid'][self.grid['cid'].isin(cellnames)]
-
-        print('Reading CWEEDS files...', end=' ')
-        daily_wy2 = read_cweeds_file(fpath_cweed2, format_to_daily=True)
-        daily_wy3 = read_cweeds_file(fpath_cweed3, format_to_daily=True)
-        wy23_df = join_daily_cweeds_wy2_and_wy3(daily_wy2, daily_wy3)
-
-        indexes = np.where((wy23_df['Years'] >= self.year_range[0]) &
-                           (wy23_df['Years'] <= self.year_range[1]))[0]
-        print('done')
-
-        print('Generating HELP D13 file for solar radiation...', end=' ')
-        save_solrad_to_HELP(d13fpath,
-                            wy23_df['Years'][indexes],
-                            wy23_df['Irradiance'][indexes],
-                            'CAN_QC_MONTREAL-INTL-A_7025251',
-                            wy23_df['Latitude'])
-        print('done')
-
-        if self.year_range[1] > np.max(wy23_df['Years']):
-            print("Warning: there is no solar radiation data after year %d."
-                  % np.max(wy23_df['Years']))
-        if self.year_range[0] < np.min(wy23_df['Years']):
-            print("Warning: there is no solar radiation data before year %d."
-                  % np.min(wy23_df['Years']))
-
-        # Update the connection table.
-        print("\rUpdating the connection table...", end=' ')
-        d13_connect_table = {cid: d13fpath for cid in cellnames}
-        self.connect_tables['D13'] = d13_connect_table
-        self._save_connect_tables()
-        print("done")
 
     def generate_d10d11_input_files(self, cellnames=None, sf_edepth=1,
                                     sf_ulai=1):
