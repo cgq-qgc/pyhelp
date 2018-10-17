@@ -97,9 +97,9 @@ class HelpManager(object):
         """Save the connect tables dictionary to a numpy binary file."""
         np.save(self.path_connect_tables, self.connect_tables)
 
-    # ---- HELP grid
+    # ---- Grid and Input
 
-    def load_grid(self, path_togrid):
+    def load_input_grid(self):
         """
         Load the grid that contains the infos required to evaluate regional
         groundwater recharge with HELP.
