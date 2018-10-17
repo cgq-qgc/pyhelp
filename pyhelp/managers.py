@@ -56,6 +56,7 @@ class HelpManager(object):
         self.solrad_data = None
 
         self.load_input_grid()
+        self.load_weather_input_data()
 
     @property
     def cellnames(self):
@@ -109,7 +110,8 @@ class HelpManager(object):
         Load the grid that contains the infos required to evaluate regional
         groundwater recharge with HELP.
         """
-        self.grid = load_grid_from_csv(path_togrid)
+        grid_fname = osp.join(self.workdir, INPUT_GRID_FNAME)
+        self.grid = load_grid_from_csv(grid_fname)
         return self.grid
 
     def load_weather_input_data(self):
