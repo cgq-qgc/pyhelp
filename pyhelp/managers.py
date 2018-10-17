@@ -156,15 +156,16 @@ class HelpManager(object):
         # don't need the D10 or D11 input files for those that aren't.
         cellnames = self.get_run_cellnames(cellnames)
 
-        d10data, d11data = format_d10d11_inputs(self.grid, cellnames,
-                                                sf_edepth, sf_ulai)
+        # Format the data from the input grid.
+        d10data, d11data = format_d10d11_inputs(
+            self.grid, cellnames, sf_edepth, sf_ulai)
 
         # Write the D10 and D11 input files.
         d10_conn_tbl, d11_conn_tbl = write_d10d11_allcells(
             d10d11_inputdir, d10data, d11data)
 
         # Update the connection table.
-        print("\rUpdating the connection table...", end=' ')
+        print("\rSaving the connectivity tables...", end=' ')
         self.connect_tables['D10'] = d10_conn_tbl
         self.connect_tables['D11'] = d11_conn_tbl
         self._save_connect_tables()
@@ -183,8 +184,8 @@ class HelpManager(object):
                 ('airtemp', 'D7', save_airtemp_to_HELP, self.airtemp_data),
                 ('solrad', 'D13', save_solrad_to_HELP, self.solrad_data))
         for var, fext, to_help_func, data in args:
-            print('Generating the connectivity table for {}...'.format(
-                  var.lower()), end=' ')
+            print('Generating HELP input files for {}...'.format(var.lower()),
+                  end=' ')
 
             if data is None:
                 print('failed')
