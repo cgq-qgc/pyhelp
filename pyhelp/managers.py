@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright © 2018 PyHelp Project Contributors
+# Copyright © PyHelp Project Contributors
 # https://github.com/jnsebgosselin/pyhelp
 #
 # This file is part of PyHelp.
