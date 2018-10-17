@@ -213,7 +213,7 @@ class HelpManager(object):
         self._save_connect_tables()
         print('done')
 
-    def run_help_for(self, path_outfile=None, cellnames=None, tfsoil=0):
+    def calc_help_cells(self, path_outfile=None, cellnames=None, tfsoil=0):
         """
         Run help for the cells listed in cellnames and save the result in
         an hdf5 file.
