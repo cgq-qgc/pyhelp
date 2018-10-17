@@ -353,9 +353,23 @@ class HelpManager(object):
         year_range = self.year_range if year_range is None else year_range
         generate_input_from_cweeds(cweed2_paths, cweed3_paths, year_range)
 
+    def generate_weather_inputs_from_MDELCC_grid(
+            self, path_to_mddelcc_grid, cellnames=None, year_range=None):
         """
+        Generate weather input data files from the MDDELCC grid.
 
+        Generate PyHelp csv data file inputs for daily precipitation and
+        average air temperature using data from the MDDELCC spatially
+        distributed daily precipitation and minimum and maximum air
+        temperature grid for a set of lat/lon coordinates.
+        """
+        cellnames = self.cellnames if cellnames is None else cellnames
+        year_range = self.year_range if year_range is None else year_range
+        lat_dd, lon_dd = self.get_latlon_for_cellnames(cellnames)
 
+        mddelcc_grid_mngr = NetCDFMeteoManager(path_to_mddelcc_grid)
+        mddelcc_grid_mngr.generate_input_from_MDELCC_grid(
+            self.workdir, lat_dd, lon_dd, year_range)
 
 
 def load_grid_from_csv(path_togrid):
