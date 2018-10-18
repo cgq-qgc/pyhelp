@@ -171,6 +171,7 @@ def format_d10d11_inputs(grid, cellnames, sf_edepth=1, sf_ulai=1):
     Format the evapotranspiration (D11) and soil and design data (D11) in a
     format that is compatible by HELP.
     """
+    tic = time.clock()
     d11dat = {}
     d10dat = {}
     N = len(cellnames)
@@ -184,6 +185,8 @@ def format_d10d11_inputs(grid, cellnames, sf_edepth=1, sf_ulai=1):
 
     print("\rFormatting D10 and D11 data for cell %d of %d (%0.1f%%)" %
           (i+1, N, (i+1)/N*100))
+    tac = time.clock()
+    print('Task completed in %0.2f sec' % (tac-tic))
 
     return d10dat, d11dat
 
