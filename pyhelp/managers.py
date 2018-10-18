@@ -482,10 +482,5 @@ if __name__ == '__main__':
     path_hdf5 = osp.join(workdir, 'surf_example.out')
     output_surf = helpm.calc_surf_water_cells(650, path_hdf5)
 
-    # path_mddelcc_grid = "F:\\MeteoGrilleDaily"
-    # helpm.generate_weather_inputs_from_MDELCC_grid(path_mddelcc_grid)
-
     # precip_data = helpm.precip_data
     # airtemp_data = helpm.airtemp_data
-
-
