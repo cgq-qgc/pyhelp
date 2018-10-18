@@ -78,13 +78,18 @@ class HelpManager(object):
     @property
     def workdir(self):
         """Return the path to the current working directory."""
-        return os.getcwd()
+        return self._workdir
 
     def set_workdir(self, dirname):
         """Set the working directory of the manager."""
+        if osp.samefile(self.workdir, dirname):
+            return
         if not osp.exists(dirname):
             os.makedirs(dirname)
         os.chdir(dirname)
+        self._workdir = dirname
+        self.load_input_grid()
+        self.load_weather_input_data()
 
     # ---- Connect tables
 
