@@ -112,8 +112,12 @@ class HelpManager(object):
 
     def load_input_grid(self):
         """
-        Load the grid that contains the infos required to evaluate regional
-        groundwater recharge with HELP.
+        Load input grid data.
+
+        Load the grid containing the geomatic data, surface conditions, and
+        soil and design data for each cell of the grid dividing the study area.
+        By default, the input grid data file must be saved in the working
+        directory and named :file:`input_grid.csv`.
         """
         grid_fname = osp.join(self.workdir, INPUT_GRID_FNAME)
         self.grid = load_grid_from_csv(grid_fname)
@@ -121,9 +125,13 @@ class HelpManager(object):
 
     def load_weather_input_data(self):
         """
-        Load the daily precipitation, average air temperature, and global
-        solar radiation from the PyHelp weather inpy datafiles if they exists
-        in the working directory.
+        Load input weather data.
+
+        Load the daily precipitation, average air temperature, and
+        global solar radiation from the input weather data files. By default,
+        those files must be saved in the working directory and named,
+        respectively, :file:`precip_input_data.csv`,
+        :file:`airtemp_input_data.csv`, and :file:`solrad_input_data.csv`.
         """
         self.precip_data = load_weather_from_csv(
             osp.join(self.workdir, INPUT_PRECIP_FNAME))
@@ -135,15 +143,15 @@ class HelpManager(object):
 
     # ---- HELP input files creation
     def clear_cache(self):
-        """Delete all HELP input data files from the input folder."""
+        """Delete all cached HELP input data files from the input folder."""
         print('Clearing HELP input files cache...', end=' ')
         delete_folder_recursively(self.inputdir)
         print('done')
 
     def build_help_input_files(self, sf_edepth=1, sf_ulai=1):
         """
-        Clear old cached HELP input files and rebuild new input files from the
-        data.
+        Clear all cached HELP input data files and generate new ones from the
+        weather and grid input data files.
         """
         self.clear_cache()
         self._generate_d10d11_input_files(sf_edepth=sf_edepth,
@@ -233,8 +241,12 @@ class HelpManager(object):
 
     def calc_help_cells(self, path_outfile=None, cellnames=None, tfsoil=0):
         """
-        Run help for the cells listed in cellnames and save the result in
-        an hdf5 file.
+        Calcul the water budget for all eligible cells with HELP.
+
+        Run HELP to compute the monthly water budget for the cells listed in
+        _cellnames_. Return a dict containing the resulting monthly values as
+        numpy arrays. If a file name is provided in _path_outfile_, the results
+        are also saved to disk in a HDF5 file.
         """
         # Convert from Celcius to Farenheight
         tfsoil = (tfsoil * 1.8) + 32
@@ -276,8 +288,8 @@ class HelpManager(object):
     def calc_surf_water_cells(self, evp_surf, path_outfile=None,
                               cellnames=None):
         """
-        Calcul the water budget for cells that are located in surface water
-        bodies.
+        Calcul the yearly water budget for cells that are located in
+        surface water bodies.
         """
         print("Calculating budget for water cells...", end=' ')
         cellnames = self.get_water_cellnames(cellnames)
@@ -357,6 +369,9 @@ class HelpManager(object):
     # ---- Input Data Utilities
     def generate_weather_inputs_from_CWEEDS(
             self, cweed2_paths, cweed3_paths, year_range=None):
+        """
+        Generate global solar irradiance input data file from CWEEDS files.
+        """
         year_range = self.year_range if year_range is None else year_range
         generate_input_from_cweeds(cweed2_paths, cweed3_paths, year_range)
 
