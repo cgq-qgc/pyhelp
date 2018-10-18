@@ -78,7 +78,8 @@ def _format_d11_singlecell(row, sf_edepth, sf_ulai):
 
 def _format_d10_singlecell(row):
     """
-    Format the D10 input data for a single cell (one row in the excel file).
+    Format the D10 input data for a single cell (corresponds to a single row
+    in the input csv file).
     """
     nlayers = int(row['nlayer'])
     if nlayers == 0:
