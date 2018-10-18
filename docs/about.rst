@@ -1,4 +1,4 @@
-About PyHelp
+About
 ==============================
 
 PyHelp is an object oriented Python library that provides a set of tools to
