@@ -7,18 +7,18 @@ module.
 
 Weather data needed by PyHelp include precipitation, average air temperature,
 and global solar radiation at a daily time step.
-Geomatics data needed by PyHelp include a uniform grid that must includes, for
+Geomatics data needed by PyHelp include a uniform grid that must include, for
 each cell of the grid, the location coordinates, the surface conditions used
 to compute evapotranspiration and runoff, and finally the soil and design data
 needed to compute infiltration, subrunoff, and groundwater recharge.
 
-Format of the Weather Input Data
+Format of the weather input data
 ---------------------------------
 
 Daily precipitation data, average air temperature and global solar irradiance
 are needed by PyHelp to calculate the water balance for each cell of the grid
 with the HELP model.
-Data from any sources can be used, as long as they are correctly formatted
+Data from any sources can be used, as long as the data are correctly formatted
 and saved in the working directory as coma-separated text files with the
 following names:
 
@@ -51,13 +51,13 @@ temperature in °C, and global solar irradiance in MJ/m².
 By default, the weather data are automatically loaded when instantiating the
 :class:`~pyhelp.HelpManager` class or when setting the working directory
 with :meth:`~pyhelp.HelpManager.set_workdir`. It is also possible to
-explicitely force a reload of the weather data from the input data files
+explicitly force a reload of the weather data from the input data files
 with the :meth:`~pyhelp.HelpManager.load_weather_input_data` method of the
 :class:`~pyhelp.HelpManager` class.
 
 Finally, tools are available to generate automatically the weather input data
 files from various sources of data. This is covered in more details in the
-section `Utils`_.
+section `Tools to generate input data files`_.
 
 .. _weather_datafile_example:
 .. figure:: img/weather_input_data.*
@@ -69,13 +69,13 @@ section `Utils`_.
     Example of a correctly formatted input weather data file.
     
 
-Format of the Grid Input Data
+Format of the grid input data
 ---------------------------------
 
 .. _sec_utils_data:
 
-Utils
----------------------------------
+Tools to generate input data files
+-----------------------------------
 
 Tools are available in PyHelp to generate automatically the weather input data
 files from various sources of data.
@@ -91,7 +91,7 @@ method of the :class:`~pyhelp.HelpManager` class can be used to generate
 automatically the global solar irradiance input data file from a set of
 CWEEDS files.
 
-Please consult the documention of each method for more details.
+Please consult the documentation of each method for more details.
 
 
 Example
@@ -100,15 +100,18 @@ Example
 Import and instantiate the :class:`~pyhelp.HelpManager` class ::
 
     >>> from pyhelp import HelpManager
-    >>> helpmngr = HelpManager("C:/path_to_pyhelp_project")
+    >>> helpm = HelpManager("C:/path_to_pyhelp_project")
 
 Generate precipitation and air temperature input files from the MDDELCC
 weather grid ::
 
-    >>> helpmngr.generate_weather_inputs_from_MDELCC_grid("C:/path_to_mddelcc_grid") 
+    >>> helpm.generate_weather_inputs_from_MDELCC_grid("C:/path_to_mddelcc_grid") 
 
 Generate global solar irradiance input file from CWEEDS files ::
 
-     >>> helpmngr.generate_weather_inputs_from_MDELCC_grid("C:/path_to_mddelcc_grid") 
-
+     >>> cweed2_paths = "C:/path_to_cweed2_file"
+     >>> cweed3_paths = "C:/path_to_cweed3_file"
+     >>> helpm.generate_weather_inputs_from_CWEEDS(cweed2_paths, cweed3_paths) 
+     
+     
 .. _HELP: https://www.epa.gov/land-research/hydrologic-evaluation-landfill-performance-help-model
