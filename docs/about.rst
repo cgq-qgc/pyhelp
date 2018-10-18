@@ -1,6 +1,22 @@
 About PyHelp
 ==============================
 
+PyHelp is an object oriented Python library that provides a set of tools to
+evaluate spatially distributed groundwater recharge at the regional scale
+using the `HELP`_ model.
+This work is based on the method that was originally developed by
+`Croteau et al. (2011)`_ to assess spatially distributed groundwater recharge
+in the Chateauguay River Watershed, Quebec, Canada.
+
+Please report bugs and feature requests on our `Issue tracker`_ or
+contact Jean-Sébastien Gosselin at jean-sebastien.gosselin@ete.inrs.ca.
+
+.. _Issue tracker: https://github.com/jnsebgosselin/pyhelp/issues
+.. _jean-sebastien.gosselin@ete.inrs.ca : mailto:jean-sebastien.gosselin@ete.inrs.ca
+
+.. _Croteau et al. (2011): https://www.tandfonline.com/doi/abs/10.4296/cwrj3504451
+.. _HELP: https://www.epa.gov/land-research/hydrologic-evaluation-landfill-performance-help-model
+
 Copyright
 -----------------------------------------------
 
@@ -42,16 +58,6 @@ Contributing authors, listed in chronological order, include:
 .. _René Lefebvre: http://www.inrs.ca/rene-lefebvre
 
 .. _INRS centre Eau-Terre-Environnement: http://www.ete.inrs.ca/
-
-Feedback
------------------------------------------------
-
-Please report bugs and feature requests on our `Issue tracker`_ or
-contact Jean-Sébastien Gosselin at jean-sebastien.gosselin@ete.inrs.ca.
-
-.. _Issue tracker: https://github.com/jnsebgosselin/pyhelp/issues
-.. _jean-sebastien.gosselin@ete.inrs.ca : mailto:jean-sebastien.gosselin@ete.inrs.ca
-
 
 Acknowledgments
 -----------------------------------------------
