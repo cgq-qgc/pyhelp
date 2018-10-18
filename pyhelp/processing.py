@@ -27,6 +27,7 @@ from pyhelp import HELP3O
 
 DEL_TEMPFILES = True
 
+
 # ---- Run HELP
 
 def run_help_singlecell(item):
@@ -56,7 +57,7 @@ def run_help_allcells(cellparams, ncore=None):
         print(('\rHELP simulation in progress: %3.1f%% (%0.1f min remaining)'
                "     ") % (progress_pct, tremain), end='')
     calcul_time = (time.clock() - tstart)
-    print('\nCalculation time: %0.2fs\n' % calcul_time)
+    print('\nCalculation time: %0.2fs' % calcul_time)
 
     return output
 
