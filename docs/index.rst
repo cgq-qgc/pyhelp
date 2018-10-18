@@ -13,6 +13,7 @@ have any questions, or have suggestions on how to improve PyHelp,
 please contact Jean-Sébastien Gosselin at jean-sebastien.gosselin@ete.inrs.ca.
 
 .. toctree::
+   data
    managers
    about
 

@@ -8,30 +8,226 @@
 
 
 # ---- Standard Library imports
-
+import os
 import os.path as osp
 import csv
 import calendar
 from calendar import monthrange
+import datetime
+from time import strftime
 
 # ---- Third Party imports
-
 import numpy as np
+import netCDF4
 from xlrd.xldate import xldate_from_datetime_tuple
 
+# ---- Local imports
+from pyhelp import __namever__
+from pyhelp.utils import save_content_to_csv, nan_as_text_tolist
 
-def save_content_to_csv(fname, fcontent, mode='w', delimiter=',',
-                        encoding='utf8'):
-    """
-    Save content in a csv file with the specifications provided
-    in arguments.
-    """
-    with open(fname, mode, encoding='utf8') as csvfile:
-        writer = csv.writer(csvfile, delimiter=delimiter, lineterminator='\n')
-        writer.writerows(fcontent)
+
+class NetCDFMeteoManager(object):
+    def __init__(self, dirpath_netcdf):
+        super(NetCDFMeteoManager, self).__init__()
+        self.dirpath_netcdf = dirpath_netcdf
+        self.lat = []
+        self.lon = []
+        self.setup_ncfile_list()
+        self.setup_latlon_grid()
+
+    def setup_ncfile_list(self):
+        """Read all the available netCDF files in dirpath_netcdf."""
+        self.ncfilelist = []
+        for file in os.listdir(self.dirpath_netcdf):
+            if file.endswith('.nc'):
+                self.ncfilelist.append(osp.join(self.dirpath_netcdf, file))
+
+    def setup_latlon_grid(self):
+        if self.ncfilelist:
+            netcdf_dset = netCDF4.Dataset(self.ncfilelist[0], 'r+')
+            self.lat = np.array(netcdf_dset['lat'])
+            self.lon = np.array(netcdf_dset['lon'])
+            netcdf_dset.close()
+
+    def get_idx_from_latlon(self, latitudes, longitudes, unique=False):
+        """
+        Get the i and j indexes of the grid meshes from a list of latitude
+        and longitude coordinates. If unique is True, only the unique pairs of
+        i and j indexes will be returned.
+        """
+        try:
+            lat_idx = [np.argmin(np.abs(self.lat - lat)) for lat in latitudes]
+            lon_idx = [np.argmin(np.abs(self.lon - lon)) for lon in longitudes]
+            if unique:
+                ijdx = np.vstack({(i, j) for i, j in zip(lat_idx, lon_idx)})
+                lat_idx = ijdx[:, 0].tolist()
+                lon_idx = ijdx[:, 1].tolist()
+        except TypeError:
+            lat_idx = np.argmin(np.abs(self.lat - latitudes))
+            lon_idx = np.argmin(np.abs(self.lon - longitudes))
+
+        return lat_idx, lon_idx
+
+    def get_data_from_latlon(self, latitudes, longitudes, years):
+        """
+        Return the daily minimum, maximum and average air temperature and daily
+        precipitation
+        """
+        lat_idx, lon_idx = self.get_idx_from_latlon(latitudes, longitudes)
+        return self.get_data_from_idx(lat_idx, lon_idx, years)
+
+    def get_data_from_idx(self, lat_idx, lon_idx, years):
+        try:
+            len(lat_idx)
+        except TypeError:
+            lat_idx, lon_idx = [lat_idx], [lon_idx]
+
+        tasmax_stacks = []
+        tasmin_stacks = []
+        precip_stacks = []
+        years_stack = []
+        for year in years:
+            print('\rFetching daily weather data for year %d...' % year,
+                  end=' ')
+            filename = osp.join(self.dirpath_netcdf, 'GCQ_v2_%d.nc' % year)
+            netcdf_dset = netCDF4.Dataset(filename, 'r+')
+
+            tasmax_stacks.append(
+                np.array(netcdf_dset['tasmax'])[:, lat_idx, lon_idx])
+            tasmin_stacks.append(
+                np.array(netcdf_dset['tasmin'])[:, lat_idx, lon_idx])
+            precip_stacks.append(
+                np.array(netcdf_dset['pr'])[:, lat_idx, lon_idx])
+            years_stack.append(
+                np.zeros(len(precip_stacks[-1][:])).astype(int) + year)
+
+            netcdf_dset.close()
+        print('done')
+
+        tasmax = np.vstack(tasmax_stacks)
+        tasmin = np.vstack(tasmin_stacks)
+        precip = np.vstack(precip_stacks)
+        years = np.hstack(years_stack)
+
+        return (tasmax + tasmin)/2, precip, years
+
+    def generate_input_from_MDELCC_grid(self, outdir, lat_dd, lon_dd,
+                                        year_range):
+        """
+        Generate input data files from the MDDELCC grid.
+
+        Generate PyHelp csv data file inputs for daily precipitation and
+        average air temperature  using data from the MDDELCC spatially
+        distributed daily precipitation and minimum and maximum air
+        temperature grid for a set of lat/lon coordinates.
+        """
+        if not osp.exists(outdir):
+            os.makedirs(outdir)
+
+        lat_idx, lon_idx = self.get_idx_from_latlon(
+            lat_dd, lon_dd, unique=True)
+        lat_dd = [self.lat[i] for i in lat_idx]
+        lon_dd = [self.lon[i] for i in lon_idx]
+
+        # Fetch the daily weather data from the netCDF files.
+        years = range(year_range[0], year_range[1] + 1)
+        tasavg, precip, years = self.get_data_from_idx(lat_idx, lon_idx, years)
+
+        # Create an array of datestring and lat/lon
+        Ndt, Ndset = np.shape(tasavg)
+        start = datetime.datetime(years[0], 1, 1)
+        datetimes = [start + datetime.timedelta(days=i) for i in range(Ndt)]
+        datestrings = [dt.strftime("%d/%m/%Y") for dt in datetimes]
+
+        # Fill -999 with 0 in daily precip.
+        precip[:, :][precip[:, :] == -999] = 0
+
+        # Fill -999 with linear interpolation in daily air temp.
+        time_ = np.arange(Ndt)
+        for i in range(Ndset):
+            indx = np.where(tasavg[:, i] != -999)[0]
+            tasavg[:, i] = np.interp(time_, time_[indx], tasavg[:, i][indx])
+
+        #  Convert and save the weather data to PyHelp csv input files.
+        for var in ['precip', 'airtemp']:
+            if var == 'precip':
+                varname = 'Precipitation in mm'
+                data = nan_as_text_tolist(precip)
+            elif var == 'airtemp':
+                varname = 'Average daily air temperature in \u00B0C'
+                data = nan_as_text_tolist(tasavg)
+            fname = osp.join(outdir, var + '_input_data.csv')
+
+            print('Saving {} data to {}...'.format(var, fname), end=' ')
+            fheader = [
+                [varname],
+                ['', ''],
+                ['Created by ' + __namever__],
+                ['Created on ' + strftime("%d/%m/%Y")],
+                ['Created from MDDELCC grid'],
+                ['', ''],
+                ['Latitude (dd)'] + lat_dd,
+                ['Longitude (dd)'] + lon_dd,
+                ['', '']]
+            fdata = [[datestrings[i]] + data[i] for i in range(Ndt)]
+            fcontent = fheader + fdata
+            save_content_to_csv(fname, fcontent)
+            print('done')
 
 
 # ---- Read CWEEDS Files
+def generate_input_from_cweeds(outdir, cweed2_paths, cweed3_paths, year_range):
+    """Generate an input PyHelp data file from CWEED files."""
+    if not isinstance(cweed2_paths, (list, tuple)):
+        cweed2_paths = [cweed2_paths]
+    if not isinstance(cweed3_paths, (list, tuple)):
+        cweed3_paths = [cweed3_paths]
+
+    print('Reading CWEEDS files...', end=' ')
+    lat_dd = []
+    lon_dd = []
+    stations = []
+    data = []
+    for cweed2, cweed3 in zip(cweed2_paths, cweed3_paths):
+        daily_wy2 = read_cweeds_file(cweed2, format_to_daily=True)
+        daily_wy3 = read_cweeds_file(cweed3, format_to_daily=True)
+        wy23_df = join_daily_cweeds_wy2_and_wy3(daily_wy2, daily_wy3)
+
+        lat_dd.append(wy23_df['Latitude'])
+        lon_dd.append(wy23_df['Longitude'])
+        stations.append(wy23_df['Location'])
+
+        indexes = np.where((wy23_df['Years'] >= year_range[0]) &
+                           (wy23_df['Years'] <= year_range[1]))[0]
+        data.append(wy23_df['Irradiance'][indexes])
+    data = nan_as_text_tolist(np.array(data).astype(float).transpose())
+    print('done')
+
+    fname = osp.join(outdir, 'solrad_input_data.csv')
+    print('Saving {} data to {}...'.format('solrad', fname), end=' ')
+
+    # Create an array of datestring and lat/lon
+    Ndt = len(wy23_df['Years'][indexes])
+    start = datetime.datetime(year_range[0], 1, 1)
+    datetimes = [start + datetime.timedelta(days=i) for i in range(Ndt)]
+    datestrings = [dt.strftime("%d/%m/%Y") for dt in datetimes]
+
+    # Save the data to file.
+    fheader = [['Global solar irradiance in MJ/m²'],
+               ['', ''],
+               ['Created by ' + __namever__],
+               ['Created on ' + strftime("%d/%m/%Y")],
+               ['Created from CWEED files'],
+               ['', ''],
+               ['Stations'] + stations,
+               ['Latitude (dd)'] + lat_dd,
+               ['Longitude (dd)'] + lon_dd,
+               ['', '']]
+    fdata = [[datestrings[i]] + data[i] for i in range(Ndt)]
+    fcontent = fheader + fdata
+    save_content_to_csv(fname, fcontent)
+    print('done')
+
 
 def read_cweeds_file(filename, format_to_daily=True):
     """
@@ -42,16 +238,14 @@ def read_cweeds_file(filename, format_to_daily=True):
     are formated to daily values. The data are kept in a hourly format if
     format_to_daily is set to False.
     """
-    # Determine if the CWEEDS file is in the WY2 or WY3 format :
-
+    # Determine if the CWEEDS file is in the WY2 or WY3 format.
     root, ext = osp.splitext(filename)
     ext = ext.replace('.', '')
     if ext not in ['WY2', 'WY3']:
         raise ValueError("%s is not a valid file extension. CWEEHDS files must"
                          " have either a WY2 or WY3 extension" % ext)
 
-    # Open and format the data from the CWEEDS file :
-
+    # Open and format the data from the CWEEDS file.
     with open(filename, 'r') as f:
         reader = list(csv.reader(f))
 
@@ -401,3 +595,12 @@ def calcul_rain_from_ptot(Tavg, Ptot, Tcrit=0):
     rain = np.copy(Ptot)
     rain[np.where(Tavg < Tcrit)[0]] = 0
     return rain
+
+
+if __name__ == '__main__':
+    outdir = "C:\\Users\\User\\pyhelp\\example"
+    cweed2_paths = osp.join(outdir, 'CWEEDS', '94792.WY2')
+    cweed3_paths = osp.join(
+        outdir, 'CWEEDS', 'CAN_QC_MONTREAL-INTL-A_7025251_CWEEDS2011_T_N.WY3')
+    year_range = [2010, 2014]
+    generate_input_from_cweeds(outdir, cweed2_paths, cweed3_paths, year_range)

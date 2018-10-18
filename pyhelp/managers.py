@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright © 2018 PyHelp Project Contributors
+# Copyright © PyHelp Project Contributors
 # https://github.com/jnsebgosselin/pyhelp
 #
 # This file is part of PyHelp.
@@ -10,24 +10,30 @@
 
 import os
 import os.path as osp
+import csv
+from datetime import datetime
 
 # ---- Third Party imports
 
 import numpy as np
-import netCDF4
 import pandas as pd
 
 # ---- Local Libraries Imports
 
 from pyhelp.preprocessing import write_d10d11_allcells, format_d10d11_inputs
 from pyhelp.processing import run_help_allcells
-from pyhelp.utils import savedata_to_hdf5
+from pyhelp.utils import (savedata_to_hdf5, calc_dist_from_coord,
+                          delete_folder_recursively)
 from pyhelp.weather_reader import (
     save_precip_to_HELP, save_airtemp_to_HELP, save_solrad_to_HELP,
-    read_cweeds_file, join_daily_cweeds_wy2_and_wy3)
+    NetCDFMeteoManager, generate_input_from_cweeds)
 
 
 FNAME_CONN_TABLES = 'connect_table.npy'
+INPUT_PRECIP_FNAME = 'precip_input_data.csv'
+INPUT_AIRTEMP_FNAME = 'airtemp_input_data.csv'
+INPUT_SOLRAD_FNAME = 'solrad_input_data.csv'
+INPUT_GRID_FNAME = 'input_grid.csv'
 
 
 class HelpManager(object):
@@ -39,20 +45,26 @@ class HelpManager(object):
 
     def __init__(self, workdir, year_range, path_togrid=None):
         super(HelpManager, self).__init__()
+        self._workdir = os.getcwd()
+
         self.year_range = year_range
         self.set_workdir(workdir)
         self._setup_connect_tables()
 
-        if path_togrid is not None:
-            self.load_grid(path_togrid)
-        else:
-            self.grid = None
+        self.grid = None
+        self.precip_data = None
+        self.airtemp_data = None
+        self.solrad_data = None
+
+        self.load_input_grid()
+        self.load_weather_input_data()
 
     @property
     def cellnames(self):
         """Return a list with the ID numbers of all cells in the grid."""
         return [] if self.grid is None else self.grid['cid'].tolist()
 
+    # ---- Work and input dir
     @property
     def inputdir(self):
         """
@@ -68,13 +80,18 @@ class HelpManager(object):
     @property
     def workdir(self):
         """Return the path to the current working directory."""
-        return os.getcwd()
+        return self._workdir
 
     def set_workdir(self, dirname):
         """Set the working directory of the manager."""
+        if osp.samefile(self.workdir, dirname):
+            return
         if not osp.exists(dirname):
             os.makedirs(dirname)
         os.chdir(dirname)
+        self._workdir = dirname
+        self.load_input_grid()
+        self.load_weather_input_data()
 
     # ---- Connect tables
 
@@ -93,64 +110,58 @@ class HelpManager(object):
         """Save the connect tables dictionary to a numpy binary file."""
         np.save(self.path_connect_tables, self.connect_tables)
 
-    # ---- HELP grid
+    # ---- Grid and Input
 
-    def load_grid(self, path_togrid):
+    def load_input_grid(self):
         """
-        Load the grid that contains the infos required to evaluate regional
-        groundwater recharge with HELP.
+        Load input grid data.
+
+        Load the grid containing the geomatic data, surface conditions, and
+        soil and design data for each cell of the grid dividing the study area.
+        By default, the input grid data file must be saved in the working
+        directory and named :file:`input_grid.csv`.
         """
-        self.grid = load_grid_from_csv(path_togrid)
+        grid_fname = osp.join(self.workdir, INPUT_GRID_FNAME)
+        self.grid = load_grid_from_csv(grid_fname)
         return self.grid
 
-    # ---- Input files creation
-
-    def generate_d13_from_cweeds(self, d13fname, fpath_cweed2, fpath_cweed3,
-                                 cellnames=None):
+    def load_weather_input_data(self):
         """
-        Generate the HELP D13 input file for solar radiation from wy2 and
-        wy3 CWEEDS files at a given location.
+        Load input weather data.
+
+        Load the daily precipitation, average air temperature, and
+        global solar radiation from the input weather data files. By default,
+        those files must be saved in the working directory and named,
+        respectively, :file:`precip_input_data.csv`,
+        :file:`airtemp_input_data.csv`, and :file:`solrad_input_data.csv`.
         """
-        d13fpath = osp.join(self.inputdir, d13fname)
-        if cellnames is None:
-            cellnames = self.cellnames
-        else:
-            # Keep only the cells that are in the grid.
-            cellnames = self.grid['cid'][self.grid['cid'].isin(cellnames)]
+        self.precip_data = load_weather_from_csv(
+            osp.join(self.workdir, INPUT_PRECIP_FNAME))
+        self.airtemp_data = load_weather_from_csv(
+            osp.join(self.workdir, INPUT_AIRTEMP_FNAME))
+        self.solrad_data = load_weather_from_csv(
+            osp.join(self.workdir, INPUT_SOLRAD_FNAME))
+        return self.precip_data, self.airtemp_data, self.solrad_data
 
-        print('Reading CWEEDS files...', end=' ')
-        daily_wy2 = read_cweeds_file(fpath_cweed2, format_to_daily=True)
-        daily_wy3 = read_cweeds_file(fpath_cweed3, format_to_daily=True)
-        wy23_df = join_daily_cweeds_wy2_and_wy3(daily_wy2, daily_wy3)
-
-        indexes = np.where((wy23_df['Years'] >= self.year_range[0]) &
-                           (wy23_df['Years'] <= self.year_range[1]))[0]
+    # ---- HELP input files creation
+    def clear_cache(self):
+        """Delete all cached HELP input data files from the input folder."""
+        print('Clearing HELP input files cache...', end=' ')
+        delete_folder_recursively(self.inputdir)
         print('done')
 
-        print('Generating HELP D13 file for solar radiation...', end=' ')
-        save_solrad_to_HELP(d13fpath,
-                            wy23_df['Years'][indexes],
-                            wy23_df['Irradiance'][indexes],
-                            'CAN_QC_MONTREAL-INTL-A_7025251',
-                            wy23_df['Latitude'])
-        print('done')
+    def build_help_input_files(self, sf_edepth=1, sf_ulai=1):
+        """
+        Clear all cached HELP input data files and generate new ones from the
+        weather and grid input data files.
+        """
+        self.clear_cache()
+        self._generate_d10d11_input_files(sf_edepth=sf_edepth,
+                                          sf_ulai=sf_ulai)
+        self._generate_d4d7d13_input_files()
 
-        if self.year_range[1] > np.max(wy23_df['Years']):
-            print("Warning: there is no solar radiation data after year %d."
-                  % np.max(wy23_df['Years']))
-        if self.year_range[0] < np.min(wy23_df['Years']):
-            print("Warning: there is no solar radiation data before year %d."
-                  % np.min(wy23_df['Years']))
-
-        # Update the connection table.
-        print("\rUpdating the connection table...", end=' ')
-        d13_connect_table = {cid: d13fpath for cid in cellnames}
-        self.connect_tables['D13'] = d13_connect_table
-        self._save_connect_tables()
-        print("done")
-
-    def generate_d10d11_input_files(self, cellnames=None, sf_edepth=1,
-                                    sf_ulai=1):
+    def _generate_d10d11_input_files(self, cellnames=None, sf_edepth=1,
+                                     sf_ulai=1):
         """Prepare the D10 and D11 input datafiles for each cell."""
         d10d11_inputdir = osp.join(self.inputdir, 'd10d11_input_files')
         if not osp.exists(d10d11_inputdir):
@@ -160,102 +171,84 @@ class HelpManager(object):
         # don't need the D10 or D11 input files for those that aren't.
         cellnames = self.get_run_cellnames(cellnames)
 
-        d10data, d11data = format_d10d11_inputs(self.grid, cellnames,
-                                                sf_edepth, sf_ulai)
+        # Format the data from the input grid.
+        d10data, d11data = format_d10d11_inputs(
+            self.grid, cellnames, sf_edepth, sf_ulai)
 
         # Write the D10 and D11 input files.
         d10_conn_tbl, d11_conn_tbl = write_d10d11_allcells(
             d10d11_inputdir, d10data, d11data)
 
         # Update the connection table.
-        print("\rUpdating the connection table...", end=' ')
+        print("\rSaving the connectivity tables...", end=' ')
         self.connect_tables['D10'] = d10_conn_tbl
         self.connect_tables['D11'] = d11_conn_tbl
         self._save_connect_tables()
         print("done")
 
-    def generate_d4d7_from_MDELCC_grid(self, path_netcdf_dir, cellnames=None):
-        """
-        Prepare the D4 and D7 input datafiles for each cell from the
-        interpolated grid of the MDDELCC.
-        """
-        d4d7_inputdir = osp.join(self.inputdir, 'd4d7_input_files')
-        if not osp.exists(d4d7_inputdir):
-            os.makedirs(d4d7_inputdir)
+    def _generate_d4d7d13_input_files(self, cellnames=None):
+        """Generate the D4, D7, and D13 HELP input datafiles for each cell."""
+        if self.grid is None:
+            return
 
-        cellnames = self.get_run_cellnames(cellnames)
-        N = len(cellnames)
+        cellnames = self.cellnames if cellnames is None else cellnames
+        grid_lat, grid_lon = self.get_latlon_for_cellnames(cellnames)
 
-        # Get the latitudes and longitudes of the resulting cells.
-        lat_dd, lon_dd = self.get_latlon_for_cellnames(cellnames)
+        fformat = '{:3.1f}_{:3.1f}.{}'
+        args = (('precip', 'D4', save_precip_to_HELP, self.precip_data),
+                ('airtemp', 'D7', save_airtemp_to_HELP, self.airtemp_data),
+                ('solrad', 'D13', save_solrad_to_HELP, self.solrad_data))
+        for var, fext, to_help_func, data in args:
+            print('Generating HELP input files for {}...'.format(var.lower()),
+                  end=' ')
 
-        # Generate the connectivity table between the HELP grid and the
-        # MDDELCC interpolated daily weather grid.
-        print('Generating the connectivity table for each cell...', end=' ')
-        meteo_manager = NetCDFMeteoManager(path_netcdf_dir)
-        d4_conn_tbl = {}
-        d7_conn_tbl = {}
-        data = []
-        for i, cellname in enumerate(cellnames):
-            lat_idx, lon_idx = meteo_manager.get_idx_from_latlon(
-                    lat_dd[i], lon_dd[i])
+            if data is None:
+                print('failed')
+                continue
 
-            d4fname = osp.join(
-                d4d7_inputdir, '%03d_%03d.D4' % (lat_idx, lon_idx))
-            d7fname = osp.join(
-                d4d7_inputdir, '%03d_%03d.D7' % (lat_idx, lon_idx))
+            help_inputdir = osp.join(self.inputdir, fext + '_input_files')
+            if not osp.exists(help_inputdir):
+                os.makedirs(help_inputdir)
 
-            d4_conn_tbl[cellnames[i]] = d4fname
-            d7_conn_tbl[cellnames[i]] = d7fname
+            file_conn_tbl = {}
+            index_conn_tbl = {}
+            for i, cellname in enumerate(cellnames):
+                dist = calc_dist_from_coord(grid_lat[i], grid_lon[i],
+                                            data['lat'], data['lon'])
+                argmin = np.argmin(dist)
 
-            data.append([lat_idx, lon_idx, d4fname, d7fname])
-        print('done')
+                lat, lon = data['lat'][argmin], data['lon'][argmin]
+                help_input_fname = osp.join(help_inputdir,
+                                            fformat.format(lat, lon, fext))
+                if not osp.exists(help_input_fname):
+                    city = '{} at {:3.1f} ; {:3.1f}'.format(var, lat, lon)
+                    if var in ('precip', 'airtemp'):
+                        to_help_func(help_input_fname, data['years'],
+                                     data['data'][:, argmin], city)
+                    elif var == 'solrad':
+                        to_help_func(help_input_fname, data['years'],
+                                     data['data'][:, argmin], city, lat)
 
-        # Fetch the daily weather data from the netCDF files.
-        data = np.unique(data, axis=0)
-        lat_indx = data[:, 0].astype(int)
-        lon_idx = data[:, 1].astype(int)
-        years = range(self.year_range[0], self.year_range[1]+1)
-        tasavg, precip, years = meteo_manager.get_data_from_idx(
-            lat_indx, lon_idx, years)
+                file_conn_tbl[cellname] = help_input_fname
+                index_conn_tbl[cellname] = argmin
 
-        # Convert and save the weather data to D4 and D7 HELP input files.
-        N = len(data)
-        for i in range(N):
-            print(("\rGenerating HELP D4 and D7 files for location " +
-                   "%d of %d (%0.1f%%)...") % (i+1, N, (i+1)/N * 100), end=' ')
-            lat = meteo_manager.lat[lat_indx[i]]
-            lon = meteo_manager.lon[lon_idx[i]]
-            d4fname, d7fname = data[i, 2], data[i, 3]
-            city = 'Meteo Grid at lat/lon %0.1f ; %0.1f' % (lat, lon)
+            self.connect_tables[fext] = file_conn_tbl
+            self.connect_tables[var] = index_conn_tbl
+            print('done')
 
-            # Fill -999 with 0 in daily precip.
-            precip_i = precip[:, i]
-            precip_i[precip_i == -999] = 0
-
-            # Fill -999 with linear interpolation in daily air temp.
-            tasavg_i = tasavg[:, i]
-            time_ = np.arange(len(tasavg_i))
-            indx = np.where(tasavg_i != -999)[0]
-            tasavg_i = np.interp(time_, time_[indx], tasavg_i[indx])
-
-            if not osp.exists(d4fname):
-                save_precip_to_HELP(d4fname, years, precip_i, city)
-            if not osp.exists(d7fname):
-                save_airtemp_to_HELP(d7fname, years, tasavg_i, city)
-        print('done')
-
-        # Update the connection table.
+        # Update the connectivity table.
         print("\rUpdating the connection table...", end=' ')
-        self.connect_tables['D4'] = d4_conn_tbl
-        self.connect_tables['D7'] = d7_conn_tbl
         self._save_connect_tables()
         print('done')
 
-    def run_help_for(self, path_outfile=None, cellnames=None, tfsoil=0):
+    def calc_help_cells(self, path_outfile=None, cellnames=None, tfsoil=0):
         """
-        Run help for the cells listed in cellnames and save the result in
-        an hdf5 file.
+        Calcul the water budget for all eligible cells with HELP.
+
+        Run HELP to compute the monthly water budget for the cells listed in
+        _cellnames_. Return a dict containing the resulting monthly values as
+        numpy arrays. If a file name is provided in _path_outfile_, the results
+        are also saved to disk in a HDF5 file.
         """
         # Convert from Celcius to Farenheight
         tfsoil = (tfsoil * 1.8) + 32
@@ -294,31 +287,25 @@ class HelpManager(object):
 
         return output
 
-    def calc_surf_water_cells(self, evp_surf, path_netcdf_dir,
-                              path_outfile=None, cellnames=None):
+    def calc_surf_water_cells(self, evp_surf, path_outfile=None,
+                              cellnames=None):
+        """
+        Calcul the yearly water budget for cells that are located in
+        surface water bodies.
+        """
+        print("Calculating budget for water cells...", end=' ')
         cellnames = self.get_water_cellnames(cellnames)
         lat_dd, lon_dd = self.get_latlon_for_cellnames(cellnames)
 
-        meteo_manager = NetCDFMeteoManager(path_netcdf_dir)
-
-        N = len(cellnames)
-        lat_indx = np.empty(N).astype(int)
-        lon_indx = np.empty(N).astype(int)
-        for i, cellname in enumerate(cellnames):
-            lat_indx[i], lon_indx[i] = meteo_manager.get_idx_from_latlon(
-                lat_dd[i], lon_dd[i])
-
         year_range = np.arange(
             self.year_range[0], self.year_range[1] + 1).astype(int)
-        tasavg, precip, years = meteo_manager.get_data_from_idx(
-            lat_indx, lon_indx, year_range)
-
-        # Fill -999 with 0 in daily precip.
-        precip[precip == -999] = 0
-
         nyr = len(year_range)
+
         output = {}
+        years = self.precip_data['years']
         for i, cellname in enumerate(cellnames):
+            precip_indx = self.connect_tables['precip'][cellname]
+            precip = self.precip_data['data'][:, precip_indx]
             data = {}
             data['years'] = year_range
             data['rain'] = np.zeros(nyr)
@@ -326,7 +313,7 @@ class HelpManager(object):
             data['runoff'] = np.zeros(nyr)
             for k, year in enumerate(year_range):
                 indx = np.where(years == year)[0]
-                data['rain'][k] = np.sum(precip[indx, i])
+                data['rain'][k] = np.sum(precip[indx])
                 data['runoff'][k] = data['rain'][k] - evp_surf
             output[cellname] = data
 
@@ -334,32 +321,9 @@ class HelpManager(object):
             savedata_to_hdf5(output, path_outfile)
 
         return output
+        print("done")
 
-        # # For cells for which the context is 2, convert recharge and deep
-        # # subrunoff into superfical subrunoff.
-        # cellnames_con_2 = cellnames[self.grid[fcon] == 2].tolist()
-        # for cellname in cellnames_con_2:
-        #     output[cellname]['subrun1'] += output[cellname]['subrun2']
-        #     output[cellname]['subrun1'] += output[cellname]['recharge']
-        #     output[cellname]['subrun2'][:] = 0
-        #     output[cellname]['recharge'][:] = 0
-
-        # # For cells for which the context is 3, convert recharge into
-        # # deep runoff.
-        # cellnames_con_3 = cellnames[self.grid[fcon] == 3].tolist()
-        # for cellname in cellnames_con_3:
-        #     output[cellname]['subrun2'] += output[cellname]['recharge']
-        #     output[cellname]['recharge'][:] = 0
-
-        # # Comput water budget for cells for which the context is 0.
-        # cellnames_con_2 = cellnames[self.grid[fcon] == 0].tolist()
-
-        # # meteo_manager = NetCDFMeteoManager(path_netcdf_dir)
-        # # for cellname in cellnames_run0:
-
-        # Save the result to an hdf5 file.
-
-    # ---- Utilities
+    # ---- Grid Utilities
 
     def get_water_cellnames(self, cellnames):
         """
@@ -404,91 +368,33 @@ class HelpManager(object):
         lon = np.array(self.grid['lon_dd'].reindex(cells).tolist())
         return lat, lon
 
-
-class NetCDFMeteoManager(object):
-    def __init__(self, dirpath_netcdf):
-        super(NetCDFMeteoManager, self).__init__()
-        self.dirpath_netcdf = dirpath_netcdf
-        self.lat = []
-        self.lon = []
-        self.setup_ncfile_list()
-        self.setup_latlon_grid()
-
-    def setup_ncfile_list(self):
-        """Read all the available netCDF files in dirpath_netcdf."""
-        self.ncfilelist = []
-        for file in os.listdir(self.dirpath_netcdf):
-            if file.endswith('.nc'):
-                self.ncfilelist.append(osp.join(self.dirpath_netcdf, file))
-
-    def setup_latlon_grid(self):
-        if self.ncfilelist:
-            netcdf_dset = netCDF4.Dataset(self.ncfilelist[0], 'r+')
-            self.lat = np.array(netcdf_dset['lat'])
-            self.lon = np.array(netcdf_dset['lon'])
-            netcdf_dset.close()
-
-    def get_idx_from_latlon(self, latitudes, longitudes, unique=False):
+    # ---- Input Data Utilities
+    def generate_weather_inputs_from_CWEEDS(
+            self, cweed2_paths, cweed3_paths, year_range=None):
         """
-        Get the i and j indexes of the grid meshes from a list of latitude
-        and longitude coordinates. If unique is True, only the unique pairs of
-        i and j indexes will be returned.
+        Generate global solar irradiance input data file from CWEEDS files.
         """
-        try:
-            lat_idx = [np.argmin(np.abs(self.lat - lat)) for lat in latitudes]
-            lon_idx = [np.argmin(np.abs(self.lon - lon)) for lon in longitudes]
-            if unique:
-                ijdx = np.vstack({(i, j) for i, j in zip(lat_idx, lon_idx)})
-                lat_idx = ijdx[:, 0].tolist()
-                lon_idx = ijdx[:, 1].tolist()
-        except TypeError:
-            lat_idx = np.argmin(np.abs(self.lat - latitudes))
-            lon_idx = np.argmin(np.abs(self.lon - longitudes))
+        year_range = self.year_range if year_range is None else year_range
+        generate_input_from_cweeds(self.workdir, cweed2_paths,
+                                   cweed3_paths, year_range)
 
-        return lat_idx, lon_idx
-
-    def get_data_from_latlon(self, latitudes, longitudes, years):
+    def generate_weather_inputs_from_MDELCC_grid(
+            self, path_to_mddelcc_grid, cellnames=None, year_range=None):
         """
-        Return the daily minimum, maximum and average air temperature and daily
-        precipitation
+        Generate weather input data files from the MDDELCC grid.
+
+        Generate PyHelp csv data file inputs for daily precipitation and
+        average air temperature using data from the MDDELCC spatially
+        distributed daily precipitation and minimum and maximum air
+        temperature grid for a set of lat/lon coordinates.
         """
-        lat_idx, lon_idx = self.get_idx_from_latlon(latitudes, longitudes)
-        return self.get_data_from_idx(lat_idx, lon_idx, years)
+        cellnames = self.cellnames if cellnames is None else cellnames
+        year_range = self.year_range if year_range is None else year_range
+        lat_dd, lon_dd = self.get_latlon_for_cellnames(cellnames)
 
-    def get_data_from_idx(self, lat_idx, lon_idx, years):
-        try:
-            len(lat_idx)
-        except TypeError:
-            lat_idx, lon_idx = [lat_idx], [lon_idx]
-
-        tasmax_stacks = []
-        tasmin_stacks = []
-        precip_stacks = []
-        years_stack = []
-        for year in years:
-            print('\rFetching daily weather data for year %d...' % year,
-                  end=' ')
-            filename = osp.join(self.dirpath_netcdf, 'GCQ_v2_%d.nc' % year)
-            netcdf_dset = netCDF4.Dataset(filename, 'r+')
-
-            tasmax_stacks.append(
-                np.array(netcdf_dset['tasmax'])[:, lat_idx, lon_idx])
-            tasmin_stacks.append(
-                np.array(netcdf_dset['tasmin'])[:, lat_idx, lon_idx])
-            precip_stacks.append(
-                np.array(netcdf_dset['pr'])[:, lat_idx, lon_idx])
-            years_stack.append(
-                np.zeros(len(precip_stacks[-1][:])).astype(int) + year)
-
-            netcdf_dset.close()
-        print('done')
-
-        tasmax = np.vstack(tasmax_stacks)
-        tasmin = np.vstack(tasmin_stacks)
-        precip = np.vstack(precip_stacks)
-        years = np.hstack(years_stack)
-
-        return (tasmax + tasmin)/2, precip, years
+        mddelcc_grid_mngr = NetCDFMeteoManager(path_to_mddelcc_grid)
+        mddelcc_grid_mngr.generate_input_from_MDELCC_grid(
+            self.workdir, lat_dd, lon_dd, year_range)
 
 
 def load_grid_from_csv(path_togrid):
@@ -496,6 +402,9 @@ def load_grid_from_csv(path_togrid):
     Load the csv that contains the infos required to evaluate regional
     groundwater recharge with HELP.
     """
+    if not osp.exists(path_togrid):
+        return None
+
     print('Reading HELP grid from csv...', end=' ')
     grid = pd.read_csv(path_togrid)
     print('done')
@@ -513,3 +422,65 @@ def load_grid_from_csv(path_togrid):
     grid.set_index(['cid'], drop=False, inplace=True)
 
     return grid
+
+
+def load_weather_from_csv(filename):
+    """
+    Load daily precipitation, average air temperature, or global solar
+    radiation data from a correctly formatted PyHelp weather input files.
+    The latitudes, longitudes, dates, and weather data values are stored in
+    numpy arrays and returned as a dict with, respectively, the keys
+    'lat', 'lon', 'dates', and 'data'.
+    """
+    if not osp.exists(filename):
+        return None
+
+    lat, lon, datestrings, data = [], [], [], []
+    with open(filename, 'r') as csvfile:
+        reader = list(csv.reader(csvfile, delimiter=','))
+
+    for i, line in enumerate(reader):
+        if not line or not line[0]:
+            continue
+
+        if line[0] == 'Latitude (dd)':
+            lat = np.array(line[1:]).astype('float')
+        elif line[0] == 'Longitude (dd)':
+            lon = np.array(line[1:]).astype('float')
+        elif all((len(lat), len(lon))):
+            date_data = np.array(reader[i:])
+            datestrings = date_data[:, 0]
+            data = date_data[:, 1:].astype('float')
+            break
+
+    datetimes = [datetime.strptime(ds, "%d/%m/%Y") for ds in datestrings]
+    years = [dt.year for dt in datetimes]
+
+    if all((len(lat), len(lon), len(datestrings), len(data))):
+        return {'lat': lat, 'lon': lon, 'datestrings': datestrings,
+                'datetimes': datetimes, 'years': years, 'data': data}
+    else:
+        print("Failed to read data from {}.".format(osp.basename(filename)))
+        return None
+
+
+if __name__ == '__main__':
+    workdir = "C:/Users/User/pyhelp/example"
+    helpm = HelpManager(workdir, year_range=(2010, 2014))
+
+    cweed2_paths = osp.join(workdir, 'CWEEDS', '94792.WY2')
+    cweed3_paths = osp.join(
+        workdir, 'CWEEDS', 'CAN_QC_MONTREAL-INTL-A_7025251_CWEEDS2011_T_N.WY3')
+    helpm.generate_weather_inputs_from_CWEEDS(cweed2_paths, cweed3_paths)
+
+    path_to_mddelcc_grid = "F:/MeteoGrilleDaily"
+    helpm.generate_weather_inputs_from_MDELCC_grid(path_to_mddelcc_grid)
+
+    helpm.build_help_input_files()
+    path_hdf5 = osp.join(workdir, 'help_example.out')
+    output_help = helpm.calc_help_cells(path_hdf5, tfsoil=-3)
+    path_hdf5 = osp.join(workdir, 'surf_example.out')
+    output_surf = helpm.calc_surf_water_cells(650, path_hdf5)
+
+    # precip_data = helpm.precip_data
+    # airtemp_data = helpm.airtemp_data
