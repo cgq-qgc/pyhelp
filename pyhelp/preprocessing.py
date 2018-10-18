@@ -78,7 +78,8 @@ def _format_d11_singlecell(row, sf_edepth, sf_ulai):
 
 def _format_d10_singlecell(row):
     """
-    Format the D10 input data for a single cell (one row in the excel file).
+    Format the D10 input data for a single cell (corresponds to a single row
+    in the input csv file).
     """
     nlayers = int(row['nlayer'])
     if nlayers == 0:
@@ -170,6 +171,7 @@ def format_d10d11_inputs(grid, cellnames, sf_edepth=1, sf_ulai=1):
     Format the evapotranspiration (D11) and soil and design data (D11) in a
     format that is compatible by HELP.
     """
+    tic = time.clock()
     d11dat = {}
     d10dat = {}
     N = len(cellnames)
@@ -177,12 +179,14 @@ def format_d10d11_inputs(grid, cellnames, sf_edepth=1, sf_ulai=1):
         print("\rFormatting D10 and D11 data for cell %d of %d (%0.1f%%)" %
               (i+1, N, (i+1)/N*100), end=' ')
 
-        row = grid[grid['cid'] == cid]
-        d11dat[cid] = _format_d11_singlecell(row.iloc[0], sf_edepth, sf_ulai)
-        d10dat[cid] = _format_d10_singlecell(row.iloc[0])
+        row = grid.loc[cid]
+        d11dat[cid] = _format_d11_singlecell(row, sf_edepth, sf_ulai)
+        d10dat[cid] = _format_d10_singlecell(row)
 
     print("\rFormatting D10 and D11 data for cell %d of %d (%0.1f%%)" %
           (i+1, N, (i+1)/N*100))
+    tac = time.clock()
+    print('Task completed in %0.2f sec' % (tac-tic))
 
     return d10dat, d11dat
 
