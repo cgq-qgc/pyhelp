@@ -375,7 +375,8 @@ class HelpManager(object):
         Generate global solar irradiance input data file from CWEEDS files.
         """
         year_range = self.year_range if year_range is None else year_range
-        generate_input_from_cweeds(cweed2_paths, cweed3_paths, year_range)
+        generate_input_from_cweeds(self.workdir, cweed2_paths,
+                                   cweed3_paths, year_range)
 
     def generate_weather_inputs_from_MDELCC_grid(
             self, path_to_mddelcc_grid, cellnames=None, year_range=None):
