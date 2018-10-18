@@ -45,6 +45,8 @@ class HelpManager(object):
 
     def __init__(self, workdir, year_range, path_togrid=None):
         super(HelpManager, self).__init__()
+        self._workdir = os.getcwd()
+
         self.year_range = year_range
         self.set_workdir(workdir)
         self._setup_connect_tables()
