@@ -12,6 +12,7 @@ import os
 import os.path as osp
 import csv
 from datetime import datetime
+import time
 
 # ---- Third Party imports
 
@@ -118,8 +119,10 @@ class HelpManager(object):
         By default, the input grid data file must be saved in the working
         directory and named :file:`input_grid.csv`.
         """
+        print('Reading input data grid from csv...', end=' ')
         grid_fname = osp.join(self.workdir, INPUT_GRID_FNAME)
         self.grid = load_grid_from_csv(grid_fname)
+        print('done')
         return self.grid
 
     def load_weather_input_data(self):
@@ -132,12 +135,14 @@ class HelpManager(object):
         respectively, :file:`precip_input_data.csv`,
         :file:`airtemp_input_data.csv`, and :file:`solrad_input_data.csv`.
         """
+        print('Reading input weather data from csv...', end=' ')
         self.precip_data = load_weather_from_csv(
             osp.join(self.workdir, INPUT_PRECIP_FNAME))
         self.airtemp_data = load_weather_from_csv(
             osp.join(self.workdir, INPUT_AIRTEMP_FNAME))
         self.solrad_data = load_weather_from_csv(
             osp.join(self.workdir, INPUT_SOLRAD_FNAME))
+        print('done')
         return self.precip_data, self.airtemp_data, self.solrad_data
 
     # ---- HELP input files creation
@@ -196,8 +201,8 @@ class HelpManager(object):
                 ('airtemp', 'D7', save_airtemp_to_HELP, self.airtemp_data),
                 ('solrad', 'D13', save_solrad_to_HELP, self.solrad_data))
         for var, fext, to_help_func, data in args:
-            print('Generating HELP input files for {}...'.format(var.lower()),
-                  end=' ')
+            print('Generating {} HELP input files for {}...'.format(
+                  fext, var.lower()), end=' ')
 
             if data is None:
                 print('failed')
@@ -290,6 +295,7 @@ class HelpManager(object):
         Calcul the yearly water budget for cells that are located in
         surface water bodies.
         """
+        tstart = time.clock()
         print("Calculating budget for water cells...", end=' ')
         cellnames = self.get_water_cellnames(cellnames)
         lat_dd, lon_dd = self.get_latlon_for_cellnames(cellnames)
@@ -316,9 +322,10 @@ class HelpManager(object):
 
         if path_outfile:
             savedata_to_hdf5(output, path_outfile)
-
-        return output
+        calcul_time = (time.clock() - tstart)
         print("done")
+        print('Task completed in %0.2f sec' % calcul_time)
+        return output
 
     # ---- Grid Utilities
 
@@ -401,10 +408,7 @@ def load_grid_from_csv(path_togrid):
     """
     if not osp.exists(path_togrid):
         return None
-
-    print('Reading HELP grid from csv...', end=' ')
     grid = pd.read_csv(path_togrid)
-    print('done')
 
     fname = osp.basename(path_togrid)
     req_keys = ['cid', 'lat_dd', 'lon_dd', 'run']
