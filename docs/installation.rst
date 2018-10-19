@@ -37,7 +37,7 @@ In summary:
 
 
 Requirements
-=================================
+-----------------------------------------------
 
 - `Python <https://www.python.org/>`_ == 3.6
 - `Matplotlib <https://matplotlib.org/>`_
