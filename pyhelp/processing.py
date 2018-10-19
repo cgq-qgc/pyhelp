@@ -57,7 +57,7 @@ def run_help_allcells(cellparams, ncore=None):
         print(('\rHELP simulation in progress: %3.1f%% (%0.1f min remaining)'
                "     ") % (progress_pct, tremain), end='')
     calcul_time = (time.clock() - tstart)
-    print('\nCalculation time: %0.2fs' % calcul_time)
+    print('\nTask completed in %0.2f sec' % calcul_time)
 
     return output
 
