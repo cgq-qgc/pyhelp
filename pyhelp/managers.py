@@ -123,7 +123,6 @@ class HelpManager(object):
         grid_fname = osp.join(self.workdir, INPUT_GRID_FNAME)
         self.grid = load_grid_from_csv(grid_fname)
         print('done')
-        return self.grid
 
     def load_weather_input_data(self):
         """
@@ -143,7 +142,6 @@ class HelpManager(object):
         self.solrad_data = load_weather_from_csv(
             osp.join(self.workdir, INPUT_SOLRAD_FNAME))
         print('done')
-        return self.precip_data, self.airtemp_data, self.solrad_data
 
     # ---- HELP input files creation
     def clear_cache(self):
