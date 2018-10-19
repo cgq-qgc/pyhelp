@@ -82,7 +82,7 @@ class HelpManager(object):
 
     def set_workdir(self, dirname):
         """Set the working directory of the manager."""
-        if self.workdir is None or osp.samefile(self.workdir, dirname):
+        if self.workdir is not None and osp.samefile(self.workdir, dirname):
             return
         if not osp.exists(dirname):
             os.makedirs(dirname)
