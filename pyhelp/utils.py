@@ -85,6 +85,7 @@ def calc_dist_from_coord(lat1, lon1, lat2, lon2):
 
 if __name__ == "__main__":
     from pyhelp import HelpManager
+    from pyhelp.weather_reader import InfoClimatGridReader
     year_range = (2012, 2014)
     workdir = "C:\\Users\\User\\pyhelp\\example"
     path_to_grid = osp.join(workdir, "input_example.csv")
@@ -93,7 +94,7 @@ if __name__ == "__main__":
     lat_dd, lon_dd = help_manager.get_latlon_for_cellnames(
         help_manager.cellnames)
 
-    mddelcc_grid_mngr = NetCDFMeteoManager("F:\\MeteoGrilleDaily")
+    mddelcc_grid_mngr = InfoClimatGridReader("F:\\MeteoGrilleDaily")
     outdir = workdir = "C:\\Users\\User\\pyhelp\\test"
     mddelcc_grid_mngr.generate_input_from_MDELCC_grid(
         outdir, lat_dd, lon_dd, year_range)

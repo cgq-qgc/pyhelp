@@ -1,20 +1,15 @@
-NetCDFMeteoManager
+InfoClimatGridReader
 ---------------------------------
 
 .. currentmodule:: pyhelp
 
-.. autoclass:: pyhelp.weather_reader.NetCDFMeteoManager
+.. autoclass:: pyhelp.weather_reader.InfoClimatGridReader
    :no-members:
    :no-undoc-members:
-
-Properties
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Utilities
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. automethod:: pyhelp.weather_reader.NetCDFMeteoManager.get_idx_from_latlon
-.. automethod:: pyhelp.weather_reader.NetCDFMeteoManager.get_data_from_latlon
-
-Example
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. automethod:: pyhelp.weather_reader.InfoClimatGridReader.get_idx_from_latlon
+.. automethod:: pyhelp.weather_reader.InfoClimatGridReader.get_data_from_latlon
+.. automethod:: pyhelp.weather_reader.InfoClimatGridReader.generate_input_from_MDELCC_grid
