@@ -1,15 +1,24 @@
 Example
 =================================
 
+This example shows how to use PyHelp to calculate the monthly water balance
+of the North River watershed in the Laurentians, Quebec, Canada.
+The study area is about 1160 |_| km² and is divided in a grid of 18 |_| 383
+cells of 250 |_| m x 250 |_| m.
+The input data required to run the calculations are available in the
+folder `example`_ that is distributed with the PyHelp module. Calculations
+for the whole area takes less than 10 |_| minutes on an Intel i7-7700HQ
+dual Core @ 2.80GHz.
+
 The first step is to import and create an instance of the
-:class:`~pyhelp.HelpManager` class, where we need to pass as argument a path
-to a working directory.
+:class:`~pyhelp.HelpManager` class.
+When doing so, we need to pass as argument a path to a working directory.
 The working directory is where the input, output and temporary files are read
 and saved by default by the :class:`~pyhelp.HelpManager`.
 It must be a location where you have `Write and Read` permissions.
-The path to the working directory can be changed at any time with the
+The working directory can be changed at any time with the
 :meth:`~pyhelp.HelpManager.set_workdir` method.
-Here, we will use the path to the folder `example` that is distributed along
+Here, we will use the path to the folder `example`_ that is distributed with
 the PyHelp module.
 
     >>> import os.path as osp
@@ -19,22 +28,21 @@ the PyHelp module.
     Reading input data grid data from csv... done
     Reading input weather data files... done
 
-During initialization or when setting a new working directory with
+During the initialization or when setting a new working directory with
 :meth:`~pyhelp.HelpManager.set_workdir`, :class:`~pyhelp.HelpManager`
 automatically looks in the specified directory and loads the input
 data grid and weather data from any valid existing input files.
-Input data files with a formatted grid and weather data are provided in the
-folder `example`.
+All input data files required for the calculation in this example are
+available in the folder `example`_.
 Please read the :ref:`sec_data_input` section for more details on how
-to prepare the input data manually or with the available tools to generate
-these files automatically from other existing sources of data.
+to prepare the input data files manually or with the tools available to
+generate these files automatically from other existing sources of data.
 
 Once :class:`~pyhelp.HelpManager` has been instantiated and the input
 data grid and weather data loaded successfully, the D4, D7, D10, D11, and D13
-input data files that are required by the HELP model to run need to be
-generated for each cell of the grid.
-These files can be automatically generated from the input grid and weather
-data by doing ::
+input data files need to be generated for each cell of the grid
+These files are required by the HELP model to run and they can be
+automatically generated from the input grid and weather data by doing ::
 
     >>> helpm.build_help_input_files()
     Clearing HELP input files cache... done
@@ -53,8 +61,8 @@ data by doing ::
 Note that by default, these files are saved in the folder `help_input_files`
 of the working directory.
 
-We can now tell :class:`~pyhelp.HelpManager` to calcul the monthly water budget
-for each cells of the grid by doing ::
+We can now use our manager to calculate the monthly water budget for each
+cell of the grid by doing ::
 
     >>> help_output_hdf5 = osp.join(workdir, 'help_example.out')
     >>> output_help = helpm.calc_help_cells(help_output_hdf5, tfsoil=-3)
@@ -84,3 +92,7 @@ Various scripts are avaible in `postprocessing.py`, `produce_help_maps.py`,
 to produce a shapefile and various graphs from the results. Note that
 the code in these files are in an early stage of development and are subject
 to change without notice in the near futur.
+
+.. _example: https://github.com/jnsebgosselin/pyhelp/tree/master/example
+.. |_| unicode:: 0xA0 
+   :trim:
