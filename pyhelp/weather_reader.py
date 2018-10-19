@@ -26,9 +26,9 @@ from pyhelp import __namever__
 from pyhelp.utils import save_content_to_csv, nan_as_text_tolist
 
 
-class NetCDFMeteoManager(object):
+class InfoClimatGridReader(object):
     def __init__(self, dirpath_netcdf):
-        super(NetCDFMeteoManager, self).__init__()
+        super(InfoClimatGridReader, self).__init__()
         self.dirpath_netcdf = dirpath_netcdf
         self.lat = []
         self.lon = []

@@ -27,7 +27,7 @@ from pyhelp.utils import (savedata_to_hdf5, calc_dist_from_coord,
                           delete_folder_recursively)
 from pyhelp.weather_reader import (
     save_precip_to_HELP, save_airtemp_to_HELP, save_solrad_to_HELP,
-    NetCDFMeteoManager, generate_input_from_cweeds)
+    InfoClimatGridReader, generate_input_from_cweeds)
 
 
 FNAME_CONN_TABLES = 'connect_table.npy'
@@ -394,7 +394,7 @@ class HelpManager(object):
         year_range = self.year_range if year_range is None else year_range
         lat_dd, lon_dd = self.get_latlon_for_cellnames(cellnames)
 
-        mddelcc_grid_mngr = NetCDFMeteoManager(path_to_mddelcc_grid)
+        mddelcc_grid_mngr = InfoClimatGridReader(path_to_mddelcc_grid)
         mddelcc_grid_mngr.generate_input_from_MDELCC_grid(
             self.workdir, lat_dd, lon_dd, year_range)
 
