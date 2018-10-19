@@ -43,21 +43,18 @@ class HelpManager(object):
     regional scale with the HELP model.
     """
 
-    def __init__(self, workdir, year_range, path_togrid=None):
+    def __init__(self, workdir, year_range):
         super(HelpManager, self).__init__()
-        self._workdir = os.getcwd()
-
-        self.year_range = year_range
-        self.set_workdir(workdir)
-        self._setup_connect_tables()
-
         self.grid = None
         self.precip_data = None
         self.airtemp_data = None
         self.solrad_data = None
 
-        self.load_input_grid()
-        self.load_weather_input_data()
+        self._workdir = None
+        self.set_workdir(workdir)
+
+        self.year_range = year_range
+        self._setup_connect_tables()
 
     @property
     def cellnames(self):
