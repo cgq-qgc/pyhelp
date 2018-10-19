@@ -28,7 +28,7 @@ In summary:
     
    or do it from your GUI client if you are using one.
 
-#. Add your cloned PyHelp directory to your Windoes `PYTHONPATH`.
+#. Add your cloned PyHelp directory to your Windows `PYTHONPATH`.
 
 #. To keep your repository up-to-date, run ``git pull`` inside the cloned
    directory or do it directly from your GUI client.
