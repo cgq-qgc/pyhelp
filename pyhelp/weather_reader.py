@@ -27,6 +27,15 @@ from pyhelp.utils import save_content_to_csv, nan_as_text_tolist
 
 
 class InfoClimatGridReader(object):
+    """
+    The :attr:`~pyhelp.weather_reader.InfoClimatGridReader` is a class
+    to read and format precipitation and air temperature data from the
+    interpolated grid produced by the `Info-climat service`_ of the MDDELCC.
+
+    .. _Info-climat service:
+       http://www.mddelcc.gouv.qc.ca/climat/surveillance/produits.htm
+    """
+
     def __init__(self, dirpath_netcdf):
         super(InfoClimatGridReader, self).__init__()
         self.dirpath_netcdf = dirpath_netcdf
