@@ -5,4 +5,4 @@ Welcome to PyHelp's documentation!
    installation
    data
    example
-   managers
+   technical_documentation
