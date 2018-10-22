@@ -81,7 +81,6 @@ section `Tools to generate input data files`_.
 
 .. _sec_utils_data:
 
-
 Tools to generate input data files
 -----------------------------------
 
@@ -93,14 +92,12 @@ of the :class:`~pyhelp.HelpManager` class can be used to generate automatically
 the precipitation and average air temperature input data files using data from
 the MDDELCC spatially distributed daily meteo grid.
 
-
 Similarly, the :meth:`~pyhelp.HelpManager.generate_weather_inputs_from_CWEEDS`
 method of the :class:`~pyhelp.HelpManager` class can be used to generate
 automatically the global solar irradiance input data file from a set of
 CWEEDS files.
 
 Please consult the documentation of each method for more details.
-
 
 Format of the grid input data
 ---------------------------------
