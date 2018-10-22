@@ -2,17 +2,29 @@
 
 Data Input
 =================================
+The PyHelp module requires multiple weather and geomatics data to perform
+spatially distributed water balance calculations at the regional scale with
+the `HELP`_ infiltration model.
 
-This section presents how to prepare the input data required to run the `HELP`_
-infiltration model with the :class:`~pyhelp.HelpManager` class of the PyHelp
-module.
+More specifically, weather data include precipitation, average air temperature,
+and global solar irradiance at a daily time step.
+Geomatics data consists in a uniformly spaced grid where the location
+coordinates must be defined for each cell of the grid, as well as the surface
+conditions required to compute evapotranspiration and runoff, and the soil and
+design data needed to compute infiltration, subrunoff, and groundwater
+recharge.
 
-Weather data needed by PyHelp include precipitation, average air temperature,
-and global solar radiation at a daily time step.
-Geomatics data needed by PyHelp include a uniform grid that must include, for
-each cell of the grid, the location coordinates, the surface conditions used
-to compute evapotranspiration and runoff, and finally the soil and design data
-needed to compute infiltration, subrunoff, and groundwater recharge.
+The input data must be formatted and saved as coma-separated text files
+in the working directory of PyHelp as:
+
+- 1. :file:`precip_input_data.csv` for daily precipitation in mm
+- 2. :file:`airtemp_input_data.csv` for average air temperature in °C
+- 3. :file:`solrad_input_data.csv` for global solar irradiance in MJ/m²
+- 4. :file:`input_grid.csv` for the grid and geomatics data.
+
+This section presents how to prepare these input data files, either manually
+or automatically with the tools available in PyHelp to do so from various
+existing sources of data.
 
 Format of the weather input data
 ---------------------------------
@@ -21,16 +33,13 @@ Daily precipitation data, average air temperature and global solar irradiance
 are needed by PyHelp to calculate the water balance for each cell of the grid
 with the HELP model.
 Data from any sources can be used, as long as the data are correctly formatted
-and saved in the working directory as coma-separated text files with the
-following names:
-
-- 1. Precipitation: :file:`precip_input_data.csv`
-- 2. Average air temperature: :file:`airtemp_input_data.csv`
-- 3. Global solar radiation: :file:`solrad_input_data.csv`
+and saved in the working directory as coma-separated text files named as
+:file:`precip_input_data.csv` for daily precipitation, 
+:file:`airtemp_input_data.csv` for average air temperature, and
+:file:`solrad_input_data.csv` for global solar irradiance.
 
 An example of correctly formatted input weather data file is shown in
 :numref:`weather_datafile_example`.
-
 The first column of the data is used to store the dates in a `dd/mm/yyyy`
 format.
 Additional columns are used to store the data of the daily meteorological
