@@ -26,6 +26,13 @@ HELP input management
 .. automethod:: pyhelp.HelpManager.clear_cache
 .. automethod:: pyhelp.HelpManager.build_help_input_files
 
+Grid utilities
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: pyhelp.HelpManager.get_water_cellnames
+.. automethod:: pyhelp.HelpManager.get_run_cellnames
+.. automethod:: pyhelp.HelpManager.get_latlon_for_cellnames
+
 Calcul
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 .. automethod:: pyhelp.HelpManager.calc_help_cells
