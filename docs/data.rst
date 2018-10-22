@@ -78,12 +78,9 @@ section `Tools to generate input data files`_.
     :figclass: align-center
 
     Example of a correctly formatted input weather data file.
-    
-
-Format of the grid input data
----------------------------------
 
 .. _sec_utils_data:
+
 
 Tools to generate input data files
 -----------------------------------
@@ -104,6 +101,9 @@ CWEEDS files.
 
 Please consult the documentation of each method for more details.
 
+
+Format of the grid input data
+---------------------------------
 
 Example
 ---------------------------------
