@@ -33,7 +33,7 @@ In summary:
 #. To keep your repository up-to-date, run ``git pull`` inside the cloned
    directory or do it directly from your GUI client.
    
-#. Open Python and starts using the latest version of PyHelp.
+#. Open Python and start using the latest version of PyHelp.
 
 
 Requirements
