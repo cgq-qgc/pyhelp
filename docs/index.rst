@@ -6,3 +6,4 @@ Welcome to PyHelp's documentation!
    data
    example
    technical_documentation
+   references
