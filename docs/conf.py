@@ -22,7 +22,7 @@ sys.path.insert(0, osp.abspath(dirname))
 
 
 # We need to mock the HELP3O module because it cannot be compiled on RTD.
-# See PR #.
+# See PR #18.
 class Mock(MagicMock):
     @classmethod
     def __getattr__(cls, name):
