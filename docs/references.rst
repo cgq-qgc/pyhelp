@@ -5,12 +5,12 @@ Carrier, M.-A., Lefebvre, R., Rivard, C., Parent, M., Ballard, J.-M.,
 Benoit, N., Vigneault, H., Beaudry, C., Malet, X., Laurencelle, M.,
 Gosselin, J.-S., Ladevèze, P., Thériault, R., Beaudin, I., Michaud, A.,
 Pugin, A., Morin, R., Crow, H., Gloaguen, E., Bleser, J., Martin, A.,
-Lavoie, D. (2013).
+Lavoie, D., 2013.
 Portrait des ressources en eau souterraine en Montérégie Est, Québec, Canada.
 Rapport de recherche (R1433). INRS, Centre Eau Terre Environnement, Québec,
 uri: `http://espace.inrs.ca/1639 <http://espace.inrs.ca/1639/>`_.
 
-Croteau, A. (2006).
+Croteau, A., 2006.
 Détermination de la distribution spatiale et temporelle de la recharge à
 l'aquifère régional transfrontalier du bassin versant de la rivière
 Châteauguay, Québec et États-Unis. Mémoire.
@@ -18,12 +18,12 @@ Québec, Université du Québec, Institut national de la recherche scientifique,
 Maîtrise en sciences de la terre, 345 p.,
 uri: `http://espace.inrs.ca/1464 <http://espace.inrs.ca/1464/>`_.
 
-Croteau, A., Nastev, M., Lefebvre, R. (2010).
+Croteau, A., Nastev, M., Lefebvre, R., 2010.
 Groundwater recharge assessment in the Chateauguay River watershed.
 *Canadian Water Resources Journal*, 35(4), 451-468,
 doi: `10.4296/cwrj3504451 <https://www.tandfonline.com/doi/abs/10.4296/cwrj3504451>`_.
 
-Canadian Weather Energy and Engineering Datasets (CWEEDS) (2016).
+Canadian Weather Energy and Engineering Datasets (CWEEDS), 2016.
 Engineering Climate Datasets,
 uri: `http://climate.weather.gc.ca/prods_servs/engineering_e.html <http://climate.weather.gc.ca/prods_servs/engineering_e.html>`_.
 
