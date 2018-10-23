@@ -27,6 +27,14 @@ Canadian Weather Energy and Engineering Datasets (CWEEDS), 2016.
 Engineering Climate Datasets,
 uri: `http://climate.weather.gc.ca/prods_servs/engineering_e.html <http://climate.weather.gc.ca/prods_servs/engineering_e.html>`_.
 
+Huchet, F., 2018.
+Caractérisation hydrogéologique et modélisation du système d’écoulement
+au-dessus de champs gaziers, sous-bassin de Moncton, sud du Nouveau-Brunswick.
+Mémoire. Québec, Université du Québec,
+Institut national de la recherche scientifique,
+Maîtrise en sciences de la terre, 556 p.,
+uri: `http://espace.inrs.ca/7689/ <http://espace.inrs.ca/7689/>`_.
+
 Lefebvre, R., Ballard, J.-M., Carrier, M.-A., Vigneault, H., Beaudry, C.,
 Berthot, L., Légaré-Couture, G., Parent, M., Laurencelle, M., Malet, X.,
 Therrien, A., Michaud, A., Desjardins, J., Drouin, A., Cloutier, M.-H,
