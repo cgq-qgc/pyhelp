@@ -283,7 +283,10 @@ class HelpManager(object):
         output = run_help_allcells(cellparams)
 
         if path_outfile:
+            print("Saving results to {}...".format(osp.basename(path_outfile)),
+                  end=" ")
             savedata_to_hdf5(output, path_outfile)
+            print('done')
 
         return output
 
