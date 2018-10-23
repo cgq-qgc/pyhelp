@@ -14,7 +14,7 @@ conditions required to compute evapotranspiration and runoff, and the soil and
 design data needed to compute infiltration, subrunoff, and groundwater
 recharge.
 
-The input data must be formatted and saved as coma-separated text files
+The input data must be formatted and saved in four coma-separated text files
 in the working directory of PyHelp with the following names:
 
 - 1. :file:`precip_input_data.csv` for daily precipitation in mm
@@ -105,20 +105,21 @@ The geomatics data required to run HELP calculations for each cell of
 the grid must be formatted and saved in the working directory as a
 coma-separated text file named :file:`grid_input.csv`.
 An example of correctly formatted input grid data file is shown in
-:numref:`grid_datafile_example`.
-:numref:`table_grid_field_desc` presents the required information that must be
-provided for each cell of the grid in the input grid data file.
+:numref:`grid_datafile_example` and :numref:`table_grid_field_desc` presents
+the required information that must be provided for each cell of the grid in
+the input grid data file.
 Note that the name of the fields must be respected faithfully in the data
-header of the file, as well as the units of the data.
+header of the file :file:`grid_input.csv`, as well as the units of
+the data.
 
 The field `run` is used to identify cells that must be run with HELP. All 
 cells with a `run` value of 0 are skipped when executing
-:meth:`pyhelp.HelpManager.calc_help_cells`. The method 
+:meth:`pyhelp.HelpManager.calc_help_cells`. Moreover, the method 
 :meth:`pyhelp.HelpManager.get_run_cellnames` can be used to get a list of cell
 ids for wich the `run` value is 1.
 The field `context` is used to identify cells that are consisered to be
-located in surface water bodies. It is also used to identify cells that are
-located near a stream, in urban areas, and cells for which data are
+located in surface water bodies. This field is also used to identify cells
+that are located near a stream, in urban areas, and cells for which data are
 incomplete.
 
 In addition, any field can be added to the grid for cell selection purpose.
@@ -196,16 +197,14 @@ the calibration of the model.
    | run          |                 | Identify cells that need to be run with|
    |              |                 | the HELP model                         |
    +--------------+-----------------+----------------------------------------+
-   | context      |                 | Identify cells by context:             |
-   |              |                 |                                        |
-   |              |                 | 0. Water cell                          |
-   |              |                 | 1. Normal cell                         |
-   |              |                 | 2. Stream edge cell with superficial   |
-   |              |                 |    hypodermic runoff                   |
-   |              |                 | 3. River edge cell with deep           |
-   |              |                 |    hypodermic runoff                   |
-   |              |                 | 4. Urban cell                          |
-   |              |                 | 5. Cell not mapped                     |
+   | context      |                 | Identify cells by context (            |
+   |              |                 | 0 - Water cell,  1 - Normal cell,      |
+   |              |                 | 2 - Stream edge cell with superficial  |
+   |              |                 | hypodermic runoff,                     |
+   |              |                 | 3 - River edge cell with deep          |
+   |              |                 | hypodermic runoff,                     |
+   |              |                 | 4 - Urban cell,                        |
+   |              |                 | 5 - Cell not mapped)                   |
    +--------------+-----------------+----------------------------------------+
 
 Example
