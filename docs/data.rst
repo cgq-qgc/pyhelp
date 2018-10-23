@@ -101,6 +101,113 @@ Please consult the documentation of each method for more details.
 Format of the grid input data
 ---------------------------------
 
+The geomatics data required to run HELP calculations for each cell of
+the grid must be formatted and saved in the working directory as a
+coma-separated text file named :file:`grid_input.csv`.
+An example of correctly formatted input grid data file is shown in
+:numref:`grid_datafile_example`.
+:numref:`table_grid_field_desc` presents the required information that must be
+provided for each cell of the grid in the input grid data file.
+Note that the name of the fields must be respected faithfully in the data
+header of the file, as well as the units of the data.
+
+The field `run` is used to identify cells that must be run with HELP. All 
+cells with a `run` value of 0 are skipped when executing
+:meth:`pyhelp.HelpManager.calc_help_cells`. The method 
+:meth:`pyhelp.HelpManager.get_run_cellnames` can be used to get a list of cell
+ids for wich the `run` value is 1.
+The field `context` is used to identify cells that are consisered to be
+located in surface water bodies. It is also used to identify cells that are
+located near a stream, in urban areas, and cells for which data are
+incomplete.
+
+In addition, any field can be added to the grid for cell selection purpose.
+For example, a field could be added to faciliate the selection of cells
+by watershed or region. These selection fields are particularly useful for
+the calibration of the model.
+
+.. _grid_datafile_example:
+.. figure:: img/grid_input_data.*
+    :align: center
+    :width: 85%
+    :alt: grid_input_datafile_example.png
+    :figclass: align-center
+
+    Example of a correctly formatted grid input data file.
+
+.. _table_grid_field_desc:
+.. table:: Field description of the :file:`grid_input.csv`
+   :widths: auto
+
+   +--------------+-----------------+----------------------------------------+
+   | Field Name   | Units           | Description                            |
+   +==============+=================+========================================+
+   | cid          |                 | Unique cell ID                         |
+   +--------------+-----------------+----------------------------------------+
+   | lat_dd       | Decimal degrees | Latitude of the cell centroid          |
+   +--------------+-----------------+----------------------------------------+
+   | lon_dd       | Decimal degrees | Longitude of the cell centroid         |
+   +--------------+-----------------+----------------------------------------+
+   | wind         | km/h            | Average annual wind speed              |
+   +--------------+-----------------+----------------------------------------+
+   | hum1         | %               | Average quaterly relative humidity     |
+   |              |                 | (jan to mar)                           |
+   +--------------+-----------------+----------------------------------------+
+   | hum2         | %               | Average quaterly relative humidity ()  |
+   |              |                 | (apr to jun)                           |
+   +--------------+-----------------+----------------------------------------+
+   | hum3         | %               | Average quaterly relative humidity     |
+   |              |                 | (jul to sep)                           |
+   +--------------+-----------------+----------------------------------------+
+   | hum4         | %               | Average quaterly relative humidity     |
+   |              |                 | (oct to dec)                           |
+   +--------------+-----------------+----------------------------------------+
+   | growth_start | Julian day      | First day of the growing season        |
+   +--------------+-----------------+----------------------------------------+
+   | growth_start | Julian day      | Last day of the growing season         |
+   +--------------+-----------------+----------------------------------------+
+   | LAI          |                 | Maximum leaf area index                |
+   +--------------+-----------------+----------------------------------------+
+   | EZD          | cm              | Evaporative zone depth                 |
+   +--------------+-----------------+----------------------------------------+
+   | CN           |                 | Curve Number                           |
+   +--------------+-----------------+----------------------------------------+
+   | nlayer       |                 | Number of hydrostratigraphic layers in |
+   |              |                 | the soil profile at cell cid           |
+   +--------------+-----------------+----------------------------------------+
+   | lay_type{i}  |                 | Type of HELP layer of the ith soil     |
+   |              |                 | layer                                  |
+   +--------------+-----------------+----------------------------------------+
+   | thick{i}     |cm               | Thickness of the ith soil layer        |
+   +--------------+-----------------+----------------------------------------+
+   | poro{i}      | m³/m³           | Total porosity of the ith soil layer   |
+   +--------------+-----------------+----------------------------------------+
+   | fc{i}        | m³/m³           | Field capacity of the ith soil layer   |
+   +--------------+-----------------+----------------------------------------+
+   | wp{i}        | m³/m³           | Wilting point of the ith soil layer    |
+   +--------------+-----------------+----------------------------------------+
+   | ksat         | cm/s            | Saturated hydraulic conductivity of    |
+   |              |                 | the ith soil layer                     |
+   +--------------+-----------------+----------------------------------------+
+   | dist_dr      | m               | Distance to discharge                  |
+   +--------------+-----------------+----------------------------------------+
+   | slope        | %               | Average slope                          |
+   +--------------+-----------------+----------------------------------------+
+   | run          |                 | Identify cells that need to be run with|
+   |              |                 | the HELP model                         |
+   +--------------+-----------------+----------------------------------------+
+   | context      |                 | Identify cells by context:             |
+   |              |                 |                                        |
+   |              |                 | 0. Water cell                          |
+   |              |                 | 1. Normal cell                         |
+   |              |                 | 2. Stream edge cell with superficial   |
+   |              |                 |    hypodermic runoff                   |
+   |              |                 | 3. River edge cell with deep           |
+   |              |                 |    hypodermic runoff                   |
+   |              |                 | 4. Urban cell                          |
+   |              |                 | 5. Cell not mapped                     |
+   +--------------+-----------------+----------------------------------------+
+
 Example
 ---------------------------------
 
