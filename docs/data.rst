@@ -15,7 +15,7 @@ design data needed to compute infiltration, subrunoff, and groundwater
 recharge.
 
 The input data must be formatted and saved as coma-separated text files
-in the working directory of PyHelp as:
+in the working directory of PyHelp with the following names:
 
 - 1. :file:`precip_input_data.csv` for daily precipitation in mm
 - 2. :file:`airtemp_input_data.csv` for average air temperature in °C
@@ -23,8 +23,7 @@ in the working directory of PyHelp as:
 - 4. :file:`input_grid.csv` for the grid and geomatics data.
 
 This section presents how to prepare these input data files, either manually
-or automatically with the tools available in PyHelp to do so from various
-existing sources of data.
+or automatically with the tools that are available in PyHelp.
 
 Format of the weather input data
 ---------------------------------
