@@ -51,6 +51,19 @@ Données du Programme de surveillance du climat, Direction générale du suivi
 de l’état de l’environnement, Québec,
 uri: `http://www.mddelcc.gouv.qc.ca/climat/surveillance/produits.htm <http://www.mddelcc.gouv.qc.ca/climat/surveillance/produits.htm>`_.
 
+Paradis, D., Vigneault, H., Lefebvre, R., Savard, M.M., Ballard, J.-M.,
+Qian, B., 2016.
+Groundwater nitrate concentration evolution under climate change and
+agricultural adaptation scenarios: Prince Edward Island, Canada.
+*Earth System Dynamics*, 7, 183-202,
+doi: `10.5194/esd-7-183-2016 <https://www.earth-syst-dynam.net/7/183/2016/>`_.
+
+Rivard, C., Lefebvre, R., Paradis, D., 2014.
+Regional recharge estimation using multiple methods: an application in the
+Annapolis Valley, Nova Scotia (Canada).
+*Environmental Earth Sciences*, 71(3), 1389–1408,
+doi: `10.1007/s12665-013-2545-2 <https://link.springer.com/article/10.1007/s12665-013-2545-2>`_.
+
 Schroeder, P. R., Aziz, N.M, Lloyd, C.M., Zappi, P.A. (1994).
 The Hydrologic Evaluation of Landfill Performance (HELP) Model:
 Engineering Documentation for Version 3. EPA/600/R-94/168b.
