@@ -5,3 +5,4 @@ xlrd
 netcdf4
 h5py
 tables
+matplotlib
