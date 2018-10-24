@@ -29,7 +29,7 @@ class Mock(MagicMock):
         return MagicMock()
 
 
-MOCK_MODULES = ['pyhelp.HELP3O']
+MOCK_MODULES = ['pyhelp.HELP3O', 'pytables']
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
 # -- Project information -----------------------------------------------------
