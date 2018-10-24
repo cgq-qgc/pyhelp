@@ -32,7 +32,7 @@ class HelpOutput(Mapping):
             self.data = {}
             for key in list(hdf5['data'].keys()):
                 if key == 'cid':
-                    self.data[key] = hdf5['data'][key].value.tolist()
+                    self.data[key] = hdf5['data'][key].value.astype(str)
                 else:
                     self.data[key] = hdf5['data'][key].value
             hdf5.close()
