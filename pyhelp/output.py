@@ -8,6 +8,7 @@
 
 
 # ---- Standard Library imports
+import os
 import os.path as osp
 from collections.abc import Mapping
 
@@ -16,8 +17,12 @@ from collections.abc import Mapping
 import matplotlib.pyplot as plt
 import matplotlib.transforms as transforms
 import pandas as pd
+from geopandas import GeoDataFrame
 import numpy as np
 import h5py
+
+# ---- Local imports
+from pyhelp.maps import produce_point_geometry
 
 
 class HelpOutput(Mapping):
@@ -74,6 +79,29 @@ class HelpOutput(Mapping):
         # Save the grid.
         self.grid.to_hdf(path_to_hdf5, key='grid', mode='a')
 
+        print('done')
+
+    def save_to_shp(self, path_to_shp):
+        """
+        Save the grid data and cell yearly average values for each component
+        of the water budget to a shapefile.
+        """
+        print('\rInitialize the shapefile...', end=' ')
+        point_geo = produce_point_geometry(
+            self.grid['lat_dd'].values, self.grid['lon_dd'].values)
+        crs = ("+proj=longlat +ellps=GRS80 +datum=NAD83 "
+               "+towgs84=0,0,0,0,0,0,0 +no_defs")
+        shp = GeoDataFrame(self.grid, crs=crs, geometry=point_geo)
+        print('done')
+        print('\rAdding results to the shapefile...', end=' ')
+        yearly_avg = self.calc_cells_yearly_avg()
+        for key, value in yearly_avg.items():
+            shp.loc[self.data['cid'], key] = value
+        print('done')
+        print('\rSaving data to the shapefile...', end=' ')
+        if not osp.exists(osp.dirname(path_to_shp)):
+            os.makedirs(osp.dirname(path_to_shp))
+        shp.to_file(path_to_shp, driver='ESRI Shapefile')
         print('done')
 
     def calc_area_monthly_avg(self):
@@ -258,3 +286,7 @@ if __name__ == "__main__":
     grid = hout.grid
     hout.plot_area_monthly_avg()
     hout.plot_area_yearly_avg()
+    cells_yearly_avg = hout.calc_cells_yearly_avg()
+
+    shp_fname = "C:/Users/User/pyhelp/example/help_example.shp"
+    hout.save_to_shp(shp_fname)
