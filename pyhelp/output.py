@@ -156,4 +156,4 @@ if __name__ == "__main__":
     hout = HelpOutput(output_fpath)
     data = hout.data
     grid = hout.grid
-    hout.plot_avg_monthly_budget()
+    hout.plot_area_monthly_avg()
