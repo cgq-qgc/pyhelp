@@ -243,7 +243,7 @@ class HelpManager(object):
         self._save_connect_tables()
         print('done')
 
-    def calc_help_cells(self, path_outfile=None, cellnames=None, tfsoil=0):
+    def calc_help_cells(self, path_to_hdf5=None, cellnames=None, tfsoil=0):
         """
         Calcul the water budget for all eligible cells with HELP.
 
@@ -282,15 +282,15 @@ class HelpManager(object):
                                     monthly_out, yearly_out, summary_out,
                                     unit_system, simu_nyear, tfsoil)
 
-        output = run_help_allcells(cellparams)
+        output_data = run_help_allcells(cellparams)
+        output_data = self._post_process_output(output_data)
+        output_grid = self.grid.loc[output_data['cid']]
+        help_output = HelpOutput({'data': output_data, 'grid': output_grid})
+        if path_to_hdf5:
+            help_output.save_to_hdf5(path_to_hdf5)
 
-        if path_outfile:
-            print("Saving results to {}...".format(osp.basename(path_outfile)),
-                  end=" ")
-            savedata_to_hdf5(output, path_outfile)
-            print('done')
+        return help_output
 
-        return output
     def _post_process_output(self, output):
         """
         Format and post-process HELP outputs.
