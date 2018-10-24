@@ -27,7 +27,7 @@ def delete_folder_recursively(dirpath):
             os.remove(filepath)
 
 
-def savedata_to_hdf5(data, hdf5_filename):
+def savedata_to_hdf5(data, hdf5_filename, grid=None):
     """
     Save the data contains in a dictionary into a hdf5 file.
     """
@@ -36,6 +36,12 @@ def savedata_to_hdf5(data, hdf5_filename):
         cellgrp = hdf5file.create_group(str(cid))
         for key in data[cid].keys():
             cellgrp.create_dataset(key, data=data[cid][key])
+
+        if grid is not None:
+            # Add the grid data to the group.
+            row = grid.loc[cid]
+            for key in list(row.keys()):
+                cellgrp.attrs[key] = row[key]
     hdf5file.close()
 
 
