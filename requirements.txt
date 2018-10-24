@@ -6,3 +6,4 @@ netcdf4
 h5py
 tables
 matplotlib
+geopandas
