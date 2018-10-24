@@ -13,13 +13,15 @@ import geopandas as gpd
 import numpy as np
 import os.path as osp
 import os
-from pyhelp.managers import HELPManager
+from pyhelp.managers import HelpManager
+from scipy.stats import linregress
 
-rname = "LAUALL_inputHELP_0416t3_0.15edepth"
+# rname = "LAUALL_inputHELP_0416t3_0.15edepth"
+rname = "BTALL_inputHELP_0416base_0.35edepth"
 figname_sufix = rname
 riv = 2
 
-rootdir = "C:\\Users\\User\\pyhelp\\RADEAU2\\inputHELP_0416"
+rootdir = "C:\\Users\\User\\pyhelp\\RADEAU2\\calage_inputHELP_0416"
 workdir = osp.join(rootdir, rname)
 os.chdir(workdir)
 
@@ -29,7 +31,7 @@ path_surf_output = osp.join(workdir, "surface_%s.out" % rname)
 # %% Load the HELP grid
 
 path_togrid = osp.join(rootdir, 'inputHELP_0416t3.csv')
-helpm = HELPManager(workdir, year_range=(1965, 2014))
+helpm = HelpManager(workdir, year_range=(1965, 2014))
 grid = helpm.load_grid(path_togrid)
 
 # %% Compute yearly values
@@ -365,37 +367,46 @@ bot_margin = 0.7/fheight
 ax.set_position([left_margin, bot_margin,
                  1 - left_margin - right_margin, 1 - top_margin - bot_margin])
 
+# Precipitation
 l1, = ax.plot(years, avg_yearly_precip, marker='o', mec='white', clip_on=False,
-              lw=2)
+              lw=2, color='#1f77b4')
+slope, intercept, r_val, p_val, std_err = linregress(years, avg_yearly_precip)
+ax.plot(years, years * slope + intercept, marker=None, mec='white',
+        clip_on=False, lw=1, dashes=[5, 3], color='#1f77b4')
+print(slope, r_val, r_val**2, p_val, std_err)
+
+# Recharge
 l2, = ax.plot(years, avg_yearly_rechg, marker='o', mec='white', clip_on=False,
-              lw=2)
+              lw=2, color='#ff7f0e')
+slope, intercept, r_val, p_val, std_err = linregress(years, avg_yearly_rechg)
+ax.plot(years, years * slope + intercept, marker=None, mec='white',
+        clip_on=False, lw=1, dashes=[5, 3], color='#ff7f0e')
+print(slope, r_val, r_val**2, p_val, std_err)
+
+# runoff
 l3, = ax.plot(years, avg_yearly_runoff, marker='o', mec='white', clip_on=False,
-              lw=2)
+              lw=2, color='#2ca02c')
+slope, intercept, r_val, p_val, std_err = linregress(years, avg_yearly_runoff)
+ax.plot(years, years * slope + intercept, marker=None, mec='white',
+        clip_on=False, lw=1, dashes=[5, 3], color='#2ca02c')
+print(slope, r_val, r_val**2, p_val, std_err)
+
+# Evapotranspiration
 l4, = ax.plot(years, avg_yearly_evapo, marker='o', mec='white', clip_on=False,
-              lw=2)
+              lw=2, color='#d62728')
+slope, intercept, r_val, p_val, std_err = linregress(years, avg_yearly_evapo)
+ax.plot(years, years * slope + intercept, marker=None, mec='white',
+        clip_on=False, lw=1, dashes=[5, 3], color='#d62728')
+print(slope, r_val, r_val**2, p_val, std_err)
+
+# Subsurface runoff
 l5, = ax.plot(years, avg_yearly_subrun, marker='o', mec='white',
-              clip_on=False, lw=2)
+              clip_on=False, lw=2, color='#9467bd')
+slope, intercept, r_val, p_val, std_err = linregress(years, avg_yearly_subrun)
+ax.plot(years, years * slope + intercept, marker=None, mec='white',
+        clip_on=False, lw=1, dashes=[5, 3], color='#9467bd')
+print(slope, r_val, r_val**2, p_val, std_err)
 
-# Plot the observations
-
-if riv == 2:
-    # Riv. du Chêne
-    base_years = np.array([1980, 1981, 1982, 1983, 1984, np.nan,
-                           2011, 2012, 2013, 2014])
-    base_evapo = [642.6, 498.5, 509.2, 545.8, 331.0, np.nan,
-                  551.2, 593.9, 490.5, 519.4]
-elif riv == 1:
-    # Riv. du Nord
-    base_years = [2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009,
-                  2010, 2011, 2012, 2013, 2014]
-    base_evapo = [424.2, 400.8, 452.1, 517.4, 398.7, 381.4, 380.8, 521.0,
-                  453.5, 262.5, 503.6, 459.4, 572.9, 411.8, 417.6]
-else:
-    base_years = []
-    base_evapo = []
-
-# l6, = ax.plot(base_years, base_evapo, marker='^', mec='white',
-              # clip_on=False, lw=2, linestyle='--')
 
 ax.tick_params(axis='both', direction='out', labelsize=12)
 ax.set_ylabel('Composantes du bilan hydrologique\n(mm/an)',
@@ -418,3 +429,5 @@ legend.draw_frame(False)
 # Figure Title
 
 fig.savefig("bilan_hydro_annuel_%s.pdf" % figname_sufix)
+
+

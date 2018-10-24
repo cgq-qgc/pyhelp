@@ -13,9 +13,9 @@ import pandas as pd
 from geopandas import GeoDataFrame
 from pyhelp.maps import produce_point_geometry
 from pyhelp.managers import load_grid_from_csv
-from pyhelp.postprocessing import add_yrly_avg_to_shp
+from pyhelp.postprocessing import calcul_yearly_averages
 
-rootdir = "C:\\Users\\User\\pyhelp\\RADEAU2\\inputHELP_0416"
+rootdir = "C:\\Users\\User\\pyhelp\\RADEAU2\\calage_inputHELP_0416"
 
 # %% Load the HELP grid
 
