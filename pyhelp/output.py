@@ -52,4 +52,27 @@ class HelpOutput(Mapping):
     def __len__(self):
         return len(self.data['cid'])
 
+    def save_to_hdf5(self, path_to_hdf5):
+        """Save the data and grid to a HDF5 file at the specified location."""
+        print("Saving data to {}...".format(osp.basename(path_to_hdf5)),
+              end=" ")
+
+        # Save the data.
+        hdf5file = h5py.File(path_to_hdf5, mode='w')
+        datagrp = hdf5file.create_group('data')
+        for key in list(self.data.keys()):
+            if key == 'cid':
+                # This is required to avoid a "TypeError: No conversion path
+                # for dtype: dtype('<U5')".
+                # See https://github.com/h5py/h5py/issues/289
+                datagrp.create_dataset(
+                    key, data=[np.string_(i) for i in self.data['cid']])
+            else:
+                datagrp.create_dataset(key, data=self.data[key])
+        hdf5file.close()
+
+        # Save the grid.
+        self.grid.to_hdf(path_to_hdf5, key='grid', mode='a')
+
+        print('done')
 
