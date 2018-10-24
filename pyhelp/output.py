@@ -105,6 +105,19 @@ class HelpOutput(Mapping):
         keys = list(monthly_avg.keys())
         return {key: np.sum(monthly_avg[key], axis=1) for key in keys}
 
+    def calc_cells_yearly_avg(self):
+        """
+        Calcul water budget average yearly values for each cell.
+
+        Return a dictionary that contains a numpy array for each
+        component of the water budget with average values calculated for
+        each cell for which data are available.
+        """
+        keys = ['precip', 'runoff', 'evapo', 'perco',
+                'subrun1', 'subrun2', 'rechg']
+        return {key: np.mean(np.sum(self.data[key], axis=2), axis=1)
+                for key in keys}
+
     def plot_area_monthly_avg(self, figname=None):
         """
         Plot water budget average monthly values for the study area.

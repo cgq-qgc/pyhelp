@@ -1,5 +1,12 @@
 connect_table.npy
 
+# Shapefiles
+*.cpg
+*.dbf
+*.prj
+*.shp
+*.shx
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *$py.class
