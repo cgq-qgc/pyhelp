@@ -14,7 +14,9 @@ Utilities
 Calcul
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 .. automethod:: pyhelp.output.HelpOutput.calc_area_monthly_avg
+.. automethod:: pyhelp.output.HelpOutput.calc_area_yearly_avg
 
 Plot
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 .. automethod:: pyhelp.output.HelpOutput.plot_area_monthly_avg
+.. automethod:: pyhelp.output.HelpOutput.plot_area_yearly_avg

@@ -31,6 +31,11 @@ helpm.build_help_input_files()
 help_output_hdf5 = osp.join(workdir, 'help_example.out')
 output_help = helpm.calc_help_cells(help_output_hdf5, tfsoil=-3)
 
+# %% Plot some results
+
+output_help.plot_area_monthly_avg()
+output_help.plot_area_yearly_avg
+
 # %% Calculate the yearly water budget for surface water cells.
 
 evp_surf = 650

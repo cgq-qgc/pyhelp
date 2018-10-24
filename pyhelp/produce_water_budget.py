@@ -292,65 +292,6 @@ legend.draw_frame(False)
 
 fig.savefig('calage_'+rname+'.pdf')
 
-# %% Yearly Average Barplot
-
-plt.close('all')
-fwidth, fheight = 8, 6.5
-fig, ax = plt.subplots()
-fig.set_size_inches(fwidth, fheight)
-
-# Setup axe margins :
-
-left_margin = 1.5/fwidth
-right_margin = 0.25/fwidth
-top_margin = 0.5/fheight
-bot_margin = 0.25/fheight
-ax.set_position([left_margin, bot_margin,
-                 1 - left_margin - right_margin, 1 - top_margin - bot_margin])
-
-l1 = ax.bar(1, np.mean(avg_yearly_precip), 0.85, align='center')
-l2 = ax.bar(2, np.mean(avg_yearly_rechg), 0.85, align='center')
-l3 = ax.bar(3, np.mean(avg_yearly_runoff), 0.85, align='center')
-l4 = ax.bar(4, np.mean(avg_yearly_evapo), 0.85, align='center')
-l5 = ax.bar(5, np.mean(avg_yearly_subrun), 0.85, align='center')
-ax.axis(ymin=0, ymax=1400, xmin=0, xmax=6)
-ax.grid(axis='y', color=[0.35, 0.35, 0.35], ls='-', lw=0.5)
-ax.set_axisbelow(True)
-
-ax.text(1, np.mean(avg_yearly_precip)+10,
-        "%d\nmm/an" % np.mean(avg_yearly_precip), ha='center', va='bottom')
-ax.text(2, np.mean(avg_yearly_rechg)+10,
-        "%d\nmm/an" % np.mean(avg_yearly_rechg), ha='center', va='bottom')
-ax.text(3, np.mean(avg_yearly_runoff)+10,
-        "%d\nmm/an" % np.mean(avg_yearly_runoff), ha='center', va='bottom')
-ax.text(4, np.mean(avg_yearly_evapo)+10,
-        "%d\nmm/an" % np.mean(avg_yearly_evapo), ha='center', va='bottom')
-ax.text(5, np.mean(avg_yearly_subrun)+10,
-        "%d\nmm/an" % np.mean(avg_yearly_subrun), ha='center', va='bottom')
-
-ax.tick_params(axis='y', direction='out', labelsize=12)
-ax.tick_params(axis='x', direction='out', length=0)
-ax.set_ylabel('Composantes du bilan hydrologique\n(mm/an)',
-              fontsize=16, labelpad=10)
-
-ax.set_xticklabels([])
-
-lines = [l1, l2, l3, l4, l5]
-labels = ["Précipitations totales", "Recharge au roc",
-          "Ruissellement de surface", "Évapotranspiration",
-          "Ruissellement hypodermique"]
-legend = ax.legend(lines, labels, numpoints=1, fontsize=12,
-                   borderaxespad=0, loc='upper right', borderpad=0.5,
-                   bbox_to_anchor=(1, 1), ncol=2)
-legend.draw_frame(False)
-
-# Add a graph title.
-offset = transforms.ScaledTranslation(0/72, 12/72, fig.dpi_scale_trans)
-ax.text(0.5, 1, figname_sufix, fontsize=16, ha='center', va='bottom',
-        transform=ax.transAxes+offset)
-
-fig.savefig("hist_bilan_hydro_moyen_annuel_%s.pdf" % figname_sufix)
-
 # %% Yearly averages time series
 
 

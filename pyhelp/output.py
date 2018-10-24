@@ -82,7 +82,8 @@ class HelpOutput(Mapping):
 
         Return a dictionary that contains a 2D numpy array for each
         component of the water budget with average values calculated over
-        the study area for each month of the year.
+        the study area for each month of every year for which data is
+        available.
         """
         Np = len(self.data['cid']) - len(self.data['idx_nan'])
         keys = ['precip', 'runoff', 'evapo', 'perco',
@@ -91,6 +92,18 @@ class HelpOutput(Mapping):
             return {key: np.zeros((1, 12)) for key in keys}
         else:
             return {key: np.nansum(self.data[key], axis=0)/Np for key in keys}
+
+    def calc_area_yearly_avg(self):
+        """
+        Calcul water budget average yearly values for the study area.
+
+        Return a dictionary that contains a numpy array for each
+        component of the water budget with average values calculated over
+        the study area for every year for which data is available.
+        """
+        monthly_avg = self.calc_area_monthly_avg()
+        keys = list(monthly_avg.keys())
+        return {key: np.sum(monthly_avg[key], axis=1) for key in keys}
 
     def plot_area_monthly_avg(self, figname=None):
         """
@@ -150,6 +163,80 @@ class HelpOutput(Mapping):
         # if figname is not None:
         #     fig.savefig('bilan_hydro_mensuel_%s.pdf' % figname_sufix)
 
+    def plot_area_yearly_avg(self):
+        """
+        Plot water budget average yearly values for the study area.
+
+        Plot the yearly average values calculated for each component of the
+        water budget for the entire study area.
+        """
+        fwidth, fheight = 8, 6.5
+        fig, ax = plt.subplots()
+        fig.set_size_inches(fwidth, fheight)
+
+        # Setup axe margins.
+        left_margin = 1.5/fwidth
+        right_margin = 0.25/fwidth
+        top_margin = 0.5/fheight
+        bot_margin = 0.25/fheight
+        ax.set_position([left_margin, bot_margin,
+                         1 - left_margin - right_margin,
+                         1 - top_margin - bot_margin])
+
+        avg_yearly = self.calc_area_yearly_avg()
+        avg_yearly_precip = np.mean(avg_yearly['precip'])
+        avg_yearly_rechg = np.mean(avg_yearly['rechg'])
+        avg_yearly_runoff = np.mean(avg_yearly['runoff'])
+        avg_yearly_evapo = np.mean(avg_yearly['evapo'])
+        avg_yearly_subrun1 = np.mean(avg_yearly['subrun1'])
+        avg_yearly_subrun2 = np.mean(avg_yearly['subrun2'])
+
+        l1 = ax.bar(1, avg_yearly_precip, 0.85, align='center')
+        l2 = ax.bar(2, avg_yearly_rechg, 0.85, align='center')
+        l3 = ax.bar(3, avg_yearly_runoff, 0.85, align='center')
+        l4 = ax.bar(4, avg_yearly_evapo, 0.85, align='center')
+        l5 = ax.bar(5, avg_yearly_subrun1, 0.85, align='center')
+        l6 = ax.bar(6, avg_yearly_subrun2, 0.85, align='center')
+
+        ax.axis(ymin=0, ymax=1200, xmin=0, xmax=7)
+        ax.grid(axis='y', color=[0.35, 0.35, 0.35], ls='-', lw=0.5)
+        ax.set_axisbelow(True)
+
+        ax.text(1, avg_yearly_precip + 10, "%d\nmm/an" % avg_yearly_precip,
+                ha='center', va='bottom')
+        ax.text(2, avg_yearly_rechg + 10, "%d\nmm/an" % avg_yearly_rechg,
+                ha='center', va='bottom')
+        ax.text(3, avg_yearly_runoff + 10, "%d\nmm/an" % avg_yearly_runoff,
+                ha='center', va='bottom')
+        ax.text(4, avg_yearly_evapo + 10, "%d\nmm/an" % avg_yearly_evapo,
+                ha='center', va='bottom')
+        ax.text(5, avg_yearly_subrun1 + 10, "%d\nmm/an" % avg_yearly_subrun1,
+                ha='center', va='bottom')
+        ax.text(6, avg_yearly_subrun2 + 10, "%d\nmm/an" % avg_yearly_subrun2,
+                ha='center', va='bottom')
+
+        ax.tick_params(axis='y', direction='out', labelsize=12)
+        ax.tick_params(axis='x', direction='out', length=0)
+        ax.set_ylabel('Composantes du bilan hydrologique\n(mm/an)',
+                      fontsize=16, labelpad=10)
+        ax.set_xticklabels([])
+
+        lines = [l1, l2, l3, l4, l5, l6]
+        labels = ["Précipitations totales", "Recharge au roc",
+                  "Ruissellement de surface", "Évapotranspiration",
+                  "Ruissellement hypodermique superficiel",
+                  "Ruissellement hypodermique profond"]
+        legend = ax.legend(lines, labels, numpoints=1, fontsize=12,
+                           borderaxespad=0, loc='upper right', borderpad=0.5,
+                           bbox_to_anchor=(1, 1), ncol=1)
+        legend.draw_frame(False)
+
+        # Add a graph title.
+        offset = transforms.ScaledTranslation(0/72, 12/72, fig.dpi_scale_trans)
+        # ax.text(0.5, 1, figname_sufix, fontsize=16, ha='center', va='bottom',
+                # transform=ax.transAxes+offset)
+        # fig.savefig("hist_bilan_hydro_moyen_annuel_%s.pdf" % figname_sufix)
+
 
 if __name__ == "__main__":
     output_fpath = "C:/Users/User/pyhelp/example/help_example.out"
@@ -157,3 +244,4 @@ if __name__ == "__main__":
     data = hout.data
     grid = hout.grid
     hout.plot_area_monthly_avg()
+    hout.plot_area_yearly_avg()
