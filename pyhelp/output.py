@@ -15,19 +15,33 @@ from collections.abc import Mapping
 # ---- Third party imports
 import matplotlib.pyplot as plt
 import matplotlib.transforms as transforms
+import pandas as pd
 import numpy as np
 import h5py
 
 
 class HelpOutput(Mapping):
-    def __init__(self, help_output):
+    def __init__(self, path_or_dict):
         super(HelpOutput, self).__init__()
-        if isinstance(help_output, dict):
-            self.store = help_output
-        elif isinstance(help_output, str) and osp.exists(help_output):
-            self.store = h5py.File(help_output, mode='r+')
+        if isinstance(path_or_dict, dict):
+            self.data = path_or_dict['data']
+            self.grid = path_or_dict['grid']
+        elif isinstance(path_or_dict, str) and osp.exists(path_or_dict):
+            # Load the data from an HDF5 file saved on disk.
+            hdf5 = h5py.File(path_or_dict, mode='r+')
+            self.data = {}
+            for key in list(hdf5['data'].keys()):
+                if key == 'cid':
+                    self.data[key] = hdf5['data'][key].value.tolist()
+                else:
+                    self.data[key] = hdf5['data'][key].value
+            hdf5.close()
 
-        self.avg_monthly = self.calc_area_monthly_avg()
+            # Load the grid from an HDF5 file saved on disk.
+            self.grid = pd.read_hdf(path_or_dict, 'grid')
+        else:
+            self.data = None
+            self.grid = None
 
     def __getitem__(self):
         pass
@@ -36,5 +50,6 @@ class HelpOutput(Mapping):
         pass
 
     def __len__(self):
-        pass
+        return len(self.data['cid'])
+
 
