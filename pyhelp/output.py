@@ -76,3 +76,19 @@ class HelpOutput(Mapping):
 
         print('done')
 
+    def calc_area_monthly_avg(self):
+        """
+        Calcul water budget average monthly values over the study area.
+
+        Return a dictionary that contains a 2D numpy array for each
+        component of the water budget with average values calculated over
+        the study area for each month of the year.
+        """
+        Np = len(self.data['cid']) - len(self.data['idx_nan'])
+        keys = ['precip', 'runoff', 'evapo', 'perco',
+                'subrun1', 'subrun2', 'rechg']
+        if self.data is None:
+            return {key: np.zeros((1, 12)) for key in keys}
+        else:
+            return {key: np.nansum(self.data[key], axis=0)/Np for key in keys}
+
