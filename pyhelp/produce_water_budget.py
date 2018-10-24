@@ -349,56 +349,6 @@ ax.text(0.5, 1, figname_sufix, fontsize=16, ha='center', va='bottom',
 
 fig.savefig("hist_bilan_hydro_moyen_annuel_%s.pdf" % figname_sufix)
 
-# %% bilan_hydro_mensuel_
-
-plt.close('all')
-fwidth, fheight = 9, 6.5
-fig, ax = plt.subplots()
-fig.set_size_inches(fwidth, fheight)
-
-# Setup axe margins :
-
-left_margin = 1.5/fwidth
-right_margin = 0.25/fwidth
-top_margin = 1/fheight
-bot_margin = 0.7/fheight
-ax.set_position([left_margin, bot_margin,
-                 1 - left_margin - right_margin, 1 - top_margin - bot_margin])
-
-months = range(1, 13)
-l1, = ax.plot(months, np.mean(avg_monthly_precip, axis=0)/(Np-len(nan_cells)),
-              marker='o', mec='white', clip_on=False, lw=2)
-l2, = ax.plot(months, np.mean(avg_monthly_rechg, axis=0)/(Np-len(nan_cells)),
-              marker='o', mec='white', clip_on=False, lw=2)
-l3, = ax.plot(months, np.mean(avg_monthly_runoff, axis=0)/(Np-len(nan_cells)),
-              marker='o', mec='white', clip_on=False, lw=2)
-l4, = ax.plot(months, np.mean(avg_monthly_evapo, axis=0)/(Np-len(nan_cells)),
-              marker='o', mec='white', clip_on=False, lw=2)
-l5, = ax.plot(months, np.mean(avg_monthly_subrun, axis=0)/(Np-len(nan_cells)),
-              marker='o', mec='white', clip_on=False, lw=2)
-l6, = ax.plot(months, np.mean(avg_monthly_perco, axis=0)/(Np-len(nan_cells)),
-              marker='o', mec='white', clip_on=False, lw=2)
-
-ax.set_ylabel('Composantes du bilan hydrologique\n(mm/mois)',
-              fontsize=16, labelpad=10)
-ax.set_xlabel('Mois', fontsize=16, labelpad=10)
-ax.axis(ymin=-5, ymax=140)
-ax.grid(axis='both', color=[0.35, 0.35, 0.35], ls='-', lw=0.5)
-ax.set_xticks(months)
-ax.set_xticklabels(['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû',
-                    'Sep', 'Oct', 'Nov', 'Déc'])
-ax.tick_params(axis='both', direction='out', labelsize=12)
-
-lines = [l1, l2, l3, l4, l5, l6]
-labels = ["Précipitations totales", "Recharge au roc",
-          "Ruissellement de surface", "Évapotranspiration",
-          "Ruissellement hypodermique", "Percolation"]
-legend = ax.legend(lines, labels, numpoints=1, fontsize=12,
-                   borderaxespad=0, loc='lower left', borderpad=0.5,
-                   bbox_to_anchor=(0, 1), ncol=2)
-legend.draw_frame(False)
-fig.savefig('bilan_hydro_mensuel_%s.pdf' % figname_sufix)
-
 # %% Yearly averages time series
 
 
