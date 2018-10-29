@@ -213,8 +213,8 @@ class HelpOutput(Mapping):
         """
         Plot water budget average yearly values for the study area.
 
-        Plot the yearly average values calculated for each component of the
-        water budget for the entire study area.
+        Plot the average yearly values of the water budget calculated over
+        the whole study area.
         """
         fwidth, fheight = 8, 6.5
         fig, ax = plt.subplots()
@@ -284,6 +284,12 @@ class HelpOutput(Mapping):
         # fig.savefig("hist_bilan_hydro_moyen_annuel_%s.pdf" % figname_sufix)
 
     def plot_area_yearly_series(self):
+        """
+        Plot water budget yearly values for the study area.
+
+        Plot the yearly values of the water budget calculated over the whole
+        study area.
+        """
         fwidth, fheight = 9, 6.5
         fig, ax = plt.subplots()
         fig.set_size_inches(fwidth, fheight)
