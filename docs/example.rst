@@ -1,25 +1,38 @@
 Example
 =================================
 
-This example shows how to use PyHelp to calculate the monthly water balance
-of the North River watershed in the Laurentians, Quebec, Canada.
+This example shows how to use PyHELP to calculate the monthly water balance
+for a section of the Rivière du Nord watershed in the Laurentians, Quebec,
+Canada (see :numref:`north_river_locmap`).
 The study area is about 1160 |_| km² and is divided in a grid of 18 |_| 383
 cells of 250 |_| m x 250 |_| m.
 The input data required to run the calculations are available in the
-folder `example`_ that is distributed with the PyHelp module. Calculations
+folder `example`_ that is distributed with the PyHELP module. Calculations
 for the whole area takes less than 10 |_| minutes on an Intel i7-7700HQ
 dual Core @ 2.80GHz.
+
+.. _north_river_locmap:
+.. figure:: img/north_river_locmap.*
+    :align: center
+    :width: 65%
+    :alt: north_river_locmap.png
+    :figclass: align-center
+
+    Location map of the study area.
+
+Intialization and execution
+-----------------------------------
 
 The first step is to import and create an instance of the
 :class:`~pyhelp.HelpManager` class.
 When doing so, we need to pass as argument a path to a working directory.
 The working directory is where the input, output and temporary files are read
-and saved by default by the :class:`~pyhelp.HelpManager`.
+and saved by default in PyHELP.
 It must be a location where you have `Write and Read` permissions.
 The working directory can be changed at any time with the
 :meth:`~pyhelp.HelpManager.set_workdir` method.
 Here, we will use the path to the folder `example`_ that is distributed with
-the PyHelp module.
+the PyHELP module.
 
     >>> import os.path as osp
     >>> from pyhelp import HelpManager
@@ -29,20 +42,23 @@ the PyHelp module.
     Reading input weather data files... done
 
 During the initialization or when setting a new working directory with
-:meth:`~pyhelp.HelpManager.set_workdir`, :class:`~pyhelp.HelpManager`
-automatically looks in the specified directory and loads the input
-data grid and weather data from any valid existing input files.
-All input data files required for the calculation in this example are
-available in the folder `example`_.
+:meth:`~pyhelp.HelpManager.set_workdir`, the :class:`~pyhelp.HelpManager`
+automatically looks in the specified directory and loads the geomatics
+and weather data from any valid existing input files.
+For the purposes of this example, all input data files required for the
+calculation in this example are provided in the folder `example`_.
 Please read the :ref:`sec_data_input` section for more details on how
 to prepare the input data files manually or with the tools available to
-generate these files automatically from other existing sources of data.
+generate these files automatically from one of the supported sources of
+existing data.
 
-Once :class:`~pyhelp.HelpManager` has been instantiated and the input
-data grid and weather data loaded successfully, the D4, D7, D10, D11, and D13
-input data files need to be generated for each cell of the grid
-These files are required by the HELP model to run and they can be
-automatically generated from the input grid and weather data by doing ::
+Once an instance of the :class:`~pyhelp.HelpManager` has been created and
+the input data have been loaded successfully, the D4, D7, D10, D11, and D13
+input data files need to be generated for each cell of the grid.
+These files are the basic input files that are required by the HELP model
+to run.
+They can be automatically generated from the input grid and weather data with
+this command::
 
     >>> helpm.build_help_input_files()
     Clearing HELP input files cache... done
@@ -59,23 +75,86 @@ automatically generated from the input grid and weather data by doing ::
     Updating the connection table... done
 
 Note that by default, these files are saved in the folder `help_input_files`
-of the working directory.
+in the working directory.
 
 We can now use our manager to calculate the monthly water budget for each
-cell of the grid by doing ::
+cell of the grid by doing::
 
     >>> help_output_hdf5 = osp.join(workdir, 'help_example.out')
-    >>> output_help = helpm.calc_help_cells(help_output_hdf5, tfsoil=-3)
+    >>> output = helpm.calc_help_cells(help_output_hdf5, tfsoil=-3)
     HELP simulation in progress: 100.0% (0.0 min remaining)     
-    Task completed in 1.29 sec
+    Task completed in 388.95 sec
+    Post-processing cell 17178 of 17178... done
+    Saving data to help_example.out... done
+
+The :meth:`~pyhelp.HelpManager.calc_help_cells` method returns a 
+:class:`~pyhelp.output.HelpOutput` object that can be used to do various
+operations on the data (see the following section).
+In addition, because we provided in arguments a file name to the 
+:meth:`~pyhelp.HelpManager.calc_help_cells` method, the results are saved
+automatically on the disk at the specified location in a `HDF5`_ format.
+Note also that the results contained in an :class:`~pyhelp.output.HelpOutput`
+object can be saved at a later time to an HDF5 file with the
+:meth:`~pyhelp.output.HelpOutput.save_to_hdf5` method.
+
+Previously saved results saved to disk in an HDF5 format can be loaded from
+the disk by doing::
+
+    >>> from pyhelp.output import HelpOutput
+    >>> output = HelpOutput(help_output_hdf5)
+
+Post-processing and plots
+-----------------------------------
+
+The :class:`~pyhelp.output.HelpOutput` object can be used to export the
+data to an `ESRI Shapefile`_ with the following command::
+
+    >>>  help_output_shp = osp.join(workdir, 'help_example.shp')
+    >>>  output.save_to_shp(help_output_shp)
+    Initialize the shapefile... done
+    Adding results to the shapefile... done
+    Saving data to the shapefile... done
+
+The shapefile contains a layer with the average yearly values of each component
+of the water budget calculated for each cell of the grid.
+In addition, the input data provided in the :file:`input_grid.csv` are saved
+in the shapefile along with the results.
+
+The :class:`~pyhelp.output.HelpOutput` object can also be used to produce
+various plots from the results::
+
+    >>>  output.plot_area_monthly_avg()
+    >>>  output.plot_area_yearly_avg()
+    >>>  output.plot_area_yearly_avg()
+
+.. image:: img/area_monthly_avg.*
+    :align: center
+    :width: 50%
+    :alt: area_monthly_avg.png
+
+|
+
+.. image:: img/area_yearly_avg.*
+    :align: center
+    :width: 50%
+    :alt: area_yearly_avg.png
+
+|
+
+.. image:: img/area_yearly_series.*
+    :align: center
+    :width: 50%
+    :alt: area_yearly_series.png
     
-The :meth:`~pyhelp.HelpManager.calc_help_cells` method returns a dictionary
-with monthtly values of the water budget components for every cell of the
-grid. Also, since we passed a hdf5 file name as argument, the data are also
-saved in a HDF5 file, with the same structure as the `output_help` dict.
-    
-Similarly, yearly values of the surface water budget can be calculated for 
-the cells that are assumed to be located in surface water bodies by doing ::
+Surface water cells
+-----------------------------------
+
+The monthly water budget for the cells in the grid that are assumed to be
+located in surface water bodies (cells with a `context` value of 0 in
+the :file:`input_data.csv`) is currently not computed by the
+:meth:`~pyhelp.HelpManager.calc_help_cells` method.
+Instead, the yearly water budget can be calculated for these cells
+by doing::
 
     >>> evp_surf = 650
     >>> surf_output_hdf5 = osp.join(workdir, 'surf_example.out')
@@ -86,13 +165,16 @@ the cells that are assumed to be located in surface water bodies by doing ::
 The :meth:`~pyhelp.HelpManager.calc_surf_water_cells` method returns a
 dictionary with yearly values of the water budget components for every cell
 of the grid that is assumed to be located in surface water bodies.
+In addition, if a path to a filename is provided, the results will be save
+automatically to the disk in a HDF5 file.
 
-Various scripts are avaible in `postprocessing.py`, `produce_help_maps.py`, 
-`produce_meteo_maps.py`, and `produce_water_budget.py`
-to produce a shapefile and various graphs from the results. Note that
-the code in these files are in an early stage of development and are subject
-to change without notice in the near futur.
+.. warning :: This feature will undergo major changes in future versions.
+              Please consult `PyHELP Issue #10`_ to follow our progress on
+              this topic.
 
 .. _example: https://github.com/jnsebgosselin/pyhelp/tree/master/example
+.. _HDF5: https://www.hdfgroup.org/solutions/hdf5/
+.. _ESRI Shapefile: https://docs.qgis.org/2.8/en/docs/user_manual/working_with_vector/supported_data.html#esri-shapefiles
 .. |_| unicode:: 0xA0 
    :trim:
+.. _PyHELP Issue #10: https://github.com/jnsebgosselin/pyhelp/issues/10
