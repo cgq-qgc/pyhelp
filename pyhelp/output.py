@@ -20,6 +20,7 @@ import pandas as pd
 from geopandas import GeoDataFrame
 import numpy as np
 import h5py
+from scipy.stats import linregress
 
 # ---- Local imports
 from pyhelp.maps import produce_point_geometry
@@ -104,6 +105,8 @@ class HelpOutput(Mapping):
         shp.to_file(path_to_shp, driver='ESRI Shapefile')
         print('done')
 
+    # ---- Calcul
+
     def calc_area_monthly_avg(self):
         """
         Calcul water budget average monthly values for the study area.
@@ -145,6 +148,8 @@ class HelpOutput(Mapping):
                 'subrun1', 'subrun2', 'rechg']
         return {key: np.mean(np.sum(self.data[key], axis=2), axis=1)
                 for key in keys}
+
+    # ---- Plots
 
     def plot_area_monthly_avg(self, figname=None):
         """
@@ -224,13 +229,13 @@ class HelpOutput(Mapping):
                          1 - left_margin - right_margin,
                          1 - top_margin - bot_margin])
 
-        avg_yearly = self.calc_area_yearly_avg()
-        avg_yearly_precip = np.mean(avg_yearly['precip'])
-        avg_yearly_rechg = np.mean(avg_yearly['rechg'])
-        avg_yearly_runoff = np.mean(avg_yearly['runoff'])
-        avg_yearly_evapo = np.mean(avg_yearly['evapo'])
-        avg_yearly_subrun1 = np.mean(avg_yearly['subrun1'])
-        avg_yearly_subrun2 = np.mean(avg_yearly['subrun2'])
+        area_yearly_avg = self.calc_area_yearly_avg()
+        avg_yearly_precip = np.mean(area_yearly_avg['precip'])
+        avg_yearly_rechg = np.mean(area_yearly_avg['rechg'])
+        avg_yearly_runoff = np.mean(area_yearly_avg['runoff'])
+        avg_yearly_evapo = np.mean(area_yearly_avg['evapo'])
+        avg_yearly_subrun1 = np.mean(area_yearly_avg['subrun1'])
+        avg_yearly_subrun2 = np.mean(area_yearly_avg['subrun2'])
 
         l1 = ax.bar(1, avg_yearly_precip, 0.85, align='center')
         l2 = ax.bar(2, avg_yearly_rechg, 0.85, align='center')
@@ -273,10 +278,93 @@ class HelpOutput(Mapping):
         legend.draw_frame(False)
 
         # Add a graph title.
-        offset = transforms.ScaledTranslation(0/72, 12/72, fig.dpi_scale_trans)
+        # offset = transforms.ScaledTranslation(0/72, 12/72, fig.dpi_scale_trans)
         # ax.text(0.5, 1, figname_sufix, fontsize=16, ha='center', va='bottom',
                 # transform=ax.transAxes+offset)
         # fig.savefig("hist_bilan_hydro_moyen_annuel_%s.pdf" % figname_sufix)
+
+    def plot_area_yearly_series(self):
+        fwidth, fheight = 9, 6.5
+        fig, ax = plt.subplots()
+        fig.set_size_inches(fwidth, fheight)
+
+        # Setup axe margins.
+        left_margin = 1.5/fwidth
+        right_margin = 0.25/fwidth
+        top_margin = 1./fheight
+        bot_margin = 0.7/fheight
+        ax.set_position([left_margin, bot_margin,
+                         1 - left_margin - right_margin,
+                         1 - top_margin - bot_margin])
+
+        years = self.data['years']
+        yearly_avg = self.calc_area_yearly_avg()
+
+        # Precipitation
+        precip = yearly_avg['precip']
+        l1, = ax.plot(years, precip, marker='o', mec='white',
+                      clip_on=False, lw=2, color='#1f77b4')
+        slope, intercept, r_val, p_val, std_err = linregress(years, precip)
+        ax.plot(years, years * slope + intercept, marker=None, mec='white',
+                clip_on=False, lw=1, dashes=[5, 3], color='#1f77b4')
+
+        # Recharge
+        rechg = yearly_avg['rechg']
+        l2, = ax.plot(years, rechg, marker='o', mec='white', clip_on=False,
+                      lw=2, color='#ff7f0e')
+        slope, intercept, r_val, p_val, std_err = linregress(years, rechg)
+        ax.plot(years, years * slope + intercept, marker=None, mec='white',
+                clip_on=False, lw=1, dashes=[5, 3], color='#ff7f0e')
+
+        # Runoff
+        runoff = yearly_avg['runoff']
+        l3, = ax.plot(years, runoff, marker='o', mec='white', clip_on=False,
+                      lw=2, color='#2ca02c')
+        slope, intercept, r_val, p_val, std_err = linregress(years, runoff)
+        ax.plot(years, years * slope + intercept, marker=None, mec='white',
+                clip_on=False, lw=1, dashes=[5, 3], color='#2ca02c')
+
+        # Evapotranspiration
+        evapo = yearly_avg['evapo']
+        l4, = ax.plot(years, evapo, marker='o', mec='white', clip_on=False,
+                      lw=2, color='#d62728')
+        slope, intercept, r_val, p_val, std_err = linregress(years, evapo)
+        ax.plot(years, years * slope + intercept, marker=None, mec='white',
+                clip_on=False, lw=1, dashes=[5, 3], color='#d62728')
+
+        # Superficial subsurface runoff
+        subrun1 = yearly_avg['subrun1']
+        l5, = ax.plot(years, subrun1, marker='o', mec='white',
+                      clip_on=False, lw=2, color='#9467bd')
+        slope, intercept, r_val, p_val, std_err = linregress(years, subrun1)
+        ax.plot(years, years * slope + intercept, marker=None, mec='white',
+                clip_on=False, lw=1, dashes=[5, 3], color='#9467bd')
+
+        # Superficial subsurface runoff
+        subrun2 = yearly_avg['subrun2']
+        l6, = ax.plot(years, subrun2, marker='o', mec='white',
+                      clip_on=False, lw=2, color='#8c564b')
+        slope, intercept, r_val, p_val, std_err = linregress(years, subrun2)
+        ax.plot(years, years * slope + intercept, marker=None, mec='white',
+                clip_on=False, lw=1, dashes=[5, 3], color='#8c564b')
+
+        ax.tick_params(axis='both', direction='out', labelsize=12)
+        ax.set_ylabel('Composantes du bilan hydrologique\n(mm/an)',
+                      fontsize=16, labelpad=10)
+        ax.set_xlabel('Années', fontsize=16, labelpad=10)
+        ax.axis(ymin=0, ymax=1600)
+        ax.grid(axis='y', color=[0.35, 0.35, 0.35], ls='-', lw=0.5)
+
+        lines = [l1, l2, l3, l4, l5, l6]
+        labels = ["Précipitations totales", "Recharge au roc",
+                  "Ruissellement de surface", "Évapotranspiration",
+                  "Ruissellement hypodermique superficiel",
+                  "Ruissellement hypodermique profond"]
+
+        legend = ax.legend(lines, labels, numpoints=1, fontsize=12,
+                           borderaxespad=0, loc='lower left', borderpad=0.5,
+                           bbox_to_anchor=(0, 1), ncol=2)
+        legend.draw_frame(False)
 
 
 if __name__ == "__main__":
@@ -286,6 +374,7 @@ if __name__ == "__main__":
     grid = hout.grid
     hout.plot_area_monthly_avg()
     hout.plot_area_yearly_avg()
+    hout.plot_area_yearly_series()
     cells_yearly_avg = hout.calc_cells_yearly_avg()
 
     shp_fname = "C:/Users/User/pyhelp/example/help_example.shp"
