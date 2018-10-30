@@ -151,7 +151,11 @@ class HelpOutput(Mapping):
 
     # ---- Plots
 
-    def _setup_figure(fsize=None, margins=None):
+    def _create_figure(fsize=None, margins=None):
+        """
+        Create and return a figure and an axe mpl object using the
+        specified settings.
+        """
         fig, ax = plt.subplots()
 
         # Setup figure size.
@@ -178,7 +182,7 @@ class HelpOutput(Mapping):
         Plot the monthly average values of the water budget in mm/month
         for the whole study area.
         """
-        fig, ax = self._setup_figure(
+        fig, ax = self._create_figure(
             fsize=(9, 6.5), margins=(1.5, 1, 0.25, 0.7))
 
         avg_monthly = self.calc_area_monthly_avg()
@@ -224,7 +228,7 @@ class HelpOutput(Mapping):
         Plot the average yearly values of the water budget in mm/year
         for the whole study area.
         """
-        fig, ax = self._setup_figure(
+        fig, ax = self._create_figure(
             fsize=(8, 6.5), margins=(1.5, 0.5, 0.25, 0.25))
 
         area_yearly_avg = self.calc_area_yearly_avg()
@@ -286,7 +290,7 @@ class HelpOutput(Mapping):
         Plot the yearly values of the water budget in mm/year for the whole
         study area.
         """
-        fig, ax = self._setup_figure(
+        fig, ax = self._create_figure(
             fsize=(9, 6.5), margins=(1.5, 1, 0.25, 0.7))
 
         years = self.data['years']
