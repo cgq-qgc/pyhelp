@@ -27,6 +27,11 @@ from pyhelp.maps import produce_point_geometry
 
 
 class HelpOutput(Mapping):
+    """
+    A container to read and post-process monthly water budget results produced
+    with the :class:`~pyhelp.HelpManager` class.
+    """
+
     def __init__(self, path_or_dict):
         super(HelpOutput, self).__init__()
         if isinstance(path_or_dict, dict):
