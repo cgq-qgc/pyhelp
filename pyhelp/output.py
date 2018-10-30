@@ -151,13 +151,6 @@ class HelpOutput(Mapping):
 
     # ---- Plots
 
-    def plot_area_monthly_avg(self, figname=None):
-        """
-        Plot water budget average monthly values for the study area.
-
-        Plot the monthly average values calculated for each component of the
-        water budget for the entire study area.
-        """
         fwidth, fheight = 9, 6.5
         fig, ax = plt.subplots()
         fig.set_size_inches(fwidth, fheight)
@@ -171,6 +164,11 @@ class HelpOutput(Mapping):
                          1 - left_margin - right_margin,
                          1 - top_margin - bot_margin])
 
+    def plot_area_monthly_avg(self, figname=None):
+        """
+        Plot the monthly average values of the water budget in mm/month
+        for the whole study area.
+        """
         avg_monthly = self.calc_area_monthly_avg()
         months = range(1, 13)
         l1, = ax.plot(months, np.mean(avg_monthly['precip'], axis=0),
@@ -211,10 +209,8 @@ class HelpOutput(Mapping):
 
     def plot_area_yearly_avg(self):
         """
-        Plot water budget average yearly values for the study area.
-
-        Plot the average yearly values of the water budget calculated over
-        the whole study area.
+        Plot the average yearly values of the water budget in mm/year
+        for the whole study area.
         """
         fwidth, fheight = 8, 6.5
         fig, ax = plt.subplots()
@@ -285,9 +281,7 @@ class HelpOutput(Mapping):
 
     def plot_area_yearly_series(self):
         """
-        Plot water budget yearly values for the study area.
-
-        Plot the yearly values of the water budget calculated over the whole
+        Plot the yearly values of the water budget in mm/year for the whole
         study area.
         """
         fwidth, fheight = 9, 6.5
