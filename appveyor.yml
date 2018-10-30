@@ -32,9 +32,11 @@ install:
 
   # set up environment
   - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
+  - conda config --set always_yes yes --set show_channel_urls true --set changeps1 no
+  - conda update -q conda
   - conda config --add channels conda-forge
   - "conda create --quiet --name tests python=%PYTHON_VERSION% --file requirements.txt --file requirements-dev.txt"
-  - "activate tests
+  - "activate tests"
 
 build: false
 
