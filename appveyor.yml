@@ -14,7 +14,7 @@ environment:
 
   matrix:
     - PYTHON_VERSION: "3.6"
-    - MINICONDA: C:\Miniconda36-x64
+      MINICONDA: C:\Miniconda36-x64
     
 init:
 - "ECHO %PYTHON_VERSION% %PYTHON%"
@@ -37,7 +37,7 @@ install:
   - conda update -q conda
   - conda config --add channels conda-forge
   - "conda create --quiet --name tests python=%PYTHON_VERSION% --file requirements.txt --file requirements-dev.txt"
-  - "activate tests"
+  - activate tests
 
 build: false
 
