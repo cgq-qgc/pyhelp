@@ -27,7 +27,7 @@ from affine import Affine
 
 # ---- Local Librairies Import
 
-from help_utils import NetCDFMeteoManager
+from pyhelp.weather_reader import InfoClimatGridReader
 
 dirpath_netcdf = "C:/Users/jsgosselin/MeteoGrilleDaily"
 
@@ -112,7 +112,7 @@ print('\rSaving to Shapefile... done', end=' ')
 
 print('Initializing netcdf manager...', end=' ')
 path_netcdf = "C:/Users/jsgosselin/MeteoGrilleDaily"
-meteo_manager = NetCDFMeteoManager(path_netcdf)
+meteo_manager = InfoClimatGridReader(path_netcdf)
 print('done')
 
 # Read HELP grid shapefile

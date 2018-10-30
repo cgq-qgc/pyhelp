@@ -28,8 +28,20 @@ helpm.load_weather_input_data()
 
 helpm.build_help_input_files()
 
+cellnames = helpm.cellnames
 help_output_hdf5 = osp.join(workdir, 'help_example.out')
-output_help = helpm.calc_help_cells(help_output_hdf5, tfsoil=-3)
+output = helpm.calc_help_cells(help_output_hdf5, cellnames, tfsoil=-3)
+
+# %% Export data to an ESRI shapefile
+
+help_output_shp = osp.join(workdir, 'help_example.shp')
+output.save_to_shp(help_output_shp)
+
+# %% Plot some results
+
+output.plot_area_monthly_avg()
+output.plot_area_yearly_avg()
+output.plot_area_yearly_series()
 
 # %% Calculate the yearly water budget for surface water cells.
 

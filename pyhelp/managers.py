@@ -18,6 +18,7 @@ import time
 
 import numpy as np
 import pandas as pd
+import h5py
 
 # ---- Local Libraries Imports
 
@@ -28,6 +29,7 @@ from pyhelp.utils import (savedata_to_hdf5, calc_dist_from_coord,
 from pyhelp.weather_reader import (
     save_precip_to_HELP, save_airtemp_to_HELP, save_solrad_to_HELP,
     InfoClimatGridReader, generate_input_from_cweeds)
+from pyhelp.output import HelpOutput
 
 
 FNAME_CONN_TABLES = 'connect_table.npy'
@@ -39,7 +41,7 @@ INPUT_GRID_FNAME = 'input_grid.csv'
 
 class HelpManager(object):
     """
-    The :attr:`~pyhelp.HelpManager` is a class whose main purpose
+    The :class:`~pyhelp.HelpManager` is a class whose main purpose
     is to evaluate the component of the hydrologic water budget at the
     regional scale with the HELP model.
     """
@@ -241,7 +243,7 @@ class HelpManager(object):
         self._save_connect_tables()
         print('done')
 
-    def calc_help_cells(self, path_outfile=None, cellnames=None, tfsoil=0):
+    def calc_help_cells(self, path_to_hdf5=None, cellnames=None, tfsoil=0):
         """
         Calcul the water budget for all eligible cells with HELP.
 
@@ -280,15 +282,70 @@ class HelpManager(object):
                                     monthly_out, yearly_out, summary_out,
                                     unit_system, simu_nyear, tfsoil)
 
-        output = run_help_allcells(cellparams)
+        output_data = run_help_allcells(cellparams)
+        output_data = self._post_process_output(output_data)
+        output_grid = self.grid.loc[output_data['cid']]
+        help_output = HelpOutput({'data': output_data, 'grid': output_grid})
+        if path_to_hdf5:
+            help_output.save_to_hdf5(path_to_hdf5)
 
-        if path_outfile:
-            print("Saving results to {}...".format(osp.basename(path_outfile)),
-                  end=" ")
-            savedata_to_hdf5(output, path_outfile)
-            print('done')
+        return help_output
 
-        return output
+    def _post_process_output(self, output):
+        """
+        Format and post-process HELP outputs.
+
+        For each component of the water budget, take the data saved in a dict
+        individually for each cell and generate a single 3D numpy matrix,
+        where the indices i, j, and k corresponds, respectively, to the cells,
+        the years, and the months.
+
+        Also, in the process, convert groundwater recharge to subsurface
+        runoff for cells that are identified as being located next to a stream.
+
+        Return a dict that contains a 3D numpy array with the monthly values
+        for precip, runoff, evapo, perco, subrun1, subrun2, and rechg. The
+        dict also contains lists for the cid (cell id) and years corresponding
+        to the i and j indexes of the 3D numpy arrays. A list with the
+        i indexes where data is nan is also saved in the dict. Nan values
+        are obtained when HELP is not able to do water budget calculations due
+        to lack of data or when there is an error in the input data.
+        """
+        cellnames = list(output.keys())
+        context = self.grid['context'][cellnames].tolist()
+        years = output[cellnames[0]]['years']
+        Np = len(cellnames)
+        Ny = len(years)
+
+        keys = ['precip', 'runoff', 'evapo', 'perco',
+                'subrun1', 'subrun2', 'rechg']
+        data = {key: np.zeros((Np, Ny, 12)) for key in keys}
+        data['cid'] = cellnames
+        data['years'] = years
+        data['idx_nan'] = []
+
+        for i, cellname in enumerate(cellnames):
+            print("\rPost-processing cell %d of %d..." % (i+1, Np), end=' ')
+            for key in keys[:-1]:
+                data[key][i, :, :] = output[cellname][key]
+
+            if np.any(np.isnan(output[cellname]['rechg'])):
+                data['idx_nan'].append(i)
+                data['rechg'][i, :, :] = output[cellname]['rechg']
+            elif context[i] == 2:
+                # Redistribute recharge as subsurface runoff if cell is
+                # located next to a stream.
+                if np.all(output[cellname]['subrun2'] == 0):
+                    # Convert recharge as surficial subsurface runoff.
+                    data['subrun1'][i, :, :] += output[cellname]['rechg']
+                else:
+                    # Convert recharge as deep subsurface runoff.
+                    data['subrun2'][i, :, :] += output[cellname]['rechg']
+            else:
+                data['rechg'][i, :, :] = output[cellname]['rechg']
+        print("done")
+
+        return data
 
     def calc_surf_water_cells(self, evp_surf, path_outfile=None,
                               cellnames=None):

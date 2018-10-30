@@ -140,13 +140,13 @@ def read_monthly_help_output(filename):
         i += 1
 
     data = {'years': np.array(arr_years).astype('uint16'),
-            'rain': np.vstack(vstack_precip),
+            'precip': np.vstack(vstack_precip),
             'runoff': np.vstack(vstack_runoff),
             'evapo': np.vstack(vstack_evapo),
             'subrun1': np.vstack(vstack_subrun1),
             'subrun2': np.vstack(vstack_subrun2),
-            'percolation': np.vstack(vstack_percol),
-            'recharge': np.vstack(vstack_rechg)}
+            'perco': np.vstack(vstack_percol),
+            'rechg': np.vstack(vstack_rechg)}
     return data
 
 
