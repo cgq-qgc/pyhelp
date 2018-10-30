@@ -151,24 +151,36 @@ class HelpOutput(Mapping):
 
     # ---- Plots
 
-        fwidth, fheight = 9, 6.5
+    def _setup_figure(fsize=None, margins=None):
         fig, ax = plt.subplots()
-        fig.set_size_inches(fwidth, fheight)
 
-        # Setup axe margins :
-        left_margin = 1.5/fwidth
-        right_margin = 0.25/fwidth
-        top_margin = 1/fheight
-        bot_margin = 0.7/fheight
+        # Setup figure size.
+        if fsize is not None:
+            fwidth, fheight = fsize
+        else:
+            fwidth, fheight = fig.get_size_inches()
+        fig.set_size_inches(*fsize)
+
+        # Setup axe margins.
+        if margins is not None:
+            left_margin = margins[0]/fwidth
+            top_margin = margins[1]/fheight
+            right_margin = margins[2]/fwidth
+            bot_margin = margins[3]/fheight
         ax.set_position([left_margin, bot_margin,
                          1 - left_margin - right_margin,
                          1 - top_margin - bot_margin])
+
+        return fig, ax
 
     def plot_area_monthly_avg(self, figname=None):
         """
         Plot the monthly average values of the water budget in mm/month
         for the whole study area.
         """
+        fig, ax = self._setup_figure(
+            fsize=(9, 6.5), margins=(1.5, 1, 0.25, 0.7))
+
         avg_monthly = self.calc_area_monthly_avg()
         months = range(1, 13)
         l1, = ax.plot(months, np.mean(avg_monthly['precip'], axis=0),
@@ -212,18 +224,8 @@ class HelpOutput(Mapping):
         Plot the average yearly values of the water budget in mm/year
         for the whole study area.
         """
-        fwidth, fheight = 8, 6.5
-        fig, ax = plt.subplots()
-        fig.set_size_inches(fwidth, fheight)
-
-        # Setup axe margins.
-        left_margin = 1.5/fwidth
-        right_margin = 0.25/fwidth
-        top_margin = 0.5/fheight
-        bot_margin = 0.25/fheight
-        ax.set_position([left_margin, bot_margin,
-                         1 - left_margin - right_margin,
-                         1 - top_margin - bot_margin])
+        fig, ax = self._setup_figure(
+            fsize=(8, 6.5), margins=(1.5, 0.5, 0.25, 0.25))
 
         area_yearly_avg = self.calc_area_yearly_avg()
         avg_yearly_precip = np.mean(area_yearly_avg['precip'])
@@ -284,18 +286,8 @@ class HelpOutput(Mapping):
         Plot the yearly values of the water budget in mm/year for the whole
         study area.
         """
-        fwidth, fheight = 9, 6.5
-        fig, ax = plt.subplots()
-        fig.set_size_inches(fwidth, fheight)
-
-        # Setup axe margins.
-        left_margin = 1.5/fwidth
-        right_margin = 0.25/fwidth
-        top_margin = 1./fheight
-        bot_margin = 0.7/fheight
-        ax.set_position([left_margin, bot_margin,
-                         1 - left_margin - right_margin,
-                         1 - top_margin - bot_margin])
+        fig, ax = self._setup_figure(
+            fsize=(9, 6.5), margins=(1.5, 1, 0.25, 0.7))
 
         years = self.data['years']
         yearly_avg = self.calc_area_yearly_avg()
