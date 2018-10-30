@@ -65,7 +65,6 @@ def test_calc_help_cells(helpm):
     help_output_hdf5 = osp.join(helpm.workdir, 'help_example.out')
     helpm.build_help_input_files()
     helpm.calc_help_cells(help_output_hdf5, cellnames)
-
     assert osp.exists(help_output_hdf5)
 
 
