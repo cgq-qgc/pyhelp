@@ -59,7 +59,7 @@ class HelpOutput(Mapping):
         return len(self.data['cid'])
 
     def save_to_hdf5(self, path_to_hdf5):
-        """Save the data and grid to a HDF5 file at the specified location."""
+        """Save the data and grid to an HDF5 file at the specified location."""
         print("Saving data to {}...".format(osp.basename(path_to_hdf5)),
               end=" ")
 
@@ -109,7 +109,8 @@ class HelpOutput(Mapping):
 
     def calc_area_monthly_avg(self):
         """
-        Calcul water budget average monthly values for the study area.
+        Calcul the monthly values of the water budget in mm/month for the
+        whole study area.
 
         Return a dictionary that contains a 2D numpy array for each
         component of the water budget with average values calculated over
@@ -126,7 +127,8 @@ class HelpOutput(Mapping):
 
     def calc_area_yearly_avg(self):
         """
-        Calcul water budget average yearly values for the study area.
+        Calcul the average yearly values of the water budget in mm/year
+        for the whole study area.
 
         Return a dictionary that contains a numpy array for each
         component of the water budget with average values calculated over
@@ -138,6 +140,8 @@ class HelpOutput(Mapping):
 
     def calc_cells_yearly_avg(self):
         """
+        Plot the yearly values of the water budget in mm/year for the whole
+        study area.
         Calcul water budget average yearly values for each cell.
 
         Return a dictionary that contains a numpy array for each
