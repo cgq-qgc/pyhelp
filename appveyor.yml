@@ -11,8 +11,6 @@ environment:
 
   global:
     PYTHON: "C:\\conda"
-    MINICONDA_VERSION: "latest"
-    PYTHON_ARCH: "64"
     APPVEYOR_RDP_PASSWORD: "dcca4c4863E30d56c2e0dda6327370b3#"
 
   matrix:
