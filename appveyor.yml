@@ -40,7 +40,7 @@ install:
   
   # Setup SYS PATH.
   - set "PATH=%PYTHON%;%PYTHON%\Scripts;%PYTHON%\Library\bin;%PATH%"
-  - set "PATH=%MINGW_64%;LIBEXEC;%PATH%"
+  - set "PATH=%MINGW_64%;%LIBEXEC%;%PATH%"
   
   # Setup Conda.
   - conda config --set always_yes yes
