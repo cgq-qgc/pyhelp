@@ -1,0 +1,42 @@
+# https://ci.appveyor.com/project/jnsebgosselin/pyhelp
+
+init:
+  - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+
+
+environment:
+
+  global:
+    PYTHON: "C:\\conda"
+    MINICONDA_VERSION: "latest"
+    CMD_IN_ENV: "cmd /E:ON /V:ON /C .\\ci-helpers\\appveyor\\windows_sdk.cmd"
+    PYTHON_ARCH: "64"
+    PIP_DEPENDENCIES_FLAGS: "-q"
+    CONDA_DEPENDENCIES_FLAGS: "--quiet"
+    CONDA_DEPENDENCIES: >
+      geopandas h5py matplotlib netcdf4 numpy pandas scipy pytables xlrd
+      codecov pytest pytest-cov pytest-mock sphinx
+    APPVEYOR_RDP_PASSWORD: "dcca4c4863E30d56c2e0dda6327370b3#"
+
+  matrix:
+    - PYTHON_VERSION: "3.6"
+
+platform:
+  -x64
+
+skip_branch_with_pr: true
+
+install:
+  - cmd: set PATH=C:\Python36-x64;C:\Python36-x64\Scripts;%PATH%
+  - python -m pip install -r requirements-dev.txt
+
+build: false
+
+test_script:
+  - python runtests.py
+
+on_success:
+  - codecov
+
+on_finish:
+#   - ps: $blockRdp = $false; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
