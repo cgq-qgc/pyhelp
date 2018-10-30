@@ -51,7 +51,7 @@ install:
   - conda config --set auto_update_conda no
   - conda config --add channels conda-forge
   - conda config --set channel_priority true
-  - conda install -c conda-forge numpy scipy pandas xlrd netcdf4 h5py pytables matplotlib geopandas pytest pytest-mock pytest-cov codecov sphinx
+  - conda install --file requirements.txt --file requirements-dev.txt
   
 build: false
 
