@@ -34,7 +34,6 @@ install:
   # set up environment
   - "set PATH=%MINICONDA%;%MINICONDA%\\Scripts;%PATH%"
   - conda config --set always_yes yes --set show_channel_urls true --set changeps1 no
-  - conda config --remove channels defaults
   - conda config --add channels conda-forge
   - "conda create --quiet --name tests python=%PYTHON_VERSION% --file requirements.txt --file requirements-dev.txt"
   - activate tests
