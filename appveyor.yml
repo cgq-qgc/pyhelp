@@ -10,11 +10,11 @@ matrix:
 environment:
 
   global:
-    PYTHON: "C:\\conda"
     APPVEYOR_RDP_PASSWORD: "dcca4c4863E30d56c2e0dda6327370b3#"
 
   matrix:
     - PYTHON_VERSION: "3.6"
+    - MINICONDA: C:\Miniconda36-x64
     
 init:
 - "ECHO %PYTHON_VERSION% %PYTHON%"
@@ -32,7 +32,7 @@ install:
         throw "There are newer queued builds for this pull request, failing early." }
 
   # set up environment
-  - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
+  - "set PATH=%MINICONDA%;%MINICONDA%\\Scripts;%PATH%"
   - conda config --set always_yes yes --set show_channel_urls true --set changeps1 no
   - conda update -q conda
   - conda config --add channels conda-forge
