@@ -15,6 +15,9 @@ environment:
 
   matrix:
     - PYTHON_VERSION: "3.6"
+    
+init:
+- "ECHO %PYTHON_VERSION% %PYTHON%"
 
 platform:
   -x64
