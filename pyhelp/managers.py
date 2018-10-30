@@ -41,7 +41,7 @@ INPUT_GRID_FNAME = 'input_grid.csv'
 
 class HelpManager(object):
     """
-    The :attr:`~pyhelp.HelpManager` is a class whose main purpose
+    The :class:`~pyhelp.HelpManager` is a class whose main purpose
     is to evaluate the component of the hydrologic water budget at the
     regional scale with the HELP model.
     """
