@@ -21,10 +21,10 @@ import pytest
 from pyhelp import HELP3O
 from pyhelp import __rootdir__
 from pyhelp.managers import HelpManager
+from pyhelp.output import HelpOutput
 
 
 # ---- Fixtures
-
 @pytest.fixture(scope="module")
 def example_folder():
     return osp.join(osp.dirname(__rootdir__), 'example')
@@ -37,6 +37,11 @@ def input_files(example_folder):
             'solrad': osp.join(example_folder, 'solrad_input_data.csv'),
             'grid': osp.join(example_folder, 'input_grid.csv')
             }
+
+
+@pytest.fixture(scope="module")
+def output_file(example_folder):
+    return osp.join(example_folder, 'help_example.out')
 
 
 @pytest.fixture
@@ -57,15 +62,27 @@ def test_autoread_input(helpm):
     assert helpm.grid is not None
 
 
-def test_calc_help_cells(helpm):
-    """
-    Test that the HelpManager is able to run calculation.
-    """
+def test_calc_help_cells(helpm, output_file):
+    """Test that the HelpManager is able to run water budget calculation."""
     cellnames = helpm.cellnames[:100]
-    help_output_hdf5 = osp.join(helpm.workdir, 'help_example.out')
     helpm.build_help_input_files()
-    helpm.calc_help_cells(help_output_hdf5, cellnames)
-    assert osp.exists(help_output_hdf5)
+    helpm.calc_help_cells(output_file, cellnames, tfsoil=-3)
+    assert osp.exists(output_file)
+
+
+def test_validate_results(output_file):
+    """Test that the water budget results are as expected. """
+    output = HelpOutput(output_file)
+    area_yrly_avg = output.calc_area_yearly_avg()
+    expected_results = {'precip': 11614.46,
+                        'perco': 2767.51,
+                        'evapo': 6034.42,
+                        'rechg': 1432.13,
+                        'runoff': 2334.89,
+                        'subrun1': 509.02,
+                        'subrun2': 1243.24}
+    for key in list(expected_results.keys()):
+        assert abs(np.sum(area_yrly_avg[key]) - expected_results[key]) < 1, key
 
 
 if __name__ == '__main__':
