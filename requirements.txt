@@ -4,6 +4,6 @@ pandas
 xlrd
 netcdf4
 h5py
-tables
+pytables
 matplotlib
 geopandas

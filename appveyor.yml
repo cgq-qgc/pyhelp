@@ -1,0 +1,59 @@
+# https://ci.appveyor.com/project/jnsebgosselin/pyhelp
+
+# Based on:
+# https://github.com/astropy/astropy/blob/master/appveyor.yml
+# https://github.com/geopandas/geopandas/blob/master/appveyor.yml
+# https://github.com/conda/conda-build/blob/master/appveyor.yml
+# https://github.com/NLeSC/mcfly/blob/master/appveyor.yml
+
+init:
+  - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+
+environment:
+  # https://www.appveyor.com/docs/installed-software#python
+
+  global:
+    MINGW_64: "C:\\mingw-w64\\x86_64-7.2.0-posix-seh-rt_v5-rev1\\mingw64\\bin"
+    APPVEYOR_RDP_PASSWORD: "dcca4c4863E30d56c2e0dda6327370b3#"
+
+  matrix:
+    - PYTHON: "C:\\Miniconda36-x64"
+      PYTHON_VERSION: "3.6"
+      PYTHON_ARCH: "64"
+
+platform:
+  -x64
+
+skip_branch_with_pr: true
+
+install:
+  # Cancel older builds for the same PR.
+  # Credits: JuliaLang developers.
+  - ps: if ($env:APPVEYOR_PULL_REQUEST_NUMBER -and $env:APPVEYOR_BUILD_NUMBER -ne ((Invoke-RestMethod `
+        https://ci.appveyor.com/api/projects/$env:APPVEYOR_ACCOUNT_NAME/$env:APPVEYOR_PROJECT_SLUG/history?recordsNumber=50).builds | `
+        Where-Object pullRequestId -eq $env:APPVEYOR_PULL_REQUEST_NUMBER)[0].buildNumber) { `
+        throw "There are newer queued builds for this pull request, failing early." }
+  
+  # Setup SYS PATH.
+  - set "PATH=%PYTHON%;%PYTHON%\Scripts;%PYTHON%\Library\bin;%PATH%"
+  - set "PATH=%MINGW_64%;%PATH%"
+  
+  # Setup Conda.
+  - conda config --set always_yes yes
+  - conda update -q conda
+  - conda config --set auto_update_conda no
+  - conda config --add channels conda-forge
+  - conda config --set channel_priority true
+  - conda install --file requirements.txt --file requirements-dev.txt
+  
+build: false
+
+test_script:
+  - python setup.py build_ext --inplace --compiler=mingw32 --fcompiler=gfortran
+  - python runtests.py
+
+on_success:
+  - codecov
+
+on_finish:
+  - ps: $blockRdp = $false; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
