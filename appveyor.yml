@@ -43,13 +43,13 @@ install:
   - conda update -q conda
   - conda config --set auto_update_conda no
   - conda config --add channels conda-forge
-  - conda install -c defaults numpy
-  - conda install -c conda-forge scipy pandas xlrd netcdf4 h5py pytables matplotlib geopandas pytest pytest-mock pytest-cov codecov sphinx
+  - conda config --set channel_priority true
+  - conda install --file requirements.txt --file requirements-dev.txt
   
 build: false
 
 test_script:
-  - python setup.py build_ext --inplace --compiler=mingw32
+  - python setup.py build_ext --inplace --compiler=mingw32 --fcompiler=gfortran
   - python runtests.py
 
 on_success:

@@ -11,6 +11,5 @@ import numpy
 
 
 setup(ext_modules=[Extension(name='pyhelp.HELP3O',
-                             sources=['pyhelp/HELP3O.FOR'],
-                             extra_link_args=['-static'])],
+                             sources=['pyhelp/HELP3O.FOR']],
       include_dirs=[numpy.get_include()])
