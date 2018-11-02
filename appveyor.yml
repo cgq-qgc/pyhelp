@@ -49,7 +49,7 @@ install:
 build: false
 
 test_script:
-  - python setup.py build_ext --inplace --compiler=mingw32 --fcompiler=gfortran
+  - python setup.py build_ext --inplace
   - python runtests.py
 
 on_success:
