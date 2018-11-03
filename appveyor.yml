@@ -42,7 +42,7 @@ install:
   - conda config --set auto_update_conda no
   - conda config --add channels conda-forge
   - conda config --set channel_priority true
-  - conda install numpy scipy pandas xlrd netcdf4 h5py pytables matplotlib geopandas pytest pytest-mock pytest-cov codecov sphinx m2w64-toolchain m2w64-toolchain_win-64
+  - conda install numpy scipy pandas xlrd netcdf4 h5py pytables matplotlib geopandas pytest pytest-mock pytest-cov codecov sphinx m2w64-toolchain
   
   # Add mingw-w64 to SYS PATH.
   - set "PATH=%PYTHON%\Library\mingw-w64\bin;%PATH%"
