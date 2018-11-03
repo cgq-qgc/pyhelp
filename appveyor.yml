@@ -10,8 +10,6 @@ init:
   - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 
 environment:
-  # https://www.appveyor.com/docs/installed-software#python
-
   global:
     APPVEYOR_RDP_PASSWORD: "dcca4c4863E30d56c2e0dda6327370b3#"
 
@@ -47,10 +45,12 @@ install:
   # Add mingw-w64 to SYS PATH.
   - set "PATH=%PYTHON%\Library\mingw-w64\bin;%PATH%"
 
+  # Build the HELP3O extension.
+  - python setup.py build_ext
+
 build: false
 
 test_script:
-  - python setup.py build_ext
   - python runtests.py
 
 on_success:
