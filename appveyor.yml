@@ -10,10 +10,7 @@ init:
   - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 
 environment:
-  # https://www.appveyor.com/docs/installed-software#python
-
   global:
-    MINGW_64: "C:\\mingw-w64\\x86_64-7.2.0-posix-seh-rt_v5-rev1\\mingw64\\bin"
     APPVEYOR_RDP_PASSWORD: "dcca4c4863E30d56c2e0dda6327370b3#"
 
   matrix:
@@ -36,7 +33,6 @@ install:
   
   # Setup SYS PATH.
   - set "PATH=%PYTHON%;%PYTHON%\Scripts;%PYTHON%\Library\bin;%PATH%"
-  - set "PATH=%MINGW_64%;%PATH%"
   
   # Setup Conda.
   - conda config --set always_yes yes
@@ -44,12 +40,17 @@ install:
   - conda config --set auto_update_conda no
   - conda config --add channels conda-forge
   - conda config --set channel_priority true
-  - conda install numpy scipy pandas xlrd netcdf4 h5py pytables matplotlib geopandas pytest pytest-mock pytest-cov codecov sphinx
+  - conda install numpy scipy pandas xlrd netcdf4 h5py pytables matplotlib geopandas pytest pytest-mock pytest-cov codecov sphinx m2w64-toolchain
   
+  # Add mingw-w64 to SYS PATH.
+  - set "PATH=%PYTHON%\Library\mingw-w64\bin;%PATH%"
+
+  # Build the HELP3O extension.
+  - python setup.py build_ext
+
 build: false
 
 test_script:
-  - python setup.py build_ext
   - python runtests.py
 
 on_success:
