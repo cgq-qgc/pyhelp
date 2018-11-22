@@ -160,7 +160,7 @@ class HelpOutput(Mapping):
 
     # ---- Plots
 
-    def _create_figure(fsize=None, margins=None):
+    def _create_figure(self, fsize=None, margins=None):
         """
         Create and return a figure and an axe mpl object using the
         specified settings.
@@ -229,10 +229,10 @@ class HelpOutput(Mapping):
                            bbox_to_anchor=(0, 1), ncol=2)
         legend.draw_frame(False)
 
-        # if figname is not None:
-        #     fig.savefig('bilan_hydro_mensuel_%s.pdf' % figname_sufix)
+        if figname is not None:
+            fig.savefig(figname)
 
-    def plot_area_yearly_avg(self):
+    def plot_area_yearly_avg(self, figname=None):
         """
         Plot the average yearly values of the water budget in mm/year
         for the whole study area.
@@ -288,13 +288,15 @@ class HelpOutput(Mapping):
                            bbox_to_anchor=(1, 1), ncol=1)
         legend.draw_frame(False)
 
+        if figname is not None:
+            fig.savefig(figname)
+
         # Add a graph title.
         # offset = transforms.ScaledTranslation(0/72, 12/72, fig.dpi_scale_trans)
         # ax.text(0.5, 1, figname_sufix, fontsize=16, ha='center', va='bottom',
                 # transform=ax.transAxes+offset)
-        # fig.savefig("hist_bilan_hydro_moyen_annuel_%s.pdf" % figname_sufix)
 
-    def plot_area_yearly_series(self):
+    def plot_area_yearly_series(self, figname=None):
         """
         Plot the yearly values of the water budget in mm/year for the whole
         study area.
@@ -370,6 +372,9 @@ class HelpOutput(Mapping):
                            borderaxespad=0, loc='lower left', borderpad=0.5,
                            bbox_to_anchor=(0, 1), ncol=2)
         legend.draw_frame(False)
+
+        if figname is not None:
+            fig.savefig(figname)
 
 
 if __name__ == "__main__":
