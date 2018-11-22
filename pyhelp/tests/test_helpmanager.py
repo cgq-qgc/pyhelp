@@ -50,7 +50,7 @@ def helpm(example_folder):
     return manager
 
 
-# ---- Tests
+# ---- Test HelpManager
 def test_autoread_input(helpm):
     """
     Test that the input files are read automatically when instantiating
@@ -70,6 +70,7 @@ def test_calc_help_cells(helpm, output_file):
     assert osp.exists(output_file)
 
 
+# ---- Test HelpOutput
 def test_validate_results(output_file):
     """Test that the water budget results are as expected. """
     output = HelpOutput(output_file)
@@ -83,6 +84,27 @@ def test_validate_results(output_file):
                         'subrun2': 1243.24}
     for key in list(expected_results.keys()):
         assert abs(np.sum(area_yrly_avg[key]) - expected_results[key]) < 1, key
+
+
+def test_plot_water_budget(output_file, example_folder):
+    """
+    Test that the water budget plots are created and saved as expected.
+
+    Regression test for Issue #29.
+    """
+    output = HelpOutput(output_file)
+
+    figfilename = osp.join(example_folder, 'area_monthly_avg.pdf')
+    output.plot_area_monthly_avg(figfilename)
+    assert osp.exists(figfilename)
+
+    figfilename = osp.join(example_folder, 'area_yearly_avg.pdf')
+    output.plot_area_yearly_avg(figfilename)
+    assert osp.exists(figfilename)
+
+    figfilename = osp.join(example_folder, 'area_yearly_series.pdf')
+    output.plot_area_yearly_series(figfilename)
+    assert osp.exists(figfilename)
 
 
 if __name__ == '__main__':
