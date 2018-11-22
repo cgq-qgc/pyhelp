@@ -46,7 +46,7 @@ install:
   - set "PATH=%PYTHON%\Library\mingw-w64\bin;%PATH%"
 
   # Build the HELP3O extension.
-  -  %PYTHON%\\python.exe setup.py build_ext
+  - %PYTHON%\\python.exe setup.py build_ext
 
 build: false
 
