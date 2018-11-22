@@ -1,0 +1,25 @@
+package:
+  name: pyhelp
+  version: "0.1.0.dev0"
+
+source:
+  git_rev: v0.1.0
+  git_url: https://github.com/cgq-qgc/pyhelp
+
+requirements:
+  build:
+    - python ==3.6
+    - numpy >=1.15
+    - m2w64-toolchain
+    - libpython
+  run:
+    - python ==3.6
+    - numpy >=1.15
+
+about:
+  home: https://github.com/jnsebgosselin/pyhelp
+  license: MIT
+  license_file: LICENSE
+extra:
+  recipe-maintainers:
+    - jnsebgosselin
