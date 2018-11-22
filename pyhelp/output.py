@@ -160,7 +160,7 @@ class HelpOutput(Mapping):
 
     # ---- Plots
 
-    def _create_figure(fsize=None, margins=None):
+    def _create_figure(self, fsize=None, margins=None):
         """
         Create and return a figure and an axe mpl object using the
         specified settings.
