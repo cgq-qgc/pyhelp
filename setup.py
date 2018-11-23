@@ -12,6 +12,8 @@ import setuptools
 from numpy.distutils.core import Extension
 from numpy.distutils.core import setup
 import numpy
+from pyhelp import __version__, __project_url__
+
 
 LONG_DESCRIPTION = ("PyHELP is an object oriented Python library that "
                     "provides a set of tools to evaluate spatially "
@@ -31,14 +33,14 @@ HELPEXT = Extension(name='pyhelp.HELP3O',
                     )
 
 setup(name='pyhelp',
-      version='0.1.0.dev0',
+      version=__version__,
       description=('A Python library for groundwater recharge assessment in '
                    'regional studies with the HELP  model'),
       long_description=LONG_DESCRIPTION,
       license='MIT',
       author='PyHELP Project Contributors',
       author_email='jean-sebastien.gosselin@ete.inrs.ca',
-      url='https://github.com/jnsebgosselin/pyhelp',
+      url=__project_url__,
       ext_modules=[HELPEXT],
       packages=setuptools.find_packages(),
       package_data={'pyhelp': ['*.pyd']},
