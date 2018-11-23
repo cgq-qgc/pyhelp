@@ -59,7 +59,7 @@ after_test:
 
 artifacts:
   - path: dist/*
-  - path: "%PYTHON%/conda-bld/win-64/*.tar.bz2"
+  - path: '../../Miniconda36-x64/conda-bld/win-64/*.tar.bz2'
 
 on_success:
   - codecov
