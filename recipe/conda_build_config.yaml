@@ -6,5 +6,3 @@ m2w64_fortran_compiler:
   - m2w64-toolchain
 target_platform:
   - win-64
-numpy:
-  - 1.15
