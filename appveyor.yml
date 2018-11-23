@@ -55,7 +55,7 @@ test_script:
   
 after_test:
   - "%PYTHON%/python.exe setup.py bdist_wheel"
-  - conda-build recipe -m recipe/conda_build_config.yaml
+  - conda-build recipe -m recipe/conda_build_config.yaml --no-test --quiet
   - cmd: xcopy "%PYTHON%/conda-bld" "dist/conda-bld" /s /i /e
 
 artifacts:
