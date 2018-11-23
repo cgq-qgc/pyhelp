@@ -59,8 +59,8 @@ test_script:
   - python runtests.py
   
 after_test:
-  if [%BUILD_WHEEL%]==[1] "%PYTHON%/python.exe setup.py -q bdist_wheel"
-  if [%BUILD_CONDA%]==[1] conda-build recipe --no-test --output-folder dist --quiet
+  - IF [%BUILD_WHEEL%]==[1] "%PYTHON%/python.exe setup.py -q bdist_wheel"
+  - IF [%BUILD_CONDA%]==[1] conda-build recipe --no-test --output-folder dist --quiet
 
 artifacts:
   - path: 'dist/*.whl'
