@@ -56,10 +56,11 @@ test_script:
 after_test:
   - "%PYTHON%/python.exe setup.py bdist_wheel"
   - conda-build recipe/.
+  - xcopy %PYTHON%/conda-bld dist/conda-bld /E
 
 artifacts:
-  - path: dist/*
-  - path: '../../Miniconda36-x64/conda-bld/win-64/*.tar.bz2'
+  - path: 'dist/*.whl'
+  - path: 'dist/conda-bld/win-64/*.tar.bz2'
 
 on_success:
   - codecov

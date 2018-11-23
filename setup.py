@@ -31,7 +31,7 @@ HELPEXT = Extension(name='pyhelp.HELP3O',
                     )
 
 setup(name='pyhelp',
-      version='0.1.0.dev',
+      version='0.1.0.dev0',
       description=('A Python library for groundwater recharge assessment in '
                    'regional studies with the HELP  model'),
       long_description=LONG_DESCRIPTION,
