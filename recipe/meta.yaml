@@ -1,13 +1,15 @@
+{% set version = "0.1.0.dev0" %}
+
 package:
   name: pyhelp
-  version: "0.1.0.dev0"
+  version: {{ version }}
 
 source:
   git_rev: v0.1.0
   git_url: https://github.com/cgq-qgc/pyhelp
 
 requirements:
-  build:
+  host:
     - python ==3.6
     - numpy >=1.15
     - m2w64-toolchain
