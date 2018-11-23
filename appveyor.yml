@@ -17,8 +17,6 @@ environment:
     - PYTHON: "C:\\Miniconda36-x64"
       PYTHON_VERSION: "3.6"
       PYTHON_ARCH: "64"
-      BUILD_WHEEL: 1
-      BUILD_CONDA: 1
 
 platform:
   -x64
