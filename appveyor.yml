@@ -26,6 +26,9 @@ platform:
 skip_branch_with_pr: true
 
 install:
+  - ECHO %APPVEYOR_REPO_BRANCH%
+  - ECHO %APPVEYOR_PULL_REQUEST_NUMBER%
+  
   # Cancel older builds for the same PR.
   # Credits: JuliaLang developers.
   - ps: if ($env:APPVEYOR_PULL_REQUEST_NUMBER -and $env:APPVEYOR_BUILD_NUMBER -ne ((Invoke-RestMethod `
@@ -56,10 +59,8 @@ test_script:
   - python runtests.py
   
 after_test:
-  if [%BUILD_WHEEL%]==[1] (
-    "%PYTHON%/python.exe setup.py -q bdist_wheel")
-  if [%BUILD_CONDA%]==[1] (
-    conda-build recipe --no-test --output-folder dist --quiet)
+  if [%BUILD_WHEEL%]==[1] "%PYTHON%/python.exe setup.py -q bdist_wheel"
+  if [%BUILD_CONDA%]==[1] conda-build recipe --no-test --output-folder dist --quiet
 
 artifacts:
   - path: 'dist/*.whl'
