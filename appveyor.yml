@@ -56,7 +56,7 @@ test_script:
 after_test:
   - "%PYTHON%/python.exe setup.py bdist_wheel"
   - conda-build recipe/.
-  - xcopy '/S /I /E %PYTHON%/conda-bld dist/conda-bld'
+  - xcopy '"%PYTHON%/conda-bld" "dist/conda-bld" /s /i /e'
 
 artifacts:
   - path: 'dist/*.whl'
