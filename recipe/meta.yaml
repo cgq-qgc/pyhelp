@@ -5,8 +5,7 @@ package:
   version: {{ version }}
 
 source:
-  git_rev: v0.1.0
-  git_url: https://github.com/cgq-qgc/pyhelp
+  path: ..
 
 requirements:
   host:
