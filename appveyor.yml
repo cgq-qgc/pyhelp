@@ -55,12 +55,11 @@ test_script:
   
 after_test:
   - "%PYTHON%/python.exe setup.py bdist_wheel"
-  - conda-build recipe -m recipe/conda_build_config.yaml --no-test --quiet
-  - cmd: xcopy "%PYTHON%/conda-bld" "dist/conda-bld" /s /i /e
+  - conda-build recipe -m recipe/conda_build_config.yaml --no-test --output-folder dist 
 
 artifacts:
   - path: 'dist/*.whl'
-  - path: 'dist/conda-bld/win-64/*.tar.bz2'
+  - path: 'dist/win-64/*.tar.bz2'
 
 on_success:
   - codecov
