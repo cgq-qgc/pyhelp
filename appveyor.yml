@@ -59,8 +59,8 @@ test_script:
   - python runtests.py
   
 after_test:
-  - IF ["%APPVEYOR_PULL_REQUEST_NUMBER%"]==[""] (%PYTHON%/python.exe setup.py bdist_wheel)
-  - IF ["%APPVEYOR_PULL_REQUEST_NUMBER%"]==[""] (python -m twine upload dist/*)
+  - IF [""]==[""] (%PYTHON%/python.exe setup.py bdist_wheel)
+  - IF [""]==[""] (python -m twine upload dist/*)
   - IF ["%APPVEYOR_PULL_REQUEST_NUMBER%"]==[""] (conda-build recipe --no-test --output-folder dist)
 
 artifacts:
