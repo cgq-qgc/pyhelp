@@ -14,6 +14,7 @@ Please consult the [documentation](http://pyhelp.readthedocs.io) for more detail
 # Install
 
 [![pypi version](https://img.shields.io/pypi/v/pyhelp.svg)](https://pypi.org/project/pyhelp/)
+[![Anaconda-Server Badge](https://anaconda.org/cgq-qgc/pyhelp/badges/version.svg)](https://anaconda.org/cgq-qgc/pyhelp)
 [![conda version](https://img.shields.io/conda/vn/cgq-qgc/pyhelp.svg)](https://anaconda.org/cgq-qgc/pyhelp)
 
 If you are new to Python or the Scientific Python ecosystem, we strongly recommend you to install and use [Anaconda](https://www.anaconda.com/download/) (miniconda is fine as well). It comes with the most important Python scientific libraries (i.e. Numpy, Pandas, Matplotlib, IPython, etc), including all PyHELP dependencies, in a single, easy to use environment. We also support [pip](https://pypi.org/project/pip/), but please be aware that pip installations are for advanced users. PyHELP depends on several low-level libraries for geospatial analysis, and this may cause dependency conflicts if you are not careful.
