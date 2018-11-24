@@ -14,9 +14,6 @@ environment:
     APPVEYOR_RDP_PASSWORD: "dcca4c4863E30d56c2e0dda6327370b3#"
     TWINE_USERNAME: jnsebgosselin
     TWINE_REPOSITORY_URL: https://test.pypi.org/legacy/
-    TWINE_PASSWORD:
-      secure: Esh5lyxRc/MAPbAlk2goTA==
-    
 
   matrix:
     - PYTHON: "C:\\Miniconda36-x64"
