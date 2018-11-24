@@ -12,7 +12,7 @@ init:
 environment:
   global:
     APPVEYOR_RDP_PASSWORD: "dcca4c4863E30d56c2e0dda6327370b3#"
-    TWINE_USERNAME: jnsebgosselin
+    # Note: TWINE_PASSWORD and TWINE_USERNAME are set in Appveyor settings
     TWINE_REPOSITORY_URL: https://test.pypi.org/legacy/
 
   matrix:
