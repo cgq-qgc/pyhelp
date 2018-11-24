@@ -12,6 +12,11 @@ init:
 environment:
   global:
     APPVEYOR_RDP_PASSWORD: "dcca4c4863E30d56c2e0dda6327370b3#"
+    TWINE_USERNAME: jnsebgosselin
+    TWINE_REPOSITORY_URL: https://test.pypi.org/legacy/
+    TWINE_PASSWORD:
+      secure: Esh5lyxRc/MAPbAlk2goTA==
+    
 
   matrix:
     - PYTHON: "C:\\Miniconda36-x64"
@@ -40,7 +45,7 @@ install:
   - conda config --set auto_update_conda no
   - conda config --add channels conda-forge
   - conda config --set channel_priority true
-  - conda install numpy scipy pandas xlrd netcdf4 h5py pytables matplotlib geopandas pytest pytest-mock pytest-cov codecov sphinx m2w64-toolchain conda-build
+  - conda install scipy geopandas xlrd netcdf4 h5py pytables matplotlib pytest pytest-mock pytest-cov codecov m2w64-toolchain conda-build twine
   
   # Add mingw-w64 to SYS PATH.
   - set "PATH=%PYTHON%/Library/mingw-w64/bin;%PATH%"
@@ -55,10 +60,12 @@ test_script:
   
 after_test:
   - IF ["%APPVEYOR_PULL_REQUEST_NUMBER%"]==[""] (%PYTHON%/python.exe setup.py bdist_wheel)
+  - IF ["%APPVEYOR_PULL_REQUEST_NUMBER%"]==[""] (python -m twine upload dist/*)
   - IF ["%APPVEYOR_PULL_REQUEST_NUMBER%"]==[""] (conda-build recipe --no-test --output-folder dist)
 
 artifacts:
   - path: 'dist/*.whl'
+  - path: 'dist/*.tar.gz'
   - path: 'dist/win-64/*.tar.bz2'
 
 on_success:
