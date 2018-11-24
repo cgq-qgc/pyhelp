@@ -11,6 +11,7 @@
 import setuptools
 from numpy.distutils.core import Extension
 from numpy.distutils.core import setup
+from distutils.command.sdist import sdist
 import numpy
 from pyhelp import __version__, __project_url__
 
@@ -45,6 +46,7 @@ setup(name='pyhelp',
       packages=setuptools.find_packages(),
       package_data={'pyhelp': ['*.pyd']},
       include_package_data=True,
+      cmdclass={"sdist": sdist},
       classifiers=["Programming Language :: Python :: 3",
                    "License :: OSI Approved :: MIT License",
                    "Operating System :: OS Independent"],
