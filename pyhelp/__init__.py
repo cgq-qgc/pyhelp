@@ -8,7 +8,7 @@
 
 import os
 
-version_info = (0, 1, 0)
+version_info = (0, 1, 0, 'test0')
 __version__ = '.'.join(map(str, version_info))
 __appname__ = 'PyHELP'
 __namever__ = __appname__ + " " + __version__
