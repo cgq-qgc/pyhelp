@@ -9,6 +9,16 @@
 init:
   - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 
+branches:
+  only:
+    - master
+
+skip_commits:
+  files:
+    - docs/*
+    - '**/*.html'
+    - '**/*.md'
+
 environment:
   global:
     APPVEYOR_RDP_PASSWORD: "dcca4c4863E30d56c2e0dda6327370b3#"
@@ -39,10 +49,9 @@ install:
   - conda config --set always_yes yes
   - conda update -q conda
   - conda config --set auto_update_conda no
-  - conda config --add channels conda-forge
-  - conda config --set channel_priority true
-  - conda install scipy geopandas xlrd netcdf4 h5py pytables matplotlib pytest pytest-mock pytest-cov codecov m2w64-toolchain conda-build twine
-  
+  - conda install -c defaults scipy geopandas xlrd netcdf4 h5py pytables matplotlib pytest pytest-mock pytest-cov pip m2w64-toolchain conda-build twine --override-channels
+  - python -m pip install codecov
+
   # Add mingw-w64 to SYS PATH.
   - set "PATH=%PYTHON%/Library/mingw-w64/bin;%PATH%"
 
