@@ -9,6 +9,16 @@
 init:
   - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 
+branches:
+  only:
+    - master
+
+skip_commits:
+  files:
+    - docs/*
+    - '**/*.html'
+    - '**/*.md'
+
 environment:
   global:
     APPVEYOR_RDP_PASSWORD: "dcca4c4863E30d56c2e0dda6327370b3#"
