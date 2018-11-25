@@ -13,6 +13,12 @@ branches:
   only:
     - master
 
+skip_commits:
+  files:
+    - docs/*
+    - '**/*.html'
+    - '**/*.md'
+
 environment:
   global:
     APPVEYOR_RDP_PASSWORD: "dcca4c4863E30d56c2e0dda6327370b3#"
