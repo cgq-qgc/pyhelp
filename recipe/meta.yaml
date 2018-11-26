@@ -29,6 +29,7 @@ about:
   license: MIT
   license_file: LICENSE
   doc_url: https://pyhelp.readthedocs.io/
+  summary: A Python library for assessing groundwater recharge at the regional scale with the HELP model
 extra:
   recipe-maintainers:
     - jnsebgosselin
