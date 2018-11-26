@@ -21,7 +21,6 @@ The easiest method to install a released version of PyHELP on Windows is with [C
 
 Then, PyHELP can be installed, along with all its dependencies, by executing the following command in a terminal:
 
-`conda install -c cgq-qgc pyhelp scipy geopandas xlrd netcdf4 h5py pytables matplotlib`
 
 [![Anaconda-Server Badge](https://anaconda.org/cgq-qgc/pyhelp/badges/installer/pypi.svg)](https://pypi.org/project/pyhelp/)
 
