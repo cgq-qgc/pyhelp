@@ -19,7 +19,7 @@ Pip wheels and conda packages are both available for Python 3.6 on the Windows 6
 
 The easiest method to install the released version of PyHELP on Windows is with [Conda](https://conda.io/docs/index.html). To do so, you will need first to download and install the [Anaconda distribution](https://www.anaconda.com/distribution/) on your computer. Anaconda comes with the most important Python scientific libraries (i.e. Numpy, Pandas, Matplotlib, IPython, etc), including all PyHELP dependencies, in a single, easy to use environment.
 
-PyHELP can then be installed, along with all its dependencies, by executing the following `conda` command in a terminal:
+Than, PyHELP can be installed, along with all its dependencies, by executing the following `conda` command in a terminal:
 
 `conda install -c cgq-qgc pyhelp scipy geopandas xlrd netcdf4 h5py pytables matplotlib`
 
