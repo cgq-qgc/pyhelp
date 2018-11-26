@@ -25,7 +25,7 @@ requirements:
     - pytables
     
 about:
-  home: https://github.com/jnsebgosselin/pyhelp
+  home: https://github.com/cgq-qgc/pyhelp
   license: MIT
   license_file: LICENSE
 extra:
