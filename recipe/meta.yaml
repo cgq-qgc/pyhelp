@@ -28,6 +28,7 @@ about:
   home: https://github.com/cgq-qgc/pyhelp
   license: MIT
   license_file: LICENSE
+  doc_url: https://pyhelp.readthedocs.io/
 extra:
   recipe-maintainers:
     - jnsebgosselin
