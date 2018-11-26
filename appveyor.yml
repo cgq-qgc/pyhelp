@@ -66,7 +66,7 @@ test_script:
 after_test:
   - IF ["%APPVEYOR_PULL_REQUEST_NUMBER%"]==[""] (%PYTHON%/python.exe setup.py sdist bdist_wheel)
   - IF ["%APPVEYOR_REPO_TAG%"] == ["true"] (python -m twine upload dist/*)
-  - IF [""]==[""] (conda-build recipe --no-test --output-folder dist)
+  - IF ["%APPVEYOR_PULL_REQUEST_NUMBER%"]==[""] (conda-build recipe --no-test --output-folder dist)
 
 artifacts:
   - path: 'dist/*.whl'
