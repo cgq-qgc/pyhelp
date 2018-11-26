@@ -27,9 +27,9 @@ PyHELP can then be installed, along with all its dependencies, by executing the 
 
 It is also possible to install PyHELP with [pip](https://pypi.org/project/pip/), but be aware that pip installations are for advanced users. PyHELP depends on several low-level libraries for geospatial analysis, and this may cause dependency conflicts if you are not careful.
 
-First, you will need to download and install [Python 3.6](https://www.python.org/downloads/release/python-367/) on your computer. Then you will need to download and install with `pip`, in that specific order, `numpy`, `matplotlib`, `scipy`, `pandas`, `shapely`, `fiona`, `pyproj`, `geopandas`, `h5py`, `pytables`, `xlrd`, `netcdf4`from Christopher Gohlke's [Unofficial Windows Binaries for Python Extension Packages](https://www.lfd.uci.edu/~gohlke/pythonlibs/). Be carefull to install the packages that were built for Python 3.6 on Windows 64bits.
+First, you will need to download and install [Python 3.6](https://www.python.org/downloads/release/python-367/) on your computer. Then you will need to download and install with `pip`, in that specific order, `numpy`, `matplotlib`, `scipy`, `pandas`, `shapely`, `fiona`, `pyproj`, `geopandas`, `h5py`, `pytables`, `xlrd`, `netcdf4`from Christopher Gohlke's [Unofficial Windows Binaries for Python Extension Packages](https://www.lfd.uci.edu/~gohlke/pythonlibs/). Be carefull to install the packages that were built for Python 3.6 and Windows 64bits.
 
-Finally, you can install PyHELP by executing the following Python command in a terminal:
+Finally, you can install PyHELP with `pip` by executing the following command in a terminal:
 
 `python -m pip install `
 
