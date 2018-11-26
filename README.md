@@ -11,9 +11,9 @@ PyHELP is a [Python](https://www.python.org/) library for the assessment of grou
 
 Please consult the [documentation](http://pyhelp.readthedocs.io) for more details or contact us at [jean-sebastien.gosselin@ete.inrs.ca](mailto:jean-sebastien.gosselin@ete.inrs.ca).
 
-## Install from built distributions
+## Install
 
-Pip wheels and conda packages are both available for Python 3.6 on the Windows 64bits plateform. If you need to use PyHELP with Python 3.7 or are working on Linux or MacOS, you will have to build and install PyHELP from source.
+Pip wheels and conda packages are both available for Python 3.6 on the Windows 64bits plateform. If you need to use PyHELP with Python 3.7 or are working on Linux or MacOS, you will have to build and install PyHELP from source. Please contact us if you need help with that.
 
 [![Anaconda-Server Badge](https://anaconda.org/cgq-qgc/pyhelp/badges/installer/conda.svg)](https://anaconda.org/cgq-qgc/pyhelp)
 
@@ -27,11 +27,11 @@ PyHELP can then be installed, along with all its dependencies, by executing the 
 
 It is also possible to install PyHELP with [pip](https://pypi.org/project/pip/), but be aware that pip installations are for advanced users. PyHELP depends on several low-level libraries for geospatial analysis, and this may cause dependency conflicts if you are not careful.
 
-First, you will need to download and install [Python 3.6](https://www.python.org/downloads/release/python-367/) on your computer. Then you will need to download and install with `pip`, in that specific order, `numpy`, `matplotlib`, `scipy`, `pandas`, `shapely`, `fiona`, `pyproj`, `geopandas`, `h5py`, `pytables`, `xlrd`, `netcdf4`from Christopher Gohlke's [Unofficial Windows Binaries for Python Extension Packages](https://www.lfd.uci.edu/~gohlke/pythonlibs/). Be carefull to install the packages that were built for Python 3.6 and Windows 64bits.
+First, you will need to download and install [Python 3.6](https://www.python.org/downloads/release/python-367/) on your computer. Then, the easiest way to install PyHELP's depencies is to download Wheels from Christopher Gohlke's [Unofficial Windows Binaries for Python Extension Packages](https://www.lfd.uci.edu/~gohlke/pythonlibs/) and [install them with pip](https://pip.pypa.io/en/stable/user_guide/#installing-from-wheels) in that specific order:  `numpy`, `matplotlib`, `scipy`, `pandas`, `shapely`, `fiona`, `pyproj`, `geopandas`, `h5py`, `pytables`, `xlrd`, `netcdf4`. Be carefull to install the packages that were built for Python 3.6 and Windows 64bits.
 
 Finally, you can install PyHELP with `pip` by executing the following command in a terminal:
 
-`python -m pip install `
+`python -m pip install pyhelp`
 
 
 
