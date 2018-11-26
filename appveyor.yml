@@ -23,6 +23,7 @@ environment:
   global:
     APPVEYOR_RDP_PASSWORD: "dcca4c4863E30d56c2e0dda6327370b3#"
     # Note: TWINE_PASSWORD and TWINE_USERNAME are set in Appveyor settings
+    PYHELP_VERSION: "v0.1.1.dev0"
 
   matrix:
     - PYTHON: "C:\\Miniconda36-x64"
@@ -65,12 +66,14 @@ test_script:
   
 after_test:
   - IF ["%APPVEYOR_PULL_REQUEST_NUMBER%"]==[""] (%PYTHON%/python.exe setup.py sdist bdist_wheel)
+  - 7z a -tzip dist/example_pyhelp_%PYHELP_VERSION%.zip example/*.csv example/help_example.py example/CWEEDS/*
   - IF ["%APPVEYOR_REPO_TAG%"] == ["true"] (python -m twine upload dist/*)
   - IF ["%APPVEYOR_PULL_REQUEST_NUMBER%"]==[""] (conda-build recipe --no-test --output-folder dist)
 
 artifacts:
   - path: 'dist/*.whl'
   - path: 'dist/*.tar.gz'
+  - path: 'dist/example_pyhelp_%PYHELP_VERSION%.zip'
   - path: 'dist/win-64/*.tar.bz2'
 
 on_success:
