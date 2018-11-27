@@ -1,4 +1,11 @@
 connect_table.npy
+*.bat
+*.pyd
+/example/*.pdf
+/example/*.out
+/example/help_input_files/*
+backup/
+H3OFS32F.exe
 
 # Shapefiles
 *.cpg
@@ -108,25 +115,6 @@ ENV/
 # mypy
 .mypy_cache/
 
-# HELP settings
-*.bat
-/help1.8-Harold
-/HelpSrc
-/Exemple_Francois
-/CWEEDS
-/RADEAU2
-backup/
-.help_threads/
-*.D4
-*.D7
-*.D13
-*.D10
-*.D11
-*.OUT
-*.DAT
-Ken_Input.csv
-Ken_Input.xlsx
-H3OFS32F.exe
 *.exe
 *.dll
 make_help.bat
