@@ -74,7 +74,8 @@ def test_run_help3o(rca_params):
 def test_run_help_singlecell(rca_params):
     """
     Run HELP for a single cell using the RCA test case and assert that the
-    result are as expected."""
+    results are as expected.
+    """
     if osp.exists(rca_params[5]):
         os.remove(rca_params[5])
     assert not osp.exists(rca_params[5])
