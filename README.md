@@ -15,7 +15,7 @@ PyHELP integrates weather data (from grids or stations), land conditions
 defined by a series of GIS maps as well as soil and geological material
 properties into HELP input files.
 PyHELP also processes HELP simulation results and outputs them as
-maps and graphs, including comparisons of simulatios results with
+maps and graphs, including comparisons of simulation results with
 stream hydrographs.
 PyHELP thus accompanies users through the entire workflow from input file
 assembly to model calibration and to the documentation of results.
