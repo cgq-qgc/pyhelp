@@ -6,10 +6,25 @@
 [![Build status](https://ci.appveyor.com/api/projects/status/ns6s8x0hkd31ffb3/branch/master?svg=true)](https://ci.appveyor.com/project/jnsebgosselin/pyhelp-rd625/branch/master)
 [![codecov](https://codecov.io/gh/cgq-qgc/pyhelp/branch/master/graph/badge.svg)](https://codecov.io/gh/cgq-qgc/pyhelp)
 
+PyHELP is an object oriented Python library providing a set of tools to
+estimate spatially distributed groundwater recharge and other hydrological
+components (runoff and evapotranspiration) using the HELP
+([Hydrologic Evaluation of Landfill Performance](https://www.epa.gov/land-research/hydrologic-evaluation-landfill-performance-help-model))
+model.
+PyHELP integrates weather data (from grids or stations), land conditions
+defined by a series of GIS maps as well as soil and geological material
+properties into HELP input files.
+PyHELP also processes HELP simulation results and outputs them as
+maps and graphs, including comparisons of simulatios results with
+stream hydrographs.
+PyHELP thus accompanies users through the entire workflow from input file
+assembly to model calibration and to the documentation of results.
+This workflow is based on the method originally developed by
+[Croteau et al. (2011)](https://www.tandfonline.com/doi/abs/10.4296/cwrj3504451)
+to assess spatially distributed groundwater recharge at the regional scale.
 
-PyHELP is a [Python](https://www.python.org/) library for the assessment of groundwater recharge at the regional scale with the [Hydrologic Evaluation of Landfill Performance](https://www.epa.gov/land-research/hydrologic-evaluation-landfill-performance-help-model) (HELP) model.
-
-Please consult the [documentation](http://pyhelp.readthedocs.io) for more details or contact us at [jean-sebastien.gosselin@ete.inrs.ca](mailto:jean-sebastien.gosselin@ete.inrs.ca).
+Please consult the [documentation](http://pyhelp.readthedocs.io) for more
+details or contact us at [jean-sebastien.gosselin@ete.inrs.ca](mailto:jean-sebastien.gosselin@ete.inrs.ca).
 
 ## Install
 
