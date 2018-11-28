@@ -34,9 +34,9 @@
      showgrid="false"
      inkscape:current-layer="layer1"
      inkscape:document-units="mm"
-     inkscape:cy="163.40918"
-     inkscape:cx="331.31966"
-     inkscape:zoom="1.4291625"
+     inkscape:cy="196.29361"
+     inkscape:cx="313.2664"
+     inkscape:zoom="1.7171803"
      inkscape:pageshadow="2"
      inkscape:pageopacity="0.0"
      borderopacity="1.0"
@@ -76,7 +76,7 @@
      inkscape:label="Layer 1">
     <g
        id="g9446"
-       transform="translate(42.024904,12.588958)">
+       transform="translate(24.767932,-5.2843347)">
       <g
          transform="matrix(1.3134204,0,0,1.3134204,39.695603,-45.568643)"
          id="g9145">
@@ -2409,29 +2409,18 @@
            id="tspan815-7-7-7-9"
            x="15.043533"
            y="168.19296"
-           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Candara;-inkscape-font-specification:Candara;letter-spacing:0px;opacity:1;fill:#1a1a1a;fill-opacity:1;stroke:#1a1a1a;stroke-width:0.5;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none">PyHELP</tspan></text>
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Consolas;-inkscape-font-specification:Consolas;letter-spacing:0px;opacity:1;fill:#1a1a1a;fill-opacity:1;stroke:#1a1a1a;stroke-width:0.5;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none">PyHELP</tspan></text>
       <text
          xml:space="preserve"
          style="font-style:normal;font-weight:normal;font-size:10.25420284px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;opacity:1;fill:#2c79a8;fill-opacity:1;stroke:#2c79a8;stroke-width:0.35539171;stroke-opacity:1"
-         x="16.635872"
-         y="181.28386"
+         x="17.432215"
+         y="180.51346"
          id="text817-6-3-0-9-0"><tspan
            sodipodi:role="line"
-           id="tspan4110"
-           style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:5.27925253px;font-family:Candara;-inkscape-font-specification:'Candara Bold Italic';stroke:none;stroke-width:0.35539171"
-           x="16.635872"
-           y="181.28386">A Python library for assessing groundwater</tspan></text>
-      <text
-         xml:space="preserve"
-         style="font-style:normal;font-weight:normal;font-size:10.25420189px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;opacity:1;fill:#2c79a8;fill-opacity:1;stroke:#2c79a8;stroke-width:0.35539171;stroke-opacity:1"
-         x="16.240072"
-         y="188.1263"
-         id="text817-6-3-0-9-0-1"><tspan
-           y="188.1263"
-           x="16.240072"
-           sodipodi:role="line"
-           id="tspan4110-5"
-           style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:5.27925253px;font-family:Candara;-inkscape-font-specification:'Candara Bold Italic';stroke:none;stroke-width:0.35539171">recharge at the regional scale with HELP</tspan></text>
+           style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:4.23333311px;font-family:Consolas;-inkscape-font-specification:'Consolas Bold Italic';letter-spacing:-0.13229167px;word-spacing:-0.79374999px;stroke:none;stroke-width:0.35539171"
+           x="17.432215"
+           y="180.51346"
+           id="tspan1312">A Python library for the assessment of</tspan></text>
       <rect
          style="opacity:1;fill:#e0f280;fill-opacity:1;stroke:none;stroke-width:2.25677419;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
          id="rect823-7-7-76-6-6-8-7-9"
@@ -5003,7 +4992,7 @@
            id="tspan815-7-5-5"
            x="-23.209084"
            y="168.68109"
-           style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-family:Candara;-inkscape-font-specification:'Candara Bold Italic';letter-spacing:0px;opacity:1;fill:#1a1a1a;fill-opacity:1;stroke:#1a1a1a;stroke-width:0.5;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1">ph</tspan></text>
+           style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-family:Consolas;-inkscape-font-specification:'Consolas Bold Italic';letter-spacing:0px;opacity:1;fill:#1a1a1a;fill-opacity:1;stroke:#1a1a1a;stroke-width:0.5;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1">ph</tspan></text>
       <rect
          style="opacity:1;fill:#544690;fill-opacity:1;stroke:none;stroke-width:2.25677419;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
          id="rect823-7-7-80-7-8-1-9-1"
@@ -5014,6 +5003,28 @@
          inkscape:export-xdpi="5561.3809"
          inkscape:export-ydpi="5561.3809"
          transform="rotate(-134.83623)" />
+      <text
+         xml:space="preserve"
+         style="font-style:normal;font-weight:normal;font-size:10.25420284px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;opacity:1;fill:#2c79a8;fill-opacity:1;stroke:#2c79a8;stroke-width:0.35539171;stroke-opacity:1"
+         x="17.068413"
+         y="186.01886"
+         id="text817-6-3-0-9-0-9"><tspan
+           sodipodi:role="line"
+           style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:4.23333311px;font-family:Consolas;-inkscape-font-specification:'Consolas Bold Italic';letter-spacing:-0.13229169px;word-spacing:-0.79374999px;stroke:none;stroke-width:0.35539171"
+           x="17.068413"
+           y="186.01886"
+           id="tspan1362">spatially distributed groundwater recharge </tspan></text>
+      <text
+         xml:space="preserve"
+         style="font-style:normal;font-weight:normal;font-size:10.25420284px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;opacity:1;fill:#2c79a8;fill-opacity:1;stroke:#2c79a8;stroke-width:0.35539171;stroke-opacity:1"
+         x="17.103552"
+         y="191.52425"
+         id="text817-6-3-0-9-0-9-6"><tspan
+           sodipodi:role="line"
+           style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:4.23333311px;font-family:Consolas;-inkscape-font-specification:'Consolas Bold Italic';letter-spacing:-0.1322917px;word-spacing:-0.79374999px;stroke:none;stroke-width:0.35539171"
+           x="17.103552"
+           y="191.52425"
+           id="tspan1362-8">and hydrological components with HELP</tspan></text>
     </g>
   </g>
 </svg>
