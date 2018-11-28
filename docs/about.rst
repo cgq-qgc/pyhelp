@@ -56,6 +56,7 @@ Contributing authors, listed in chronological order, include:
 | `Jean-Sébastien Gosselin`_, `INRS centre Eau-Terre-Environnement`_
 | `Mélanie Raynauld`, `INRS centre Eau-Terre-Environnement`_
 | `René Lefebvre`_, `INRS centre Eau-Terre-Environnement`_
+| `François Huchet`_, `INRS centre Eau-Terre-Environnement`_
 |
 
 | **PyHELP Project Contributors:**
@@ -64,6 +65,7 @@ Contributing authors, listed in chronological order, include:
 |
 
 .. _Jean-Sébastien Gosselin: https://github.com/jnsebgosselin
+.. _François Huchet: https://github.com/FHuchet
 .. _René Lefebvre: http://www.inrs.ca/rene-lefebvre
 
 .. _INRS centre Eau-Terre-Environnement: http://www.ete.inrs.ca/
