@@ -1,4 +1,4 @@
-![PyHELP](./images/pyhelp_banner.png)
+![PyHELP](./images/pyhelp_banner_v2.png)
 
 [![license](https://img.shields.io/pypi/l/pyhelp.svg)](./LICENSE)
 [![Latest release](https://img.shields.io/github/release/cgq-qgc/pyhelp.svg)](https://github.com/cgq-qgc/pyhelp/releases)
