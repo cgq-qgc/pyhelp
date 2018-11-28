@@ -20,7 +20,7 @@ at the regional scale.
 Please report bugs and feature requests on our `Issue tracker`_ or
 contact Jean-Sébastien Gosselin at jean-sebastien.gosselin@ete.inrs.ca.
 
-.. _Issue tracker: https://github.com/jnsebgosselin/pyhelp/issues
+.. _Issue tracker: https://github.com/cgq-qgc/pyhelp/issues
 .. _jean-sebastien.gosselin@ete.inrs.ca : mailto:jean-sebastien.gosselin@ete.inrs.ca
 
 .. _Croteau et al. (2011): https://www.tandfonline.com/doi/abs/10.4296/cwrj3504451
