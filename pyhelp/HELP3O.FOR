@@ -1020,19 +1020,15 @@ C
 C
 C 
       END SUBROUTINE run_simulation
-C
-C
-C        *********************** LEAP ************************
-C
-C
-C     INTEGER FUNCTION SUBPROGRAM LEAP DETERMINES
-C     WHETHER A YEAR IS A LEAP YEAR
-C
+
+C     ************************* LEAP *************************
+C     Determine whether a year is a leap year.
+
       INTEGER FUNCTION LEAP (NYEAR, NT)
-C
-C     IF DIVISIBLE BY FOUR, NYEAR IS A LEAP YEAR AND NT IS SET
-C     TO 1; ELSE, NYEAR IS NOT A LEAP YEAR AND NT = 0.
-C
+
+      INTEGER, INTENT(IN) :: NYEAR
+      INTEGER, INTENT(OUT) :: NT
+
       IF (MOD (NYEAR, 4) .NE. 0) THEN
          LEAP = 365
          NT = 0
