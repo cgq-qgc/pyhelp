@@ -1020,12 +1020,15 @@ C
 C
 C 
       END SUBROUTINE run_simulation
-
-C     ************************* LEAP *************************
-C     Determine whether a year is a leap year.
-
+C
+C
+C        *********************** LEAP ************************
+C
+C
+C     INTEGER FUNCTION SUBPROGRAM LEAP DETERMINES
+C     WHETHER A YEAR IS A LEAP YEAR
+C
       INTEGER FUNCTION LEAP (NYEAR, NT)
-
       INTEGER, INTENT(IN) :: NYEAR
       INTEGER, INTENT(OUT) :: NT
 
