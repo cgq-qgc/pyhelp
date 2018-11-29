@@ -12,6 +12,7 @@ init:
 branches:
   only:
     - master
+    - 0.1.x
 
 skip_commits:
   files:
