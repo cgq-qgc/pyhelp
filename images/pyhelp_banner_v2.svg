@@ -13,9 +13,9 @@
    inkscape:version="0.92.2 (5c3e80d, 2017-08-06)"
    id="svg8"
    version="1.1"
-   viewBox="0 0 187.99754 48.608662"
+   viewBox="0 0 152.26535 48.608662"
    height="48.608662mm"
-   width="187.99751mm"
+   width="152.26532mm"
    inkscape:export-filename="C:\Users\User\pyhelp\images\pyhelp_banner_v2.png"
    inkscape:export-xdpi="100.85034"
    inkscape:export-ydpi="100.85034">
@@ -34,9 +34,9 @@
      showgrid="false"
      inkscape:current-layer="g1574"
      inkscape:document-units="mm"
-     inkscape:cy="177.84621"
-     inkscape:cx="359.65597"
-     inkscape:zoom="1.0316211"
+     inkscape:cy="62.610267"
+     inkscape:cx="300.70131"
+     inkscape:zoom="1.7529499"
      inkscape:pageshadow="2"
      inkscape:pageopacity="0.0"
      borderopacity="1.0"
@@ -45,17 +45,17 @@
      id="base"
      inkscape:snap-global="true">
     <sodipodi:guide
-       position="55.272626,15.000025"
+       position="60.525361,24.753511"
        orientation="1,0"
        id="guide3320"
        inkscape:locked="false" />
     <sodipodi:guide
-       position="145.98692,8.0074648"
+       position="151.38888,18.263259"
        orientation="1,0"
        id="guide3322"
        inkscape:locked="false" />
     <sodipodi:guide
-       position="60.390907,67.463704"
+       position="60.390909,67.463703"
        orientation="0,1"
        id="guide1566"
        inkscape:locked="false" />
@@ -5008,10 +5008,10 @@
          y="181.42021"
          id="text817-6-3-0-9-0"><tspan
            sodipodi:role="line"
-           style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:4.23333311px;font-family:Consolas;-inkscape-font-specification:'Consolas Bold Italic';letter-spacing:-0.13229167px;word-spacing:-0.79374999px;stroke:none;stroke-width:0.35539171"
+           style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:4.23333311px;font-family:Calibri;-inkscape-font-specification:'Calibri Bold Italic';letter-spacing:0px;word-spacing:0px;stroke:none;stroke-width:0.35539171"
            x="17.432215"
            y="181.42021"
-           id="tspan1312">A Python library for the assessment of spatially distributed</tspan></text>
+           id="tspan1312">A Python library for the assessment of spatially</tspan></text>
       <text
          xml:space="preserve"
          style="font-style:normal;font-weight:normal;font-size:10.25420284px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;opacity:1;fill:#2c79a8;fill-opacity:1;stroke:#2c79a8;stroke-width:0.35539171;stroke-opacity:1"
@@ -5019,10 +5019,21 @@
          y="186.99048"
          id="text817-6-3-0-9-0-9-6"><tspan
            sodipodi:role="line"
-           style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:4.23333311px;font-family:Consolas;-inkscape-font-specification:'Consolas Bold Italic';letter-spacing:-0.1322917px;word-spacing:-0.79374999px;stroke:none;stroke-width:0.35539171"
+           style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:4.23333311px;font-family:Calibri;-inkscape-font-specification:'Calibri Bold Italic';letter-spacing:0px;word-spacing:0px;stroke:none;stroke-width:0.35539171"
            x="17.103552"
            y="186.99048"
-           id="tspan1362-8">groundwater recharge and hydrological components with HELP</tspan></text>
+           id="tspan1362-8">distributed groundwater recharge and hydrological</tspan></text>
+      <text
+         xml:space="preserve"
+         style="font-style:normal;font-weight:normal;font-size:10.25420284px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;opacity:1;fill:#2c79a8;fill-opacity:1;stroke:#2c79a8;stroke-width:0.35539171;stroke-opacity:1"
+         x="17.032843"
+         y="192.38474"
+         id="text817-6-3-0-9-0-9-6-2"><tspan
+           sodipodi:role="line"
+           style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:4.23333311px;font-family:Calibri;-inkscape-font-specification:'Calibri Bold Italic';letter-spacing:0px;word-spacing:0px;stroke:none;stroke-width:0.35539171"
+           x="17.032843"
+           y="192.38474"
+           id="tspan1362-8-6">components with HELP</tspan></text>
     </g>
   </g>
 </svg>
