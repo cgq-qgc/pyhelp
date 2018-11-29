@@ -18,6 +18,9 @@ skip_commits:
     - docs/*
     - '**/*.html'
     - '**/*.md'
+    - '**/*.png'
+    - '**/*.svg'
+    - '**/*.jpg'
 
 environment:
   global:
