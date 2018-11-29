@@ -2514,7 +2514,16 @@ C
        B        =2.0/AM*SUMB
        RETURN
        END
+
+C  *****************************  COMPUT  *****************************
+
        FUNCTION COMPUT(AC,A,B,I,N)
+       REAL, INTENT(IN) :: AC
+       REAL, INTENT(IN) :: A
+       REAL, INTENT(IN) :: B
+       INTEGER, INTENT(IN) :: I
+       INTEGER, INTENT(IN) :: N
+
        AI       =FLOAT(I)-0.5
        AN       =FLOAT(N)
        ANG      =6.283185*AI/AN
