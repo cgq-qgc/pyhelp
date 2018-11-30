@@ -13,7 +13,7 @@ The input data required to run the calculations are distributed
 with each new release of PyHELP as a zip archive on our `Releases page`_.
 The input data are also distributed alongside the source code
 of PyHELP in the folder `example`_ on our `GitHub repository`_.
-Note that it is very important that the folder _example_ be saved on your
+Note that it is very important that the folder :file:`example` be saved on your
 computer to a location with `Write and Read` permissions.
 
 .. _north_river_locmap:
@@ -34,10 +34,11 @@ When doing so, we need to pass as argument a path to a working directory.
 The working directory is where the input, output and temporary files are read
 and saved by PyHELP.
 It must be a location where you have `Write and Read` permissions.
-The working directory can be changed at any time with the
+Here, we will use the path to the folder :file:`example`, which corresponds
+to the content of the zip archived that can be downloaded from our
+`Releases page`_ on GitHub. 
+The working directory can be set or changed at a later time with the
 :meth:`~pyhelp.HelpManager.set_workdir` method.
-Here, we will use the path to the folder `example`_, which contains all the
-necessary input files to run this example.
 
     >>> import os.path as osp
     >>> from pyhelp import HelpManager
