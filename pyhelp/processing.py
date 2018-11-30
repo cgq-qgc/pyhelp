@@ -32,6 +32,7 @@ DEL_TEMPFILES = True
 
 def run_help_singlecell(item):
     """Run HELP for a single cell."""
+    print('test')
     cellname, outparam = item
     HELP3O.run_simulation(*outparam)
     results = read_monthly_help_output(outparam[5])
