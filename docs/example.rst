@@ -32,12 +32,12 @@ The first step is to import and create an instance of the
 :class:`~pyhelp.HelpManager` class.
 When doing so, we need to pass as argument a path to a working directory.
 The working directory is where the input, output and temporary files are read
-and saved by default in PyHELP.
+and saved by PyHELP.
 It must be a location where you have `Write and Read` permissions.
 The working directory can be changed at any time with the
 :meth:`~pyhelp.HelpManager.set_workdir` method.
-Here, we will use the path to the folder `example`_ that can be dowloaded
-from our `Releases page`_ on GitHub.
+Here, we will use the path to the folder `example`_, which contains all the
+necessary input files to run this example.
 
     >>> import os.path as osp
     >>> from pyhelp import HelpManager
