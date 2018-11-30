@@ -6,10 +6,15 @@ for a section of the Rivière du Nord watershed in the Laurentians, Quebec,
 Canada (see :numref:`north_river_locmap`).
 The study area is about 1160 |_| km² and is divided in a grid of 18 |_| 383
 cells of 250 |_| m x 250 |_| m.
-The input data required to run the calculations are available in the
-folder `example`_ that is distributed with the PyHELP module. Calculations
-for the whole area takes less than 10 |_| minutes on an Intel i7-7700HQ
-dual Core @ 2.80GHz.
+Calculations for the whole area take less than 10 |_| minutes on an
+Intel i7-7700HQ dual Core @ 2.80GHz.
+
+The input data required to run the calculations are distributed
+with each new release of PyHELP as a zip archive on our `Releases page`_.
+The input data are also distributed alongside the source code
+of PyHELP in the folder `example`_ on our `GitHub repository`_.
+Note that it is very important that the folder _example_ be saved on your
+computer to a location with `Write and Read` permissions.
 
 .. _north_river_locmap:
 .. figure:: img/north_river_locmap.*
@@ -31,12 +36,12 @@ and saved by default in PyHELP.
 It must be a location where you have `Write and Read` permissions.
 The working directory can be changed at any time with the
 :meth:`~pyhelp.HelpManager.set_workdir` method.
-Here, we will use the path to the folder `example`_ that is distributed with
-the PyHELP module.
+Here, we will use the path to the folder `example`_ that can be dowloaded
+from our `Releases page`_ on GitHub.
 
     >>> import os.path as osp
     >>> from pyhelp import HelpManager
-    >>> workdir = "C:/Users/User/pyhelp/example"
+    >>> workdir = "path/to/folder/example"
     >>> helpm = HelpManager(workdir, year_range=(2000, 2010))
     Reading input data grid data from csv... done
     Reading input weather data files... done
@@ -172,9 +177,11 @@ automatically to the disk in a HDF5 file.
               Please consult `PyHELP Issue #10`_ to follow our progress on
               this topic.
 
-.. _example: https://github.com/jnsebgosselin/pyhelp/tree/master/example
+.. _example: https://github.com/cgq-qgc/pyhelp/tree/master/example
+.. _GitHub repository: https://github.com/cgq-qgc/pyhelp
 .. _HDF5: https://www.hdfgroup.org/solutions/hdf5/
 .. _ESRI Shapefile: https://docs.qgis.org/2.8/en/docs/user_manual/working_with_vector/supported_data.html#esri-shapefiles
 .. |_| unicode:: 0xA0 
    :trim:
-.. _PyHELP Issue #10: https://github.com/jnsebgosselin/pyhelp/issues/10
+.. _PyHELP Issue #10: https://github.com/cgq-qgc/pyhelp/issues/10
+.. _Releases page: https://github.com/cgq-qgc/pyhelp/releases
