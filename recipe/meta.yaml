@@ -15,12 +15,21 @@ requirements:
     - libpython
   run:
     - python ==3.6
-    - numpy 1.15.*
-
+    - numpy
+    - matplotlib
+    - scipy
+    - geopandas
+    - xlrd
+    - netcdf4
+    - h5py
+    - pytables
+    
 about:
-  home: https://github.com/jnsebgosselin/pyhelp
+  home: https://github.com/cgq-qgc/pyhelp
   license: MIT
   license_file: LICENSE
+  doc_url: https://pyhelp.readthedocs.io/
+  summary: A Python library for assessing groundwater recharge at the regional scale with the HELP model
 extra:
   recipe-maintainers:
     - jnsebgosselin
