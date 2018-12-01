@@ -54,7 +54,7 @@ install:
   - conda config --set always_yes yes
   - conda update -q conda
   - conda config --set auto_update_conda no
-  - conda install -c defaults scipy geopandas xlrd netcdf4 h5py pytables matplotlib pytest pytest-mock pytest-cov pip m2w64-toolchain conda-build twine --override-channels
+  - conda install -c defaults scipy geopandas xlrd netcdf4 h5py pytables matplotlib pytest pytest-mock pytest-cov pip m2w64-toolchain conda-build==3.16.* twine --override-channels
   - python -m pip install codecov
 
   # Add mingw-w64 to SYS PATH.
