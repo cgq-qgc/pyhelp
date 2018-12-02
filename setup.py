@@ -48,6 +48,7 @@ setup(name='pyhelp',
                    'distributed groundwater recharge and hydrological '
                    'components with HELP.'),
       long_description=LONG_DESCRIPTION,
+      long_description_content_type='text/markdown',
       license='MIT',
       author='PyHELP Project Contributors',
       author_email='jean-sebastien.gosselin@ete.inrs.ca',
