@@ -3,8 +3,6 @@ C    IYR IS THE NUMBER OF THE YEAR
 C    LMYR IS THE NUMBER OF YEARS OF SIMULATION
 C    OSNO IS THE INITIAL SNOW WATER
 C    AREA IS AREA PROJECTED ON HORIZONTAL PLANE
-C    TFSOIL is the average air temperature, in Fahrenheit degrees,
-C           below which the soil is assumed to be freezing
 C
 C******************************MAIN*************************
 C                         OUTPUT ROUTINE
@@ -12,6 +10,12 @@ C
 C    DIRECTS THE RUNNING OF THE SIMULATION AND PRINTING OF OUTPUT,
 C    AND PERFORMS THE ACCOUNTING ON THE RESULTS.
 C
+C    IU8 is a flag to indicate the system of units used for the inputs and
+C        outputs. A value of 2 is used for SI and 1 for IP.
+C    TFSOIL is the average air temperature, in Fahrenheit degrees,
+C           below which the soil is assumed to be freezing
+C        
+
       SUBROUTINE run_simulation (fpath_precip, fpath_tasavg,
      1 fpath_solrad, fpath_evapo, fpath_soil, fpath_output,
      2 IOD, IOM, IOA, IOS, IU8, LMYR, TFSOIL)
