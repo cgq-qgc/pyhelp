@@ -2500,7 +2500,11 @@ C
 C      ************************** DATFIT *************************
 C
        SUBROUTINE DATFIT(M,D,AC,A,B)
-       REAL D(12)
+       INTEGER, INTENT(IN) :: M
+       REAL, INTENT(IN) :: D(12)
+       REAL, INTENT(OUT) :: AC
+       REAL, INTENT(OUT) :: A
+       REAL, INTENT(OUT) :: B
        PI       =3.14159
        SUMD     =0.0
        AM       =FLOAT(M)
