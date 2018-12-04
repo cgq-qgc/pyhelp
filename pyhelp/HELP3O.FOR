@@ -3,8 +3,6 @@ C    IYR IS THE NUMBER OF THE YEAR
 C    LMYR IS THE NUMBER OF YEARS OF SIMULATION
 C    OSNO IS THE INITIAL SNOW WATER
 C    AREA IS AREA PROJECTED ON HORIZONTAL PLANE
-C    TFSOIL is the average air temperature, in Fahrenheit degrees,
-C           below which the soil is assumed to be freezing
 C
 C******************************MAIN*************************
 C                         OUTPUT ROUTINE
@@ -12,6 +10,12 @@ C
 C    DIRECTS THE RUNNING OF THE SIMULATION AND PRINTING OF OUTPUT,
 C    AND PERFORMS THE ACCOUNTING ON THE RESULTS.
 C
+C    IU8 is a flag to indicate the system of units used for the inputs and
+C        outputs. A value of 2 is used for SI and 1 for IP.
+C    TFSOIL is the average air temperature, in Fahrenheit degrees,
+C           below which the soil is assumed to be freezing
+C        
+
       SUBROUTINE run_simulation (fpath_precip, fpath_tasavg,
      1 fpath_solrad, fpath_evapo, fpath_soil, fpath_output,
      2 IOD, IOM, IOA, IOS, IU8, LMYR, TFSOIL)
@@ -8574,7 +8578,7 @@ C
             IF(IU8 .EQ. 1) CALL LATKS (DPHED2, NSEG2B, NSEG2D, ELKS)
             IF(IU8.NE.1) CALL LATKS (DPHED2/25.4, NSEG2B, NSEG2D, ELKS)
             PDRN2 = PRCR2 + PDRN2
-            CALL MOUND (PDRN2, ELKS, LAYD, PMHED2, PLEN2)
+            CALL MOUND (PDRN2, ELKS, LAYD, PMHED2, PLEN2, IU8)
             MND = 1
             IF (IU8 .EQ. 1) THEN
               IF (LAYER (LP(2)-1) .GT. 2) THEN
@@ -8613,7 +8617,7 @@ C
             IF(IU8 .EQ. 1) CALL LATKS (DPHED3, NSEG3B, NSEG3D, ELKS)
             IF(IU8.NE.1) CALL LATKS (DPHED3/25.4, NSEG3B, NSEG3D, ELKS)
             PDRN3 = PRCR3 + PDRN3
-            CALL MOUND (PDRN3, ELKS, LAYD, PMHED3, PLEN3)
+            CALL MOUND (PDRN3, ELKS, LAYD, PMHED3, PLEN3, IU8)
             MND = 1
             IF (IU8 .EQ. 1) THEN
               IF (LAYER (LP(3)-1) .GT. 2) THEN
@@ -8652,7 +8656,7 @@ C
             IF(IU8 .EQ. 1) CALL LATKS (DPHED4, NSEG4B, NSEG4D, ELKS)
             IF(IU8.NE.1) CALL LATKS (DPHED4/25.4, NSEG4B, NSEG4D, ELKS)
             PDRN4 = PRCR4 + PDRN4
-            CALL MOUND (PDRN4, ELKS, LAYD, PMHED4, PLEN4)
+            CALL MOUND (PDRN4, ELKS, LAYD, PMHED4, PLEN4, IU8)
             MND = 1
             IF (IU8 .EQ. 1) THEN
               IF (LAYER (LP(4)-1) .GT. 2) THEN
@@ -8691,7 +8695,7 @@ C
             IF(IU8 .EQ. 1) CALL LATKS (DPHED5, NSEG5B, NSEG5D, ELKS)
             IF(IU8.NE.1) CALL LATKS (DPHED5/25.4, NSEG5B, NSEG5D, ELKS)
             PDRN5 = PRCR5 + PDRN5
-            CALL MOUND (PDRN5, ELKS, LAYD, PMHED5, PLEN5)
+            CALL MOUND (PDRN5, ELKS, LAYD, PMHED5, PLEN5, IU8)
             MND = 1
             IF (IU8 .EQ. 1) THEN
               IF (LAYER (LP(5)-1) .GT. 2) THEN
