@@ -72,21 +72,15 @@ in a terminal:
    
 .. _sec_install_from_source:
 
-Install from source
+Run PyHELP from source
 ---------------------------------
 
-PyHELP is in an early stage of development and no version has been published
-yet.
-Therefore, the only way to use PyHELP currently is to clone it from our
-`GitHub repository`_ and run it from the source files after installing the
-`requirements`_ that are listed below.
+If you need to use PyHELP with another version of Python than 3.6 or if you
+are working on Linux or macOS, you will have to build and install
+PyHELP from source.
+Below is a step-by-step guide to achieve this.
 
-.. note::  PyHELP is currently available only on the Windows plateform and on
-           Python 3.6 64-bits.
-
-In summary:
-
-#. Install the PyHELP `requirements`_.
+#. Install PyHELP's `requirements`_.
 
    The recommended and easiest way to do this is with `Anaconda`_, a free
    and open source distribution of Python.
@@ -98,15 +92,34 @@ In summary:
 
    .. code-block:: bash
 
-      git clone https://github.com/jnsebgosselin/pyhelp.git <path-to-target-dir>
+      git clone https://github.com/cgq-qgc/pyhelp.git <path-to-target-dir>
     
    or do it from your GUI client if you are using one.
 
-#. Add your cloned PyHELP directory to your Windows `PYTHONPATH`.
-
-#. To keep your repository up-to-date, run ``git pull`` inside the cloned
-   directory or do it directly from your GUI client.
+#. To keep your PyHELP repository up-to-date, run ``git pull`` inside the
+   cloned directory or do it directly from your GUI client.
    
+#. Build PyHELP extensions by executing the following command
+   in a terminal from inside your cloned directory:
+   
+   .. code-block:: bash
+
+      python setup.py build_ext
+      
+   To do the above, you will need to have a Fortran and C++ compiler installed
+   on your computer. If you are using Anaconda, you can achieve that simply by
+   installing the conda package named `m2w64-toolchain`.
+   If you do not use Anaconda and are working on Linux or macOS, you can
+   install the free and open source `GNU Compiler Collection (GCC)`_ and
+   the `GNU Fortran compiler (gfortran)`_ with the package manager of your
+   operating system.
+   If you are on Windows, you can download and install `mingw-w64`_, which is
+   a complete runtime environment for gcc to support binaries native to
+   Windows 64-bit and 32-bit operating systems.
+
+#. Add your cloned PyHELP directory to the `PYTHONPATH` of your operating
+   system.
+
 #. Open Python and start using or contributing to PyHELP.
 
 .. _sec_requirements:
@@ -128,10 +141,13 @@ Requirements
 .. _Anaconda: https://www.anaconda.com/download/
 .. _Anaconda distribution: <https://www.anaconda.com/download/
 .. _Anaconda Navigator: https://docs.anaconda.com/anaconda/navigator/
+.. _mingw-w64: https://sourceforge.net/projects/mingw-w64/
 .. _Getting started with conda: https://conda.io/docs/user-guide/getting-started.html
 .. _Getting started with Navigator: https://docs.anaconda.com/anaconda/navigator/getting-started/
 .. _Git: https://git-scm.com/downloads
 .. _GitHub repository: https://github.com/jnsebgosselin/pyhelp
+.. _GNU Fortran compiler (gfortran): https://gcc.gnu.org/wiki/GFortran
+.. _GNU Compiler Collection (GCC): https://gcc.gnu.org/
 .. _GUI client: https://git-scm.com/download/gui/windows
 .. _install them with pip:  https://pip.pypa.io/en/stable/user_guide/#installing-from-wheels
 .. _pip: https://pypi.org/project/pip/
