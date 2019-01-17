@@ -6,6 +6,43 @@ Windows 64bits plateform.
 If you need to use PyHELP with Python 3.7 or are working on Linux or
 MacOS, you will have to build and install PyHELP from source.
 
+Install with Conda
+---------------------------------
+
+The easiest method to install a released version of PyHELP on Windows is
+with Conda. To do so, you will need first to download and install the
+`Anaconda distribution <https://www.anaconda.com/download/>`_ on your computer.
+Anaconda comes with the most important Python scientific libraries
+(i.e. Numpy, Pandas, Matplotlib, IPython, etc), including all PyHELP
+dependencies, in a single, easy to use environment. It also includes the
+`Anaconda Navigator <https://docs.anaconda.com/anaconda/navigator/>`_, which
+is a graphical user interface to the Conda package and environment manager.
+
+First, to avoid installation problems and dependency conflicts, we advise you
+to install PyHELP in a fresh new conda environment that uses Python 3.6.
+This can be done with the Anaconda Navigator or with Conda by executing the
+following command in a terminal:
+
+.. code-block:: bash
+
+   conda create -n my_new_env_name python=3.6
+   
+Note that this step is required if your default Conda environment named `base`
+is not using Python 3.6.
+   
+Then, PyHELP can be installed, along with all its dependencies, by executing
+the following command in a terminal:
+
+.. code-block:: bash
+
+   conda install -c cgq-qgc pyhelp
+   
+If you need more guidance on how to install packages or manage Conda
+environments with Conda or the Anaconda Navigator, please consult the 
+`Getting started with conda <https://conda.io/docs/user-guide/getting-started.html>`_
+or `Getting started with Navigator <https://docs.anaconda.com/anaconda/navigator/getting-started/>`_
+guide.
+            
 
 .. _sec_install_from_source:
 
