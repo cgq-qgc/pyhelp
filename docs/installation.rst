@@ -96,9 +96,6 @@ Below is a step-by-step guide that describe how to achieve this.
     
    or do it with your GUI client if you are using one.
 
-#. To keep your PyHELP repository up-to-date, run ``git pull`` inside the
-   cloned directory or do it directly from your GUI client.
-   
 #. Build and install PyHELP by executing the following commands
    in a terminal from inside your cloned directory:
    
@@ -122,6 +119,10 @@ Below is a step-by-step guide that describe how to achieve this.
    system.
 
 #. Open Python and start using or contributing to PyHELP.
+
+#. To keep your PyHELP repository up-to-date with the version on GitHub,
+   run ``git pull`` inside the cloned directory or do it with your GUI client.
+   You will then need to re-build and re-install PyHELP after completing that. 
 
 .. _sec_requirements:
 
