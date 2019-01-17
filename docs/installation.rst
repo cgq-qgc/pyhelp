@@ -78,7 +78,7 @@ Run PyHELP from source
 If you need to use PyHELP with another version of Python than 3.6 or if you
 are working on Linux or macOS, you will have to build and install
 PyHELP from source.
-Below is a step-by-step guide to achieve this.
+Below is a step-by-step guide that describe how to achieve this.
 
 #. Install PyHELP's `requirements`_.
 
