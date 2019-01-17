@@ -1,6 +1,12 @@
 Installation
 =================================
 
+
+.. _sec_install_from_source:
+
+Install from source
+---------------------------------
+
 PyHELP is in an early stage of development and no version has been published
 yet.
 Therefore, the only way to use PyHELP currently is to clone it from our
