@@ -11,12 +11,12 @@ Install with Conda
 
 The easiest method to install a released version of PyHELP on Windows is
 with Conda. To do so, you will need first to download and install the
-`Anaconda distribution <https://www.anaconda.com/download/>`_ on your computer.
+`Anaconda distribution`_ on your computer.
 Anaconda comes with the most important Python scientific libraries
 (i.e. Numpy, Pandas, Matplotlib, IPython, etc), including all PyHELP
 dependencies, in a single, easy to use environment. It also includes the
-`Anaconda Navigator <https://docs.anaconda.com/anaconda/navigator/>`_, which
-is a graphical user interface to the Conda package and environment manager.
+`Anaconda Navigator`_, which is a graphical user interface to the Conda
+package and environment manager.
 
 First, to avoid installation problems and dependency conflicts, we advise you
 to install PyHELP in a fresh new conda environment that uses Python 3.6.
@@ -39,9 +39,7 @@ the following command in a terminal:
    
 If you need more guidance on how to install packages or manage Conda
 environments with Conda or the Anaconda Navigator, please consult the 
-`Getting started with conda <https://conda.io/docs/user-guide/getting-started.html>`_
-or `Getting started with Navigator <https://docs.anaconda.com/anaconda/navigator/getting-started/>`_
-guide.
+`Getting started with conda`_ or `Getting started with Navigator`_ guide.
             
 
 .. _sec_install_from_source:
@@ -99,6 +97,15 @@ Requirements
 - `PyTables <https://www.pytables.org/>`_
 
 .. _Anaconda: https://www.anaconda.com/download/
+.. _Anaconda distribution: <https://www.anaconda.com/download/
+.. _Anaconda Navigator: https://docs.anaconda.com/anaconda/navigator/
+.. _Getting started with conda: https://conda.io/docs/user-guide/getting-started.html
+.. _Getting started with Navigator: https://docs.anaconda.com/anaconda/navigator/getting-started/
 .. _Git: https://git-scm.com/downloads
 .. _GitHub repository: https://github.com/jnsebgosselin/pyhelp
 .. _GUI client: https://git-scm.com/download/gui/windows
+.. _install them with pip:  https://pip.pypa.io/en/stable/user_guide/#installing-from-wheels
+.. _pip: https://pypi.org/project/pip/
+.. _Python 3.6: https://www.python.org/downloads/release/https://www.python.org/downloads/release/python-367/python-367/
+.. _The Python Package Index (PyPI): https://pypi.org/
+.. _Unofficial Windows Binaries for Python Extension Packages: https://www.lfd.uci.edu/~gohlke/pythonlibs/
