@@ -99,12 +99,13 @@ Below is a step-by-step guide that describe how to achieve this.
 #. To keep your PyHELP repository up-to-date, run ``git pull`` inside the
    cloned directory or do it directly from your GUI client.
    
-#. Build PyHELP extensions by executing the following command
+#. Build and install PyHELP by executing the following commands
    in a terminal from inside your cloned directory:
    
    .. code-block:: bash
 
       python setup.py build_ext
+      python setup.py install
       
    To do the above, you will need to have a Fortran and C++ compiler installed
    on your computer. If you are using Anaconda, you can achieve that simply by
