@@ -94,7 +94,7 @@ Below is a step-by-step guide that describe how to achieve this.
 
       git clone https://github.com/cgq-qgc/pyhelp.git <path-to-target-dir>
     
-   or do it from your GUI client if you are using one.
+   or do it with your GUI client if you are using one.
 
 #. To keep your PyHELP repository up-to-date, run ``git pull`` inside the
    cloned directory or do it directly from your GUI client.
