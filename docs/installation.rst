@@ -3,8 +3,9 @@ Installation
 
 Pip Wheels and Conda packages are both available for Python 3.6 on the
 Windows 64bits plateform.
-If you need to use PyHELP with Python 3.7 or are working on Linux or
-MacOS, you will have to build and install PyHELP from source.
+If you need to use PyHELP with another version of Python than 3.6 or if you
+are working on Linux or macOS, you will have to build and run PyHELP from
+source.
 
 Install with Conda
 ---------------------------------
