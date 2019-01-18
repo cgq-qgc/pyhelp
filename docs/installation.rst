@@ -3,7 +3,7 @@ Installation
 
 Pip Wheels and Conda packages are both available for Python 3.6 on the
 Windows 64bits plateform.
-If you need to use PyHELP with another version of Python than 3.6 or if you
+If you need to use PyHELP with a version of Python other than 3.6 or if you
 are working on Linux or macOS, you will have to build and install PyHELP from
 source.
 
@@ -28,8 +28,8 @@ following command in a terminal:
 
    conda create -n my_new_env_name python=3.6
    
-Note that this step is required if your default Conda environment named `base`
-is not using Python 3.6.
+Note that the above step is required if your default Conda environment
+named `base` is not using Python 3.6.
    
 Then, PyHELP can be installed, along with all its dependencies, by executing
 the following command in a terminal:
@@ -54,8 +54,8 @@ First, you will need to download and install `Python 3.6`_ on your computer.
 Then you will need to install all the dependencies that are listed in
 the section :ref:`sec_requirements` below.
 Unless you really know what you are doing, we strongly recommand against
-installing these dependencies with with pip directly from the
-`The Python Package Index (PyPI)`_ because you will most likely run into
+installing these dependencies with pip directly from the
+`The Python Package Index (PyPI)`_, because you will most likely run into
 installation problems and dependency conflicts.
 The easiest and safest way to install PyHELP's depencies on Windows is to
 download Wheels from Christopher Gohlke's
@@ -75,7 +75,7 @@ in a terminal:
 Install PyHELP from source
 ---------------------------------
 
-If you need to use PyHELP with another version of Python than 3.6 or if you
+If you need to use PyHELP with a version of Python other than 3.6 or if you
 are working on Linux or macOS, you will have to build and install
 PyHELP from source.
 Below is a step-by-step guide that describe how to achieve this.
@@ -120,9 +120,11 @@ Below is a step-by-step guide that describe how to achieve this.
 
 #. Open Python and start using or contributing to PyHELP.
 
-#. To keep your PyHELP repository up-to-date with the version on GitHub,
-   run ``git pull`` inside the cloned directory or do it with your GUI client.
-   You will then need to re-build and re-install PyHELP after completing that. 
+#. To keep your PyHELP repository up-to-date, run ``git pull`` inside the
+   cloned directory or do it with your GUI client.
+   You then need to re-build and re-install PyHELP, so that the pulled
+   changes are applied to the PyHELP installation used by your Python
+   installation. 
 
 .. _sec_requirements:
 
