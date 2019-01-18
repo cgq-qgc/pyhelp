@@ -29,7 +29,10 @@ class Mock(MagicMock):
         return MagicMock()
 
 
-MOCK_MODULES = ['pyhelp.HELP3O']
+MOCK_MODULES = ['pyhelp.HELP3O', 'matplotlib', 'matplotlib.pyplot', 'numpy',
+                'matplotlib.transforms', 'pandas', 'netCDF4', 'geopandas',
+                'xlrd', 'xlrd.xldate', 'h5py', 'scipy', 'scipy.stats',
+                'shapely', 'shapely.geometry']
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
 # -- Project information -----------------------------------------------------
