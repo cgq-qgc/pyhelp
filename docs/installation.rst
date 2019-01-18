@@ -10,6 +10,9 @@ source.
 Install with Conda
 ---------------------------------
 
+.. warning:: This installation method is currently only supported for the
+             Windows 64bits plateform.
+
 The easiest method to install a released version of PyHELP on Windows is
 with Conda. To do so, you will need first to download and install the
 `Anaconda distribution`_ on your computer.
@@ -44,6 +47,9 @@ environments with Conda or the Anaconda Navigator, please consult the
             
 Install with Pip
 ---------------------------------
+
+.. warning:: This installation method is currently only supported for the
+             Windows 64bits plateform.
 
 It is also possible to install PyHELP with `pip`_, but be aware that pip
 installations are for advanced users.
