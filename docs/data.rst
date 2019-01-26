@@ -154,7 +154,7 @@ the calibration of the model.
    | hum1         | %               | Average quaterly relative humidity     |
    |              |                 | (jan to mar)                           |
    +--------------+-----------------+----------------------------------------+
-   | hum2         | %               | Average quaterly relative humidity ()  |
+   | hum2         | %               | Average quaterly relative humidity     |
    |              |                 | (apr to jun)                           |
    +--------------+-----------------+----------------------------------------+
    | hum3         | %               | Average quaterly relative humidity     |
@@ -165,7 +165,7 @@ the calibration of the model.
    +--------------+-----------------+----------------------------------------+
    | growth_start | Julian day      | First day of the growing season        |
    +--------------+-----------------+----------------------------------------+
-   | growth_start | Julian day      | Last day of the growing season         |
+   | growth_end   | Julian day      | Last day of the growing season         |
    +--------------+-----------------+----------------------------------------+
    | LAI          |                 | Maximum leaf area index                |
    +--------------+-----------------+----------------------------------------+
