@@ -59,6 +59,10 @@ install:
   - conda install scipy geopandas xlrd netcdf4 h5py pytables matplotlib pytest pytest-mock pytest-cov pip m2w64-toolchain conda-build==3.16.*
   - python -m pip install codecov
 
+  # Check that we have still the expected version and architecture for Python
+  - python --version
+  - python -c "import struct; print(struct.calcsize('P') * 8)"
+
   # Add mingw-w64 to SYS PATH.
   - set "PATH=%PYTHON%/Library/mingw-w64/bin;%PATH%"
 
