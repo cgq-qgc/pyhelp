@@ -26,7 +26,6 @@ skip_commits:
 environment:
   global:
     APPVEYOR_RDP_PASSWORD: "dcca4c4863E30d56c2e0dda6327370b3#"
-    # Note: TWINE_PASSWORD and TWINE_USERNAME are set in Appveyor settings
     PYHELP_VERSION: "v0.1.2.dev0"
 
   matrix:
@@ -52,9 +51,8 @@ install:
   
   # Setup Conda.
   - conda config --set always_yes yes
-  - conda update -q conda
   - conda config --set auto_update_conda no
-  - conda install -c defaults scipy geopandas xlrd netcdf4 h5py pytables matplotlib pytest pytest-mock pytest-cov pip m2w64-toolchain conda-build==3.16.* twine --override-channels
+  - conda install scipy geopandas xlrd netcdf4 h5py pytables matplotlib pytest pytest-mock pytest-cov pip m2w64-toolchain conda-build==3.16.*
   - python -m pip install codecov
 
   # Add mingw-w64 to SYS PATH.
@@ -71,7 +69,6 @@ test_script:
 after_test:
   - IF ["%APPVEYOR_PULL_REQUEST_NUMBER%"]==[""] (%PYTHON%/python.exe setup.py sdist bdist_wheel)
   - 7z a -tzip dist/example_pyhelp_%PYHELP_VERSION%.zip example/*.csv example/help_example.py example/CWEEDS/*
-  - IF ["%APPVEYOR_REPO_TAG%"] == ["true"] (python -m twine upload dist/*)
   - IF ["%APPVEYOR_PULL_REQUEST_NUMBER%"]==[""] (conda-build recipe --no-test --output-folder dist)
 
 artifacts:
