@@ -9,12 +9,12 @@ source:
 
 requirements:
   host:
-    - python ==3.6
+    - python
     - numpy 1.15.*
     - m2w64-toolchain
     - libpython
   run:
-    - python ==3.6
+    - python
     - numpy
     - matplotlib
     - scipy
