@@ -83,15 +83,21 @@ in a terminal:
 Install PyHELP from source
 ---------------------------------
 
-If you need to use PyHELP with a version of Python other than 3.6 or if you
-are working on Linux or macOS, you will have to build and install
+If you need to use PyHELP with a version of Python older than 3.6 or
+if you are working on Linux or macOS, you will have to build and install
 PyHELP from source.
 Below is a step-by-step guide that describe how to achieve this.
 
 #. Install PyHELP's `requirements`_.
 
    The recommended and easiest way to do this is with `Anaconda`_, a free
-   and open source distribution of Python.
+   and open source distribution of Python. If you decide to do so,
+   PyHELP's `requirements`_ can be installed one by one with the Anaconda
+   Navigator or with Conda by executing the following command in a terminal:
+   
+   .. code-block:: bash
+
+      conda scipy geopandas xlrd netcdf4 h5py pytables matplotlib
 
 #. Install `Git`_, a powerful source control management tool, or install one
    of the numerous `GUI client`_ that exists for it .
@@ -123,10 +129,7 @@ Below is a step-by-step guide that describe how to achieve this.
    a complete runtime environment for gcc to support binaries native to
    Windows 64-bit and 32-bit operating systems.
 
-#. Add your cloned PyHELP directory to the `PYTHONPATH` of your operating
-   system.
-
-#. Open Python and start using or contributing to PyHELP.
+#. Open Python and start using PyHELP.
 
 #. To keep your PyHELP repository up-to-date, run ``git pull`` inside the
    cloned directory or do it with your GUI client.
@@ -163,6 +166,6 @@ Requirements
 .. _GUI client: https://git-scm.com/download/gui/windows
 .. _install them with pip:  https://pip.pypa.io/en/stable/user_guide/#installing-from-wheels
 .. _pip: https://pypi.org/project/pip/
-.. _Python 3.6: https://www.python.org/downloads/release/https://www.python.org/downloads/release/python-367/python-367/
+.. _Python 3.6 or 3.7: https://www.python.org/downloads/
 .. _The Python Package Index (PyPI): https://pypi.org/
 .. _Unofficial Windows Binaries for Python Extension Packages: https://www.lfd.uci.edu/~gohlke/pythonlibs/
