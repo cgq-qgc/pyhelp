@@ -31,8 +31,8 @@ following command in a terminal:
 
    conda create -n my_new_env_name python=3.7.*
 
-Simply replace the ``python=3.7.*`` argument by ``python=3.6.*`` to use
-Python 3.6 instead.
+If you want to use Python 3.6 instead, simply replace the ``python=3.7.*``
+argument by ``python=3.6.*``.
 
 Then, PyHELP can be installed, along with all its dependencies, by executing
 the following command in a terminal:
