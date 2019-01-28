@@ -97,7 +97,7 @@ Below is a step-by-step guide that describe how to achieve this.
    
    .. code-block:: bash
 
-      conda scipy geopandas xlrd netcdf4 h5py pytables matplotlib
+      conda install scipy geopandas xlrd netcdf4 h5py pytables matplotlib
 
 #. Install `Git`_, a powerful source control management tool, or install one
    of the numerous `GUI client`_ that exists for it .
