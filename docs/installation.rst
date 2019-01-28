@@ -56,18 +56,20 @@ installations are for advanced users.
 PyHELP depends on several low-level libraries for geospatial analysis, and
 this may cause dependency conflicts if you are not careful.
 
-First, you will need to download and install `Python 3.6`_ on your computer.
+First, you will need to download and install `Python 3.6 or 3.7`_ on your
+computer.
 Then you will need to install all the dependencies that are listed in
 the section :ref:`sec_requirements` below.
 Unless you really know what you are doing, we strongly recommand against
-installing these dependencies with pip directly from the
-`The Python Package Index (PyPI)`_, because you will most likely run into
-installation problems and dependency conflicts.
+installing these dependencies directly from the `The Python Package Index (PyPI)`_
+with pip, because you will most likely run into installation problems and
+dependency conflicts.
 The easiest and safest way to install PyHELP's depencies on Windows is to
 download Wheels from Christopher Gohlke's
 `Unofficial Windows Binaries for Python Extension Packages`_ and
-`install them with pip`_. Be carefull to install the packages that were
-built for Python 3.6 and Windows 64bits.
+`install them with pip`_.
+Be carefull to install the packages that were built for Windows 64bits and
+the version of Python that you downloaded and installed on your computer.
 
 Then, you can install PyHELP with pip by executing the following command
 in a terminal:
