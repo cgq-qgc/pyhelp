@@ -23,17 +23,17 @@ dependencies, in a single, easy to use environment. It also includes the
 package and environment manager.
 
 First, to avoid installation problems and dependency conflicts, we advise you
-to install PyHELP in a fresh new conda environment that uses Python 3.6.
+to install PyHELP in a fresh new conda environment.
 This can be done with the Anaconda Navigator or with Conda by executing the
 following command in a terminal:
 
 .. code-block:: bash
 
-   conda create -n my_new_env_name python=3.6
-   
-Note that the above step is required if your default Conda environment
-named `base` is not using Python 3.6.
-   
+   conda create -n my_new_env_name python=3.7.*
+
+Simply replace the ``python=3.7.*`` argument by ``python=3.6.*`` to use
+Python 3.6 instead.
+
 Then, PyHELP can be installed, along with all its dependencies, by executing
 the following command in a terminal:
 
