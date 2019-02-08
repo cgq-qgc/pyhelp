@@ -514,7 +514,7 @@ def load_weather_from_csv(filename):
 
     datetimes = [datetime.strptime(ds, "%d/%m/%Y") for ds in datestrings]
     years = [dt.year for dt in datetimes]
-    
+
     if all((len(lat), len(lon), len(datestrings), len(data))):
         return {'lat': lat, 'lon': lon, 'datestrings': datestrings,
                 'datetimes': datetimes, 'years': years, 'data': data}
