@@ -502,9 +502,9 @@ def load_weather_from_csv(filename):
         if not line or not line[0]:
             continue
 
-        if line[0] == 'Latitude (dd)':
+        if line[0].lower().strip().startswith('lat'):
             lat = np.array(line[1:]).astype('float')
-        elif line[0] == 'Longitude (dd)':
+        elif line[0].lower().strip().startswith('lon'):
             lon = np.array(line[1:]).astype('float')
         elif all((len(lat), len(lon))):
             date_data = np.array(reader[i:])
