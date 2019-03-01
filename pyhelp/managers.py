@@ -418,6 +418,11 @@ class HelpManager(object):
         # don't need the D4 or D7 input files for those that aren't.
         cellnames = self.grid['cid'][cellnames][self.grid['run'] == 1].tolist()
 
+        # Only keep the cells that have  a nlayer > 0 because we cannot run
+        # those in HELP anyway.
+        cellnames = (
+            self.grid['cid'][cellnames][self.grid['nlayer'] > 0].tolist())
+
         return cellnames
 
     def get_latlon_for_cellnames(self, cells):
