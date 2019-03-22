@@ -132,6 +132,12 @@ def _format_d10_singlecell(row):
         xleng = float(row['dist_dr'+lay])
         slope = float(row['slope'+lay])
 
+        # Check that all values are valid for the layer.
+        check = [val == -9999 for val in
+                 (thick, poro, fc, wp, rc, xleng, slope)]
+        if any(check):
+            return None
+
         # READ (10, 5120) LAYER (J), THICK (J), ISOIL (J),
         #   PORO (J), FC (J), WP (J), SW (J), RC (J)
         # 5120 FORMAT(I2,F7.0,I4,4F6.0,F16.0)
