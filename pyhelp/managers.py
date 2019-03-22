@@ -261,6 +261,7 @@ class HelpManager(object):
 
         run_cellnames = self.get_run_cellnames(cellnames)
         cellparams = {}
+        skipped_cells = []
         for cellname in run_cellnames:
             fpath_d4 = self.connect_tables['D4'][cellname]
             fpath_d7 = self.connect_tables['D7'][cellname]
@@ -268,6 +269,10 @@ class HelpManager(object):
             fpath_d10 = self.connect_tables['D10'][cellname]
             fpath_d11 = self.connect_tables['D11'][cellname]
             fpath_out = osp.abspath(osp.join(tempdir, str(cellname) + '.OUT'))
+
+            if fpath_d10 is None or fpath_d11 is None:
+                skipped_cells.append(cellname)
+                continue
 
             daily_out = 0
             monthly_out = 1
@@ -281,6 +286,16 @@ class HelpManager(object):
                                     fpath_d10, fpath_out, daily_out,
                                     monthly_out, yearly_out, summary_out,
                                     unit_system, simu_nyear, tfsoil)
+
+        skipped_cells = list(set(skipped_cells))
+        if skipped_cells:
+            print('-' * 25)
+            msg = "Warning: calcul for "
+            msg += "cell " if len(skipped_cells) == 1 else "cells "
+            msg += "#" + ", #".join(skipped_cells) + " "
+            msg += "will be skipped due to problems with the input data."
+            print(msg)
+            print('-' * 25)
 
         output_data = run_help_allcells(cellparams)
         output_data = self._post_process_output(output_data)
