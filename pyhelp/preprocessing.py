@@ -206,7 +206,7 @@ def write_d10d11_allcells(dirpath, d10data, d11data, ncore=None):
     ncore = max(mp.cpu_count() if ncore is None else ncore, 1)
     pool = Pool(ncore)
 
-    # Prepare soil and design input files :
+    # Prepare soil and design input files (D10).
 
     tic = time.clock()
     iterable = [(osp.join(dirpath, str(cid) + '.D10'), cid, d10data[cid]) for
@@ -223,7 +223,7 @@ def write_d10d11_allcells(dirpath, d10data, d11data, ncore=None):
     tac = time.clock()
     print('\nTask completed in %0.2f sec' % (tac-tic))
 
-    # Prepare evapotranspiration input files :
+    # Prepare evapotranspiration input files (D11).
 
     tic = time.clock()
     iterable = [(osp.join(dirpath, str(cid) + '.D11'), cid, d11data[cid]) for
