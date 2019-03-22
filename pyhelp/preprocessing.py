@@ -167,8 +167,8 @@ def _format_d10_singlecell(row):
 
 def format_d10d11_inputs(grid, cellnames, sf_edepth=1, sf_ulai=1):
     """
-    Format the evapotranspiration (D11) and soil and design data (D11) in a
-    format that is compatible by HELP.
+    Format the evapotranspiration (D11) and soil and design data (D10) in a
+    format that is compatible with HELP.
     """
     tic = time.clock()
     d11dat = {}
