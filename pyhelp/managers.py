@@ -403,7 +403,7 @@ class HelpManager(object):
 
         return cellnames.tolist()
 
-    def get_run_cellnames(self, cellnames):
+    def get_run_cellnames(self, cellnames=None):
         """
         Take a list of cellnames and return only those that are in the grid
         and for which HELP can be run.
