@@ -193,9 +193,12 @@ def format_d10d11_inputs(grid, cellnames, sf_edepth=1, sf_ulai=1):
 def write_d10d11_singlecell(packed_data):
     """Write the content of cell in a D10 and D11 file."""
     fname, cid, d10data = packed_data
-    with open(fname, 'w') as csvfile:
-        writer = csv.writer(csvfile, lineterminator='\n')
-        writer.writerows(d10data)
+    if d10data is None:
+        fname = None
+    else:
+        with open(fname, 'w') as csvfile:
+            writer = csv.writer(csvfile, lineterminator='\n')
+            writer.writerows(d10data)
     return {cid: fname}
 
 
