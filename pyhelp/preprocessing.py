@@ -193,6 +193,16 @@ def format_d10d11_inputs(grid, cellnames, sf_edepth=1, sf_ulai=1):
     tac = time.clock()
     print('Task completed in %0.2f sec' % (tac-tic))
 
+    warnings = [cid for cid, val in d10dat.items() if val is None]
+    if warnings:
+        print('-' * 25)
+        msg = "Warning: the data for "
+        msg += "cell " if len(warnings) == 1 else "cells "
+        msg += "#" + ", #".join(warnings) + " "
+        msg += "are not formatted correctly."
+        print(msg)
+        print('-' * 25)
+
     return d10dat, d11dat
 
 
