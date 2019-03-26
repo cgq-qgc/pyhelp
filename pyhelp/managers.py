@@ -292,8 +292,8 @@ class HelpManager(object):
             print('-' * 25)
             msg = "Warning: calcul for "
             msg += "cell " if len(skipped_cells) == 1 else "cells "
-            msg += "#" + ", #".join(skipped_cells) + " "
-            msg += "will be skipped due to problems with the input data."
+            msg += ", ".join(skipped_cells)
+            msg += " will be skipped due to problems with the input data."
             print(msg)
             print('-' * 25)
 

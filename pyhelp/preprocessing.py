@@ -198,8 +198,8 @@ def format_d10d11_inputs(grid, cellnames, sf_edepth=1, sf_ulai=1):
         print('-' * 25)
         msg = "Warning: the data for "
         msg += "cell " if len(warnings) == 1 else "cells "
-        msg += "#" + ", #".join(warnings) + " "
-        msg += "are not formatted correctly."
+        msg += ", ".join(warnings)
+        msg += " are not formatted correctly."
         print(msg)
         print('-' * 25)
 
