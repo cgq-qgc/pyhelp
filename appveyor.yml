@@ -25,7 +25,7 @@ skip_commits:
 
 environment:
   global:
-    PYHELP_VERSION: "v0.1.2.dev0"
+    PYHELP_VERSION: "v0.1.2"
 
   matrix:
     - PYTHON: "C:\\Miniconda36-x64"
