@@ -167,7 +167,7 @@ Requirements
 .. _Anaconda distribution: <https://www.anaconda.com/download/
 .. _Anaconda Navigator: https://docs.anaconda.com/anaconda/navigator/
 .. _mingw-w64: https://sourceforge.net/projects/mingw-w64/
-.. _Getting started with conda: https://conda.io/docs/user-guide/getting-started.html
+.. _Getting started with conda: https://docs.conda.io/projects/conda/en/latest/user-guide/getting-started.html
 .. _Getting started with Navigator: https://docs.anaconda.com/anaconda/navigator/getting-started/
 .. _Git: https://git-scm.com/downloads
 .. _GitHub repository: https://github.com/jnsebgosselin/pyhelp
