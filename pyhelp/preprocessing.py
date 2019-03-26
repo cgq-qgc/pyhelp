@@ -132,6 +132,12 @@ def _format_d10_singlecell(row):
         xleng = float(row['dist_dr'+lay])
         slope = float(row['slope'+lay])
 
+        # Check that all values are valid for the layer.
+        check = [val == -9999 for val in
+                 (thick, poro, fc, wp, rc, xleng, slope)]
+        if any(check):
+            return None
+
         # READ (10, 5120) LAYER (J), THICK (J), ISOIL (J),
         #   PORO (J), FC (J), WP (J), SW (J), RC (J)
         # 5120 FORMAT(I2,F7.0,I4,4F6.0,F16.0)
@@ -167,8 +173,8 @@ def _format_d10_singlecell(row):
 
 def format_d10d11_inputs(grid, cellnames, sf_edepth=1, sf_ulai=1):
     """
-    Format the evapotranspiration (D11) and soil and design data (D11) in a
-    format that is compatible by HELP.
+    Format the evapotranspiration (D11) and soil and design data (D10) in a
+    format that is compatible with HELP.
     """
     tic = time.clock()
     d11dat = {}
@@ -187,15 +193,28 @@ def format_d10d11_inputs(grid, cellnames, sf_edepth=1, sf_ulai=1):
     tac = time.clock()
     print('Task completed in %0.2f sec' % (tac-tic))
 
+    warnings = [cid for cid, val in d10dat.items() if val is None]
+    if warnings:
+        print('-' * 25)
+        msg = "Warning: the data for "
+        msg += "cell " if len(warnings) == 1 else "cells "
+        msg += ", ".join(warnings)
+        msg += " are not formatted correctly."
+        print(msg)
+        print('-' * 25)
+
     return d10dat, d11dat
 
 
 def write_d10d11_singlecell(packed_data):
     """Write the content of cell in a D10 and D11 file."""
     fname, cid, d10data = packed_data
-    with open(fname, 'w') as csvfile:
-        writer = csv.writer(csvfile, lineterminator='\n')
-        writer.writerows(d10data)
+    if d10data is None:
+        fname = None
+    else:
+        with open(fname, 'w') as csvfile:
+            writer = csv.writer(csvfile, lineterminator='\n')
+            writer.writerows(d10data)
     return {cid: fname}
 
 
@@ -206,7 +225,7 @@ def write_d10d11_allcells(dirpath, d10data, d11data, ncore=None):
     ncore = max(mp.cpu_count() if ncore is None else ncore, 1)
     pool = Pool(ncore)
 
-    # Prepare soil and design input files :
+    # Prepare soil and design input files (D10).
 
     tic = time.clock()
     iterable = [(osp.join(dirpath, str(cid) + '.D10'), cid, d10data[cid]) for
@@ -223,7 +242,7 @@ def write_d10d11_allcells(dirpath, d10data, d11data, ncore=None):
     tac = time.clock()
     print('\nTask completed in %0.2f sec' % (tac-tic))
 
-    # Prepare evapotranspiration input files :
+    # Prepare evapotranspiration input files (D11).
 
     tic = time.clock()
     iterable = [(osp.join(dirpath, str(cid) + '.D11'), cid, d11data[cid]) for
