@@ -41,6 +41,15 @@ the following command in a terminal:
 
    conda install -c cgq-qgc pyhelp
    
+When a new released version of PyHELP is made available on the
+`Anaconda cgq-qgc channel`_, PyHELP can be updated by executing the following
+command in a terminal:
+
+.. code-block:: bash
+
+   conda update -c cgq-qgc pyhelp
+
+   
 If you need more guidance on how to install packages or manage Conda
 environments with Conda or the Anaconda Navigator, please consult the 
 `Getting started with conda`_ or `Getting started with Navigator`_ guide.
@@ -153,6 +162,7 @@ Requirements
 - `GeoPandas <http://geopandas.org/>`_
 - `PyTables <https://www.pytables.org/>`_
 
+.. _Anaconda cgq-qgc channel: https://anaconda.org/cgq-qgc/pyhelp
 .. _Anaconda: https://www.anaconda.com/download/
 .. _Anaconda distribution: <https://www.anaconda.com/download/
 .. _Anaconda Navigator: https://docs.anaconda.com/anaconda/navigator/
