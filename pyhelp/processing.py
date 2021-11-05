@@ -8,7 +8,6 @@
 
 
 # ---- Standard Library Imports
-
 import os
 import os.path as osp
 from multiprocessing import Pool
@@ -18,11 +17,9 @@ import csv
 import calendar
 
 # ---- Third Party imports
-
 import numpy as np
 
 # ---- Local Libraries Imports
-
 from pyhelp import HELP3O
 
 DEL_TEMPFILES = True
@@ -68,7 +65,7 @@ def read_monthly_help_output(filename):
     """
     Read the monthly output from .OUT HELP file and return the data as
     numpy arrays stored in a dictionary. Support the output format that was
-    modified from HELP 3.07.
+    modified from HELP 3.07 (see PR#2).
     """
     with open(filename, 'r') as csvfile:
         csvread = list(csv.reader(csvfile))
