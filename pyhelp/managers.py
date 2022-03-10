@@ -164,7 +164,14 @@ class HelpManager(object):
 
     def _generate_d10d11_input_files(self, cellnames=None, sf_edepth=1,
                                      sf_ulai=1):
-        """Prepare the D10 and D11 input datafiles for each cell."""
+        """
+        Prepare the D10 and D11 input datafiles for each cell.
+
+        D10 : Soil and Design data
+        D11 : Surface condition (Evapotranspiration)
+
+        See https://github.com/cgq-qgc/pyhelp/wiki/HELP-input-files-format-description
+        """
         d10d11_inputdir = osp.join(self.inputdir, 'd10d11_input_files')
         if not osp.exists(d10d11_inputdir):
             os.makedirs(d10d11_inputdir)
@@ -189,7 +196,13 @@ class HelpManager(object):
         print("done")
 
     def _generate_d4d7d13_input_files(self, cellnames=None):
-        """Generate the D4, D7, and D13 HELP input datafiles for each cell."""
+        """
+        Generate the D4, D7, and D13 HELP input datafiles for each cell.
+
+        D4 : total precipitation
+        D7 : mean air temperature
+        D13 : solar radiation
+        """
         if self.grid is None:
             return
 
