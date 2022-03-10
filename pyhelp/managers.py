@@ -28,7 +28,7 @@ from pyhelp.utils import (savedata_to_hdf5, calc_dist_from_coord,
                           delete_folder_recursively)
 from pyhelp.weather_reader import (
     save_precip_to_HELP, save_airtemp_to_HELP, save_solrad_to_HELP,
-    InfoClimatGridReader, generate_input_from_cweeds)
+    generate_input_from_cweeds)
 from pyhelp.output import HelpOutput
 
 
