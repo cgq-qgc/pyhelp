@@ -27,8 +27,7 @@ from pyhelp.processing import run_help_allcells
 from pyhelp.utils import (savedata_to_hdf5, calc_dist_from_coord,
                           delete_folder_recursively)
 from pyhelp.weather_reader import (
-    save_precip_to_HELP, save_airtemp_to_HELP, save_solrad_to_HELP,
-    generate_input_from_cweeds)
+    save_precip_to_HELP, save_airtemp_to_HELP, save_solrad_to_HELP)
 from pyhelp.output import HelpOutput
 
 
@@ -462,16 +461,6 @@ class HelpManager(object):
         lat = np.array(self.grid['lat_dd'].reindex(cells).tolist())
         lon = np.array(self.grid['lon_dd'].reindex(cells).tolist())
         return lat, lon
-
-    # ---- Input Data Utilities
-    def generate_weather_inputs_from_CWEEDS(
-            self, cweed2_paths, cweed3_paths, year_range=None):
-        """
-        Generate global solar irradiance input data file from CWEEDS files.
-        """
-        year_range = self.year_range if year_range is None else year_range
-        generate_input_from_cweeds(self.workdir, cweed2_paths,
-                                   cweed3_paths, year_range)
 
 
 def load_grid_from_csv(path_togrid):
