@@ -8,7 +8,6 @@
 
 
 # ---- Standard Library imports
-import os
 import os.path as osp
 import csv
 import calendar
@@ -18,170 +17,11 @@ from time import strftime
 
 # ---- Third Party imports
 import numpy as np
-import netCDF4
 from xlrd.xldate import xldate_from_datetime_tuple
 
 # ---- Local imports
 from pyhelp import __namever__
 from pyhelp.utils import save_content_to_csv, nan_as_text_tolist
-
-
-class InfoClimatGridReader(object):
-    """
-    The :attr:`~pyhelp.weather_reader.InfoClimatGridReader` is a class
-    to read and format precipitation and air temperature data from the
-    interpolated grid produced by the `Info-climat service`_ of the MDDELCC.
-
-    .. _Info-climat service:
-       http://www.mddelcc.gouv.qc.ca/climat/surveillance/produits.htm
-    """
-
-    def __init__(self, dirpath_netcdf):
-        super(InfoClimatGridReader, self).__init__()
-        self.dirpath_netcdf = dirpath_netcdf
-        self.lat = []
-        self.lon = []
-        self.setup_ncfile_list()
-        self.setup_latlon_grid()
-
-    def setup_ncfile_list(self):
-        """Read all the available netCDF files in dirpath_netcdf."""
-        self.ncfilelist = []
-        for file in os.listdir(self.dirpath_netcdf):
-            if file.endswith('.nc'):
-                self.ncfilelist.append(osp.join(self.dirpath_netcdf, file))
-
-    def setup_latlon_grid(self):
-        if self.ncfilelist:
-            netcdf_dset = netCDF4.Dataset(self.ncfilelist[0], 'r+')
-            self.lat = np.array(netcdf_dset['lat'])
-            self.lon = np.array(netcdf_dset['lon'])
-            netcdf_dset.close()
-
-    def get_idx_from_latlon(self, latitudes, longitudes, unique=False):
-        """
-        Get the i and j indexes of the grid meshes from a list of latitude
-        and longitude coordinates. If unique is True, only the unique pairs of
-        i and j indexes will be returned.
-        """
-        try:
-            lat_idx = [np.argmin(np.abs(self.lat - lat)) for lat in latitudes]
-            lon_idx = [np.argmin(np.abs(self.lon - lon)) for lon in longitudes]
-            if unique:
-                ijdx = np.vstack({(i, j) for i, j in zip(lat_idx, lon_idx)})
-                lat_idx = ijdx[:, 0].tolist()
-                lon_idx = ijdx[:, 1].tolist()
-        except TypeError:
-            lat_idx = np.argmin(np.abs(self.lat - latitudes))
-            lon_idx = np.argmin(np.abs(self.lon - longitudes))
-
-        return lat_idx, lon_idx
-
-    def get_data_from_latlon(self, latitudes, longitudes, years):
-        """
-        Return the daily minimum, maximum and average air temperature and daily
-        precipitation
-        """
-        lat_idx, lon_idx = self.get_idx_from_latlon(latitudes, longitudes)
-        return self.get_data_from_idx(lat_idx, lon_idx, years)
-
-    def get_data_from_idx(self, lat_idx, lon_idx, years):
-        try:
-            len(lat_idx)
-        except TypeError:
-            lat_idx, lon_idx = [lat_idx], [lon_idx]
-
-        tasmax_stacks = []
-        tasmin_stacks = []
-        precip_stacks = []
-        years_stack = []
-        for year in years:
-            print('\rFetching daily weather data for year %d...' % year,
-                  end=' ')
-            filename = osp.join(self.dirpath_netcdf, 'GCQ_v2_%d.nc' % year)
-            netcdf_dset = netCDF4.Dataset(filename, 'r+')
-
-            tasmax_stacks.append(
-                np.array(netcdf_dset['tasmax'])[:, lat_idx, lon_idx])
-            tasmin_stacks.append(
-                np.array(netcdf_dset['tasmin'])[:, lat_idx, lon_idx])
-            precip_stacks.append(
-                np.array(netcdf_dset['pr'])[:, lat_idx, lon_idx])
-            years_stack.append(
-                np.zeros(len(precip_stacks[-1][:])).astype(int) + year)
-
-            netcdf_dset.close()
-        print('done')
-
-        tasmax = np.vstack(tasmax_stacks)
-        tasmin = np.vstack(tasmin_stacks)
-        precip = np.vstack(precip_stacks)
-        years = np.hstack(years_stack)
-
-        return (tasmax + tasmin)/2, precip, years
-
-    def generate_input_from_MDELCC_grid(self, outdir, lat_dd, lon_dd,
-                                        year_range):
-        """
-        Generate input data files from the MDDELCC grid.
-
-        Generate PyHelp csv data file inputs for daily precipitation and
-        average air temperature  using data from the MDDELCC spatially
-        distributed daily precipitation and minimum and maximum air
-        temperature grid for a set of lat/lon coordinates.
-        """
-        if not osp.exists(outdir):
-            os.makedirs(outdir)
-
-        lat_idx, lon_idx = self.get_idx_from_latlon(
-            lat_dd, lon_dd, unique=True)
-        lat_dd = [self.lat[i] for i in lat_idx]
-        lon_dd = [self.lon[i] for i in lon_idx]
-
-        # Fetch the daily weather data from the netCDF files.
-        years = range(year_range[0], year_range[1] + 1)
-        tasavg, precip, years = self.get_data_from_idx(lat_idx, lon_idx, years)
-
-        # Create an array of datestring and lat/lon
-        Ndt, Ndset = np.shape(tasavg)
-        start = datetime.datetime(years[0], 1, 1)
-        datetimes = [start + datetime.timedelta(days=i) for i in range(Ndt)]
-        datestrings = [dt.strftime("%d/%m/%Y") for dt in datetimes]
-
-        # Fill -999 with 0 in daily precip.
-        precip[:, :][precip[:, :] == -999] = 0
-
-        # Fill -999 with linear interpolation in daily air temp.
-        time_ = np.arange(Ndt)
-        for i in range(Ndset):
-            indx = np.where(tasavg[:, i] != -999)[0]
-            tasavg[:, i] = np.interp(time_, time_[indx], tasavg[:, i][indx])
-
-        #  Convert and save the weather data to PyHelp csv input files.
-        for var in ['precip', 'airtemp']:
-            if var == 'precip':
-                varname = 'Precipitation in mm'
-                data = nan_as_text_tolist(precip)
-            elif var == 'airtemp':
-                varname = 'Average daily air temperature in \u00B0C'
-                data = nan_as_text_tolist(tasavg)
-            fname = osp.join(outdir, var + '_input_data.csv')
-
-            print('Saving {} data to {}...'.format(var, fname), end=' ')
-            fheader = [
-                [varname],
-                ['', ''],
-                ['Created by ' + __namever__],
-                ['Created on ' + strftime("%d/%m/%Y")],
-                ['Created from MDDELCC grid'],
-                ['', ''],
-                ['Latitude (dd)'] + lat_dd,
-                ['Longitude (dd)'] + lon_dd,
-                ['', '']]
-            fdata = [[datestrings[i]] + data[i] for i in range(Ndt)]
-            fcontent = fheader + fdata
-            save_content_to_csv(fname, fcontent)
-            print('done')
 
 
 # ---- Read CWEEDS Files
