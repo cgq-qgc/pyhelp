@@ -45,7 +45,7 @@ class HelpManager(object):
     """
 
     def __init__(self, workdir, year_range):
-        super(HelpManager, self).__init__()
+        super().__init__()
         self.grid = None
         self.precip_data = None
         self.airtemp_data = None
