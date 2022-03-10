@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
-
+# =============================================================================
 # Copyright © 2018 PyHelp Project Contributors
 # https://github.com/jnsebgosselin/gwhat
 #
 # This file is part of PyHelp.
 # Licensed under the terms of the GNU General Public License.
-
+# =============================================================================
 
 # ---- Standard Library Imports
 import os
@@ -18,7 +18,6 @@ import pytest
 
 
 # ---- Local library Imports
-from pyhelp import HELP3O
 from pyhelp import __rootdir__
 from pyhelp.managers import HelpManager
 from pyhelp.output import HelpOutput
