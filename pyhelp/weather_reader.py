@@ -9,196 +9,15 @@
 
 # ---- Standard Library imports
 import os.path as osp
-import csv
 import calendar
 from calendar import monthrange
-import datetime
-from time import strftime
 
 # ---- Third Party imports
 import numpy as np
-from xlrd.xldate import xldate_from_datetime_tuple
 
 # ---- Local imports
-from pyhelp import __namever__
-from pyhelp.utils import save_content_to_csv, nan_as_text_tolist
+from pyhelp.utils import save_content_to_csv
 
-
-# ---- Read CWEEDS Files
-def generate_input_from_cweeds(outdir, cweed2_paths, cweed3_paths, year_range):
-    """Generate an input PyHelp data file from CWEED files."""
-    if not isinstance(cweed2_paths, (list, tuple)):
-        cweed2_paths = [cweed2_paths]
-    if not isinstance(cweed3_paths, (list, tuple)):
-        cweed3_paths = [cweed3_paths]
-
-    print('Reading CWEEDS files...', end=' ')
-    lat_dd = []
-    lon_dd = []
-    stations = []
-    data = []
-    for cweed2, cweed3 in zip(cweed2_paths, cweed3_paths):
-        daily_wy2 = read_cweeds_file(cweed2, format_to_daily=True)
-        daily_wy3 = read_cweeds_file(cweed3, format_to_daily=True)
-        wy23_df = join_daily_cweeds_wy2_and_wy3(daily_wy2, daily_wy3)
-
-        lat_dd.append(wy23_df['Latitude'])
-        lon_dd.append(wy23_df['Longitude'])
-        stations.append(wy23_df['Location'])
-
-        indexes = np.where((wy23_df['Years'] >= year_range[0]) &
-                           (wy23_df['Years'] <= year_range[1]))[0]
-        data.append(wy23_df['Irradiance'][indexes])
-    data = nan_as_text_tolist(np.array(data).astype(float).transpose())
-    print('done')
-
-    fname = osp.join(outdir, 'solrad_input_data.csv')
-    print('Saving {} data to {}...'.format('solrad', fname), end=' ')
-
-    # Create an array of datestring and lat/lon
-    Ndt = len(wy23_df['Years'][indexes])
-    start = datetime.datetime(year_range[0], 1, 1)
-    datetimes = [start + datetime.timedelta(days=i) for i in range(Ndt)]
-    datestrings = [dt.strftime("%d/%m/%Y") for dt in datetimes]
-
-    # Save the data to file.
-    fheader = [['Global solar irradiance in MJ/m²'],
-               ['', ''],
-               ['Created by ' + __namever__],
-               ['Created on ' + strftime("%d/%m/%Y")],
-               ['Created from CWEED files'],
-               ['', ''],
-               ['Stations'] + stations,
-               ['Latitude (dd)'] + lat_dd,
-               ['Longitude (dd)'] + lon_dd,
-               ['', '']]
-    fdata = [[datestrings[i]] + data[i] for i in range(Ndt)]
-    fcontent = fheader + fdata
-    save_content_to_csv(fname, fcontent)
-    print('done')
-
-
-def read_cweeds_file(filename, format_to_daily=True):
-    """
-    Reads and formats data from a CWEEDS file, either version WY2 or WY3.
-    Returns a dictionary, which includes a numpy array of the global
-    solar irradiance in MJ/m², as well as corresponding arrays of the years,
-    months, days, and hours. By default, the hourly data from the CWEEDS file
-    are formated to daily values. The data are kept in a hourly format if
-    format_to_daily is set to False.
-    """
-    # Determine if the CWEEDS file is in the WY2 or WY3 format.
-    root, ext = osp.splitext(filename)
-    ext = ext.replace('.', '')
-    if ext not in ['WY2', 'WY3']:
-        raise ValueError("%s is not a valid file extension. CWEEHDS files must"
-                         " have either a WY2 or WY3 extension" % ext)
-
-    # Open and format the data from the CWEEDS file.
-    with open(filename, 'r') as f:
-        reader = list(csv.reader(f))
-
-    header_df = {}
-    if ext == 'WY3':
-        # We remove the header line from the data if the format is WY3.
-        header_list = reader.pop(0)
-        header_df['HORZ version'] = header_list[0]
-        header_df['Location'] = header_list[1]
-        header_df['Province'] = header_list[2]
-        header_df['Country'] = header_list[3]
-        header_df['Station ID'] = header_list[4]
-        header_df['Latitude'] = float(header_list[5])
-        header_df['Longitude'] = float(header_list[6])
-        header_df['Time Zone'] = float(header_list[7])
-        header_df['Elevation'] = float(header_list[8])
-
-    char_offset = 0 if ext == 'WY2' else 2
-    hourly_df = {}
-    hourly_df['Years'] = np.empty(len(reader)).astype(int)
-    hourly_df['Months'] = np.empty(len(reader)).astype(int)
-    hourly_df['Days'] = np.empty(len(reader)).astype(int)
-    hourly_df['Hours'] = np.empty(len(reader)).astype(int)
-    hourly_df['Time'] = np.empty(len(reader)).astype('float64')
-    # Global horizontal irradiance, kJ/m²
-    hourly_df['Irradiance'] = np.empty(len(reader)).astype('float64')
-
-    for i, line in enumerate(reader):
-        hourly_df['Years'][i] = year = int(line[0][char_offset:][6:10])
-        hourly_df['Months'][i] = month = int(line[0][char_offset:][10:12])
-        hourly_df['Days'][i] = day = int(line[0][char_offset:][12:14])
-        hourly_df['Hours'][i] = hour = int(line[0][char_offset:][14:16]) - 1
-        # The global horizontal irradiance is converted from kJ/m² to MJ/m².
-        hourly_df['Irradiance'][i] = float(line[0][char_offset:][20:24])/1000
-
-        # Compute time in Excel numeric format :
-        hourly_df['Time'][i] = xldate_from_datetime_tuple(
-                (year, month, day, hour, 0, 0), 0)
-
-    if format_to_daily:
-        # Convert the hourly data to daily format.
-        assert len(hourly_df['Irradiance']) % 24 == 0
-        new_shape = (len(hourly_df['Irradiance'])//24, 24)
-
-        daily_df = {}
-        daily_df['Irradiance'] = np.sum(
-                hourly_df['Irradiance'].reshape(new_shape), axis=1)
-        for key in ['Years', 'Months', 'Days', 'Time']:
-            daily_df[key] = hourly_df[key].reshape(new_shape)[:, 0]
-        daily_df['Hours'] = np.zeros(len(daily_df['Irradiance']))
-
-        daily_df.update(header_df)
-        daily_df['Time Format'] = 'daily'
-        daily_df['CWEEDS Format'] = ext
-        return daily_df
-    else:
-        hourly_df.update(header_df)
-        hourly_df['Time Format'] = 'hourly'
-        hourly_df['CWEEDS Format'] = ext
-        return hourly_df
-
-
-def join_daily_cweeds_wy2_and_wy3(wy2_df, wy3_df):
-    """
-    Join a CWEEDS dataset in the wy2 format to another cweeds dataset in the
-    wy3 format.
-    """
-    assert wy2_df['CWEEDS Format'] == 'WY2'
-    assert wy3_df['CWEEDS Format'] == 'WY3'
-    assert wy2_df['Time Format'] == wy3_df['Time Format']
-
-    time_wy23 = np.hstack([wy2_df['Time'], wy3_df['Time']])
-    time_wy23 = np.unique(time_wy23)
-    time_wy23 = np.sort(time_wy23)
-
-    wy23_df = {}
-    wy23_df['Time Format'] = wy3_df['Time Format']
-    wy23_df['CWEEDS Format'] = 'WY2+WY3'
-
-    # Copy the header info from WY3 dataset :
-
-    for key in ['HORZ version', 'Location', 'Province', 'Country',
-                'Station ID', 'Latitude', 'Longitude', 'Time Zone',
-                'Elevation']:
-        wy23_df[key] = wy3_df[key]
-
-    # Merge the two datasets :
-
-    wy23_df['Time'] = time_wy23
-    wy23_df['Years'] = np.empty(len(time_wy23)).astype(int)
-    wy23_df['Months'] = np.empty(len(time_wy23)).astype(int)
-    wy23_df['Days'] = np.empty(len(time_wy23)).astype(int)
-    wy23_df['Hours'] = np.empty(len(time_wy23)).astype(int)
-    wy23_df['Irradiance'] = np.empty(len(time_wy23)).astype('float64')
-
-    for dataset in [wy2_df, wy3_df]:
-        indexes = np.digitize(dataset['Time'], time_wy23, right=True)
-        for key in ['Years', 'Months', 'Days', 'Hours', 'Irradiance']:
-            wy23_df[key][indexes] = dataset[key]
-
-    return wy23_df
-
-
-# ---- Export to HELP format
 
 def save_precip_to_HELP(filename, years, precip, city):
     """
@@ -347,7 +166,6 @@ def save_data_to_HELP_format(filename, years, data, city, lat=None):
 
 
 # ---- Base functions: monthly downscaling
-
 def calc_monthly_sum(yy_dly, mm_dly, x_dly):
     """
     Calcul monthly cumulative values from daily values, where yy_dly are the
@@ -411,7 +229,6 @@ def calcul_monthly_normals(years, months, x_mly, yearmin=None, yearmax=None):
 
 
 # ----- Base functions: yearly downscaling
-
 def calc_yearly_sum(yy_dly, x_dly):
     """
     Calcul yearly cumulative values from daily values, where yy_dly are the
@@ -439,17 +256,7 @@ def calc_yearly(yy_dly, x_dly, func):
 
 
 # ----- Base functions: secondary variables
-
 def calcul_rain_from_ptot(Tavg, Ptot, Tcrit=0):
     rain = np.copy(Ptot)
     rain[np.where(Tavg < Tcrit)[0]] = 0
     return rain
-
-
-if __name__ == '__main__':
-    outdir = "C:\\Users\\User\\pyhelp\\example"
-    cweed2_paths = osp.join(outdir, 'CWEEDS', '94792.WY2')
-    cweed3_paths = osp.join(
-        outdir, 'CWEEDS', 'CAN_QC_MONTREAL-INTL-A_7025251_CWEEDS2011_T_N.WY3')
-    year_range = [2010, 2014]
-    generate_input_from_cweeds(outdir, cweed2_paths, cweed3_paths, year_range)
