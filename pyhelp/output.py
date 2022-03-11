@@ -38,9 +38,9 @@ class HelpOutput(Mapping):
             self.data = {}
             for key in list(hdf5['data'].keys()):
                 if key == 'cid':
-                    self.data[key] = hdf5['data'][key].value.astype(str)
+                    self.data[key] = np.array(hdf5['data'][key]).astype(str)
                 else:
-                    self.data[key] = hdf5['data'][key].value
+                    self.data[key] = np.array(hdf5['data'][key])
             hdf5.close()
 
             # Load the grid from an HDF5 file saved on disk.
