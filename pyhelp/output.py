@@ -1,29 +1,24 @@
 # -*- coding: utf-8 -*-
-
+# =============================================================================
 # Copyright © PyHelp Project Contributors
 # https://github.com/cgq-qgc/pyhelp
 #
 # This file is part of PyHelp.
-# Licensed under the terms of the GNU General Public License.
+# Licensed under the terms of the MIT License.
+# =============================================================================
 
 
 # ---- Standard Library imports
-import os
 import os.path as osp
 from collections.abc import Mapping
 
 
 # ---- Third party imports
 import matplotlib.pyplot as plt
-import matplotlib.transforms as transforms
 import pandas as pd
-from geopandas import GeoDataFrame
 import numpy as np
 import h5py
 from scipy.stats import linregress
-
-# ---- Local imports
-from pyhelp.maps import produce_point_geometry
 
 
 class HelpOutput(Mapping):
