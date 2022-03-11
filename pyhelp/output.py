@@ -60,8 +60,7 @@ class HelpOutput(Mapping):
 
     def save_to_hdf5(self, path_to_hdf5):
         """Save the data and grid to an HDF5 file at the specified location."""
-        print("Saving data to {}...".format(osp.basename(path_to_hdf5)),
-              end=" ")
+        print("Saving data to {}...".format(osp.basename(path_to_hdf5)))
 
         # Save the data.
         hdf5file = h5py.File(path_to_hdf5, mode='w')
@@ -75,17 +74,12 @@ class HelpOutput(Mapping):
                     key, data=[np.string_(i) for i in self.data['cid']])
             else:
                 datagrp.create_dataset(key, data=self.data[key])
-
-        # Save the grid.
-        group = hdf5file.create_group('grid')
-        # for column in list(self.grid.columns):
-            
-        # self.grid.to_hdf(path_to_hdf5, key='grid', mode='a')
-        
-        
         hdf5file.close()
 
-        print('done')
+        # Save the grid.
+        self.grid.to_hdf(path_to_hdf5, key='grid', mode='a')
+
+        print("Data saved successfully.")
 
     def save_to_csv(self, path_to_csv):
         """
