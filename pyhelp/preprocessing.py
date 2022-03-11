@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
-
-# Copyright © 2018 PyHelp Project Contributors
+# =============================================================================
+# Copyright © PyHelp Project Contributors
 # https://github.com/cgq-qgc/pyhelp
 #
 # This file is part of PyHelp.
-# Licensed under the terms of the GNU General Public License.
+# Licensed under the terms of the MIT License.
+# =============================================================================
 
 
 # ---- Standard Library Imports
@@ -12,7 +13,6 @@
 import csv
 import time
 import os.path as osp
-from collections import OrderedDict
 import multiprocessing as mp
 from multiprocessing import Pool
 
@@ -133,6 +133,12 @@ def _format_d10_singlecell(row):
         xleng = float(row['dist_dr'+lay])
         slope = float(row['slope'+lay])
 
+        # Check that all values are valid for the layer.
+        check = [val == -9999 for val in
+                 (thick, poro, fc, wp, rc, xleng, slope)]
+        if any(check):
+            return None
+
         # READ (10, 5120) LAYER (J), THICK (J), ISOIL (J),
         #   PORO (J), FC (J), WP (J), SW (J), RC (J)
         # 5120 FORMAT(I2,F7.0,I4,4F6.0,F16.0)
@@ -168,10 +174,10 @@ def _format_d10_singlecell(row):
 
 def format_d10d11_inputs(grid, cellnames, sf_edepth=1, sf_ulai=1):
     """
-    Format the evapotranspiration (D11) and soil and design data (D11) in a
-    format that is compatible by HELP.
+    Format the evapotranspiration (D11) and soil and design data (D10) in a
+    format that is compatible with HELP.
     """
-    tic = time.clock()
+    tic = time.perf_counter()
     d11dat = {}
     d10dat = {}
     N = len(cellnames)
@@ -185,62 +191,31 @@ def format_d10d11_inputs(grid, cellnames, sf_edepth=1, sf_ulai=1):
 
     print("\rFormatting D10 and D11 data for cell %d of %d (%0.1f%%)" %
           (i+1, N, (i+1)/N*100))
-    tac = time.clock()
+    tac = time.perf_counter()
     print('Task completed in %0.2f sec' % (tac-tic))
 
-    return d10dat, d11dat
-
-
-def read_concatenated_d10d11_file(path_d10file, path_d11file):
-    """
-    Read the concatenated D10 and D11 files that contain the D10 and D11 inputs
-    for all the cells. Return a formatted dictionary where the data
-    relative to each cell is saved as a list at the key that correspond to the
-    unique id of the cell.
-    """
-
-    enc = 'iso-8859-1'
-
-    # ---- Read and Format D11 File
-
-    with open(path_d11file, 'r', encoding=enc) as csvfile:
-        d11reader = list(csv.reader(csvfile))
-
-    d11dat = OrderedDict()
-    cellnames = []
-    for i in range(0, len(d11reader), 3):
-        cell_name, zone_name = d11reader[i+1][0].split()
-        d11dat[cell_name] = [d11reader[i],
-                             d11reader[i+1],
-                             d11reader[i+2]]
-        cellnames.append(cell_name)
-
-    # ---- Read and Format D10 File
-
-    with open(path_d10file, 'r', encoding=enc) as csvfile:
-        d10reader = list(csv.reader(csvfile))
-
-    d10dat = OrderedDict()
-    i = 0
-    curcell = None
-    nextcell = cellnames[i]
-    for line in d10reader:
-        if nextcell in line[0]:
-            d10dat[nextcell] = [line]
-            curcell = nextcell
-            nextcell = 'None' if i >= len(cellnames)-1 else cellnames[i+1]
-            i += 1
-        else:
-            d10dat[curcell].append(line)
+    warnings = [cid for cid, val in d10dat.items() if val is None]
+    if warnings:
+        print('-' * 25)
+        msg = "Warning: the data for "
+        msg += "cell " if len(warnings) == 1 else "cells "
+        msg += ", ".join(warnings)
+        msg += " are not formatted correctly."
+        print(msg)
+        print('-' * 25)
 
     return d10dat, d11dat
 
 
 def write_d10d11_singlecell(packed_data):
+    """Write the content of cell in a D10 and D11 file."""
     fname, cid, d10data = packed_data
-    with open(fname, 'w') as csvfile:
-        writer = csv.writer(csvfile, lineterminator='\n')
-        writer.writerows(d10data)
+    if d10data is None:
+        fname = None
+    else:
+        with open(fname, 'w') as csvfile:
+            writer = csv.writer(csvfile, lineterminator='\n')
+            writer.writerows(d10data)
     return {cid: fname}
 
 
@@ -251,9 +226,9 @@ def write_d10d11_allcells(dirpath, d10data, d11data, ncore=None):
     ncore = max(mp.cpu_count() if ncore is None else ncore, 1)
     pool = Pool(ncore)
 
-    # Prepare soil and design input files :
+    # Prepare soil and design input files (D10).
 
-    tic = time.clock()
+    tic = time.perf_counter()
     iterable = [(osp.join(dirpath, str(cid) + '.D10'), cid, d10data[cid]) for
                 cid in d10data.keys()]
     d10_connect_table = {}
@@ -265,12 +240,12 @@ def write_d10d11_allcells(dirpath, d10data, d11data, ncore=None):
         progress_pct = calcul_progress/N*100
         print("\rCreating D10 input file for cell %d of %d (%0.1f%%)" %
               (calcul_progress, N, progress_pct), end=' ')
-    tac = time.clock()
+    tac = time.perf_counter()
     print('\nTask completed in %0.2f sec' % (tac-tic))
 
-    # Prepare evapotranspiration input files :
+    # Prepare evapotranspiration input files (D11).
 
-    tic = time.clock()
+    tic = time.perf_counter()
     iterable = [(osp.join(dirpath, str(cid) + '.D11'), cid, d11data[cid]) for
                 cid in d10data.keys()]
     d11_connect_table = {}
@@ -282,7 +257,7 @@ def write_d10d11_allcells(dirpath, d10data, d11data, ncore=None):
         progress_pct = calcul_progress/N*100
         print("\rCreating D11 input file for cell %d of %d (%0.1f%%)" %
               (calcul_progress, N, progress_pct), end=' ')
-    tac = time.clock()
+    tac = time.perf_counter()
     print('\nTask completed in %0.2f sec' % (tac-tic))
 
     return d10_connect_table, d11_connect_table

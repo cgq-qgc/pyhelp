@@ -87,20 +87,3 @@ def calc_dist_from_coord(lat1, lon1, lat2, lon2):
     c = 2 * np.arctan2(np.sqrt(a), np.sqrt(1-a))
 
     return r * c
-
-
-if __name__ == "__main__":
-    from pyhelp import HelpManager
-    from pyhelp.weather_reader import InfoClimatGridReader
-    year_range = (2012, 2014)
-    workdir = "C:\\Users\\User\\pyhelp\\example"
-    path_to_grid = osp.join(workdir, "input_example.csv")
-    help_manager = HelpManager(workdir, year_range)
-    grid = help_manager.load_grid(path_to_grid)
-    lat_dd, lon_dd = help_manager.get_latlon_for_cellnames(
-        help_manager.cellnames)
-
-    mddelcc_grid_mngr = InfoClimatGridReader("F:\\MeteoGrilleDaily")
-    outdir = workdir = "C:\\Users\\User\\pyhelp\\test"
-    mddelcc_grid_mngr.generate_input_from_MDELCC_grid(
-        outdir, lat_dd, lon_dd, year_range)

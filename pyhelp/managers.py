@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
-
+# =============================================================================
 # Copyright © PyHelp Project Contributors
 # https://github.com/cgq-qgc/pyhelp
 #
 # This file is part of PyHelp.
-# Licensed under the terms of the GNU General Public License.
+# Licensed under the terms of the MIT License.
+# =============================================================================
 
 # ---- Standard Library Imports
-
 import os
 import os.path as osp
 import csv
@@ -15,20 +15,16 @@ from datetime import datetime
 import time
 
 # ---- Third Party imports
-
 import numpy as np
 import pandas as pd
-import h5py
 
 # ---- Local Libraries Imports
-
 from pyhelp.preprocessing import write_d10d11_allcells, format_d10d11_inputs
 from pyhelp.processing import run_help_allcells
 from pyhelp.utils import (savedata_to_hdf5, calc_dist_from_coord,
                           delete_folder_recursively)
 from pyhelp.weather_reader import (
-    save_precip_to_HELP, save_airtemp_to_HELP, save_solrad_to_HELP,
-    InfoClimatGridReader, generate_input_from_cweeds)
+    save_precip_to_HELP, save_airtemp_to_HELP, save_solrad_to_HELP)
 from pyhelp.output import HelpOutput
 
 
@@ -94,7 +90,6 @@ class HelpManager(object):
         self.load_weather_input_data()
 
     # ---- Connect tables
-
     @property
     def path_connect_tables(self):
         return osp.join(self.inputdir, FNAME_CONN_TABLES)
@@ -111,7 +106,6 @@ class HelpManager(object):
         np.save(self.path_connect_tables, self.connect_tables)
 
     # ---- Grid and Input
-
     def load_input_grid(self):
         """
         Load input grid data.
@@ -164,7 +158,14 @@ class HelpManager(object):
 
     def _generate_d10d11_input_files(self, cellnames=None, sf_edepth=1,
                                      sf_ulai=1):
-        """Prepare the D10 and D11 input datafiles for each cell."""
+        """
+        Prepare the D10 and D11 input datafiles for each cell.
+
+        D10 : Soil and Design data
+        D11 : Surface condition (Evapotranspiration)
+
+        See https://github.com/cgq-qgc/pyhelp/wiki/HELP-input-files-format-description
+        """
         d10d11_inputdir = osp.join(self.inputdir, 'd10d11_input_files')
         if not osp.exists(d10d11_inputdir):
             os.makedirs(d10d11_inputdir)
@@ -189,7 +190,13 @@ class HelpManager(object):
         print("done")
 
     def _generate_d4d7d13_input_files(self, cellnames=None):
-        """Generate the D4, D7, and D13 HELP input datafiles for each cell."""
+        """
+        Generate the D4, D7, and D13 HELP input datafiles for each cell.
+
+        D4 : total precipitation
+        D7 : mean air temperature
+        D13 : solar radiation
+        """
         if self.grid is None:
             return
 
@@ -261,6 +268,7 @@ class HelpManager(object):
 
         run_cellnames = self.get_run_cellnames(cellnames)
         cellparams = {}
+        skipped_cells = []
         for cellname in run_cellnames:
             fpath_d4 = self.connect_tables['D4'][cellname]
             fpath_d7 = self.connect_tables['D7'][cellname]
@@ -268,6 +276,10 @@ class HelpManager(object):
             fpath_d10 = self.connect_tables['D10'][cellname]
             fpath_d11 = self.connect_tables['D11'][cellname]
             fpath_out = osp.abspath(osp.join(tempdir, str(cellname) + '.OUT'))
+
+            if fpath_d10 is None or fpath_d11 is None:
+                skipped_cells.append(cellname)
+                continue
 
             daily_out = 0
             monthly_out = 1
@@ -281,6 +293,16 @@ class HelpManager(object):
                                     fpath_d10, fpath_out, daily_out,
                                     monthly_out, yearly_out, summary_out,
                                     unit_system, simu_nyear, tfsoil)
+
+        skipped_cells = list(set(skipped_cells))
+        if skipped_cells:
+            print('-' * 25)
+            msg = "Warning: calcul for "
+            msg += "cell " if len(skipped_cells) == 1 else "cells "
+            msg += ", ".join(skipped_cells)
+            msg += " will be skipped due to problems with the input data."
+            print(msg)
+            print('-' * 25)
 
         output_data = run_help_allcells(cellparams)
         output_data = self._post_process_output(output_data)
@@ -353,7 +375,7 @@ class HelpManager(object):
         Calcul the yearly water budget for cells that are located in
         surface water bodies.
         """
-        tstart = time.clock()
+        tstart = time.perf_counter()
         print("Calculating budget for water cells...", end=' ')
         cellnames = self.get_water_cellnames(cellnames)
         lat_dd, lon_dd = self.get_latlon_for_cellnames(cellnames)
@@ -380,13 +402,12 @@ class HelpManager(object):
 
         if path_outfile:
             savedata_to_hdf5(output, path_outfile)
-        calcul_time = (time.clock() - tstart)
+        calcul_time = (time.perf_counter() - tstart)
         print("done")
         print('Task completed in %0.2f sec' % calcul_time)
         return output
 
     # ---- Grid Utilities
-
     def get_water_cellnames(self, cellnames):
         """
         Take a list of cellnames and return only those that are considered
@@ -403,7 +424,7 @@ class HelpManager(object):
 
         return cellnames.tolist()
 
-    def get_run_cellnames(self, cellnames):
+    def get_run_cellnames(self, cellnames=None):
         """
         Take a list of cellnames and return only those that are in the grid
         and for which HELP can be run.
@@ -418,6 +439,11 @@ class HelpManager(object):
         # don't need the D4 or D7 input files for those that aren't.
         cellnames = self.grid['cid'][cellnames][self.grid['run'] == 1].tolist()
 
+        # Only keep the cells that have  a nlayer > 0 because we cannot run
+        # those in HELP anyway.
+        cellnames = (
+            self.grid['cid'][cellnames][self.grid['nlayer'] > 0].tolist())
+
         return cellnames
 
     def get_latlon_for_cellnames(self, cells):
@@ -429,34 +455,6 @@ class HelpManager(object):
         lat = np.array(self.grid['lat_dd'].reindex(cells).tolist())
         lon = np.array(self.grid['lon_dd'].reindex(cells).tolist())
         return lat, lon
-
-    # ---- Input Data Utilities
-    def generate_weather_inputs_from_CWEEDS(
-            self, cweed2_paths, cweed3_paths, year_range=None):
-        """
-        Generate global solar irradiance input data file from CWEEDS files.
-        """
-        year_range = self.year_range if year_range is None else year_range
-        generate_input_from_cweeds(self.workdir, cweed2_paths,
-                                   cweed3_paths, year_range)
-
-    def generate_weather_inputs_from_MDELCC_grid(
-            self, path_to_mddelcc_grid, cellnames=None, year_range=None):
-        """
-        Generate weather input data files from the MDDELCC grid.
-
-        Generate PyHelp csv data file inputs for daily precipitation and
-        average air temperature using data from the MDDELCC spatially
-        distributed daily precipitation and minimum and maximum air
-        temperature grid for a set of lat/lon coordinates.
-        """
-        cellnames = self.cellnames if cellnames is None else cellnames
-        year_range = self.year_range if year_range is None else year_range
-        lat_dd, lon_dd = self.get_latlon_for_cellnames(cellnames)
-
-        mddelcc_grid_mngr = InfoClimatGridReader(path_to_mddelcc_grid)
-        mddelcc_grid_mngr.generate_input_from_MDELCC_grid(
-            self.workdir, lat_dd, lon_dd, year_range)
 
 
 def load_grid_from_csv(path_togrid):
@@ -502,9 +500,9 @@ def load_weather_from_csv(filename):
         if not line or not line[0]:
             continue
 
-        if line[0] == 'Latitude (dd)':
+        if line[0].lower().strip().startswith('lat'):
             lat = np.array(line[1:]).astype('float')
-        elif line[0] == 'Longitude (dd)':
+        elif line[0].lower().strip().startswith('lon'):
             lon = np.array(line[1:]).astype('float')
         elif all((len(lat), len(lon))):
             date_data = np.array(reader[i:])
@@ -531,9 +529,6 @@ if __name__ == '__main__':
     cweed3_paths = osp.join(
         workdir, 'CWEEDS', 'CAN_QC_MONTREAL-INTL-A_7025251_CWEEDS2011_T_N.WY3')
     helpm.generate_weather_inputs_from_CWEEDS(cweed2_paths, cweed3_paths)
-
-    path_to_mddelcc_grid = "F:/MeteoGrilleDaily"
-    helpm.generate_weather_inputs_from_MDELCC_grid(path_to_mddelcc_grid)
 
     helpm.build_help_input_files()
     path_hdf5 = osp.join(workdir, 'help_example.out')

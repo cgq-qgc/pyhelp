@@ -23,15 +23,20 @@ skip_commits:
     - '**/*.svg'
     - '**/*.jpg'
 
+image:
+  - Visual Studio 2019
+
 environment:
   global:
-    APPVEYOR_RDP_PASSWORD: "dcca4c4863E30d56c2e0dda6327370b3#"
-    # Note: TWINE_PASSWORD and TWINE_USERNAME are set in Appveyor settings
     PYHELP_VERSION: "v0.2.0.dev0"
 
   matrix:
-    - PYTHON: "C:\\Miniconda36-x64"
-      PYTHON_VERSION: "3.6"
+    - PYTHON: "C:\\Miniconda37-x64"
+      PYTHON_VERSION: "3.7.*"
+      PYTHON_ARCH: "64"
+
+    - PYTHON: "C:\\Miniconda38-x64"
+      PYTHON_VERSION: "3.8.*"
       PYTHON_ARCH: "64"
 
 platform:
@@ -46,16 +51,20 @@ install:
         https://ci.appveyor.com/api/projects/$env:APPVEYOR_ACCOUNT_NAME/$env:APPVEYOR_PROJECT_SLUG/history?recordsNumber=50).builds | `
         Where-Object pullRequestId -eq $env:APPVEYOR_PULL_REQUEST_NUMBER)[0].buildNumber) { `
         throw "There are newer queued builds for this pull request, failing early." }
-  
+
   # Setup SYS PATH.
   - set "PATH=%PYTHON%;%PYTHON%/Scripts;%PYTHON%/Library/bin;%PATH%"
-  
+
   # Setup Conda.
   - conda config --set always_yes yes
   - conda update -q conda
   - conda config --set auto_update_conda no
-  - conda install -c defaults scipy geopandas xlrd netcdf4 h5py pytables matplotlib pytest pytest-mock pytest-cov pip m2w64-toolchain conda-build==3.16.* twine --override-channels
-  - python -m pip install codecov
+  - conda install pandas scipy h5py=3 matplotlib pip m2w64-toolchain conda-build
+  - python -m pip install codecov pytest pytest-cov
+
+  # Check that we have still the expected version and architecture for Python
+  - python --version
+  - python -c "import struct; print(struct.calcsize('P') * 8)"
 
   # Add mingw-w64 to SYS PATH.
   - set "PATH=%PYTHON%/Library/mingw-w64/bin;%PATH%"
@@ -67,12 +76,11 @@ build: false
 
 test_script:
   - python runtests.py
-  
+
 after_test:
   - IF ["%APPVEYOR_PULL_REQUEST_NUMBER%"]==[""] (%PYTHON%/python.exe setup.py sdist bdist_wheel)
   - 7z a -tzip dist/example_pyhelp_%PYHELP_VERSION%.zip example/*.csv example/help_example.py example/CWEEDS/*
-  - IF ["%APPVEYOR_REPO_TAG%"] == ["true"] (python -m twine upload dist/*)
-  - IF ["%APPVEYOR_PULL_REQUEST_NUMBER%"]==[""] (conda-build recipe --no-test --output-folder dist)
+  - IF ["%APPVEYOR_PULL_REQUEST_NUMBER%"]==[""] (conda-build recipe --no-test --output-folder dist --python %PYTHON_VERSION%)
 
 artifacts:
   - path: 'dist/*.whl'

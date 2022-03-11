@@ -1,29 +1,24 @@
 # -*- coding: utf-8 -*-
-
+# =============================================================================
 # Copyright © PyHelp Project Contributors
 # https://github.com/cgq-qgc/pyhelp
 #
 # This file is part of PyHelp.
-# Licensed under the terms of the GNU General Public License.
+# Licensed under the terms of the MIT License.
+# =============================================================================
 
 
 # ---- Standard Library imports
-import os
 import os.path as osp
 from collections.abc import Mapping
 
 
 # ---- Third party imports
 import matplotlib.pyplot as plt
-import matplotlib.transforms as transforms
 import pandas as pd
-from geopandas import GeoDataFrame
 import numpy as np
 import h5py
 from scipy.stats import linregress
-
-# ---- Local imports
-from pyhelp.maps import produce_point_geometry
 
 
 class HelpOutput(Mapping):
@@ -38,18 +33,7 @@ class HelpOutput(Mapping):
             self.data = path_or_dict['data']
             self.grid = path_or_dict['grid']
         elif isinstance(path_or_dict, str) and osp.exists(path_or_dict):
-            # Load the data from an HDF5 file saved on disk.
-            hdf5 = h5py.File(path_or_dict, mode='r+')
-            self.data = {}
-            for key in list(hdf5['data'].keys()):
-                if key == 'cid':
-                    self.data[key] = hdf5['data'][key].value.astype(str)
-                else:
-                    self.data[key] = hdf5['data'][key].value
-            hdf5.close()
-
-            # Load the grid from an HDF5 file saved on disk.
-            self.grid = pd.read_hdf(path_or_dict, 'grid')
+            self.load_from_hdf5(path_or_dict)
         else:
             self.data = None
             self.grid = None
@@ -63,52 +47,87 @@ class HelpOutput(Mapping):
     def __len__(self):
         return len(self.data['cid'])
 
+    def load_from_hdf5(self, path_to_hdf5):
+        """Read data and grid from an HDF5 file at the specified location."""
+        print(f"Loading data and grid from {path_to_hdf5}")
+        hdf5 = h5py.File(path_to_hdf5, mode='r+')
+        try:
+            # Load the data.
+            self.data = {}
+            for key in list(hdf5['data'].keys()):
+                values = np.array(hdf5['data'][key])
+                if key == 'cid':
+                    values = values.astype(str)
+                self.data[key] = values
+
+            # Load the grid.
+            self.grid = pd.DataFrame(
+                data=[],
+                columns=hdf5['grid'].attrs['columns'],
+                index=hdf5['grid'].attrs['index'])
+            for key in list(hdf5['grid'].keys()):
+                values = np.array(hdf5['grid'][key])
+                if key == 'cid':
+                    values = values.astype(str)
+                self.grid.loc[:, key] = values
+        except Exception as e:
+            print(e)
+            self.data = None
+            self.grid = None
+        finally:
+            hdf5.close()
+
     def save_to_hdf5(self, path_to_hdf5):
         """Save the data and grid to an HDF5 file at the specified location."""
-        print("Saving data to {}...".format(osp.basename(path_to_hdf5)),
-              end=" ")
-
-        # Save the data.
+        print("Saving data to {}...".format(osp.basename(path_to_hdf5)))
         hdf5file = h5py.File(path_to_hdf5, mode='w')
-        datagrp = hdf5file.create_group('data')
-        for key in list(self.data.keys()):
-            if key == 'cid':
-                # This is required to avoid a "TypeError: No conversion path
-                # for dtype: dtype('<U5')".
-                # See https://github.com/h5py/h5py/issues/289
-                datagrp.create_dataset(
-                    key, data=[np.string_(i) for i in self.data['cid']])
-            else:
-                datagrp.create_dataset(key, data=self.data[key])
-        hdf5file.close()
+        try:
+            # Save the data.
+            group = hdf5file.create_group('data')
+            for key in list(self.data.keys()):
+                if key == 'cid':
+                    # See http://docs.h5py.org/en/latest/strings.html as to
+                    # why this is necessary to do this in order to save a list
+                    # of strings in a dataset with h5py.
+                    group.create_dataset(
+                        key,
+                        data=self.data[key],
+                        dtype=h5py.string_dtype())
+                else:
+                    group.create_dataset(key, data=self.data[key])
 
-        # Save the grid.
-        self.grid.to_hdf(path_to_hdf5, key='grid', mode='a')
+            # Save the grid.
+            group = hdf5file.create_group('grid')
+            group.attrs['columns'] = list(self.grid.columns)
+            group.attrs['index'] = list(self.grid.index)
+            for column in list(self.grid.columns):
+                if column == 'cid':
+                    # See http://docs.h5py.org/en/latest/strings.html as to
+                    # why this is necessary to do this in order to save a list
+                    # of strings in a dataset with h5py.
+                    group.create_dataset(
+                        column,
+                        data=self.grid[column].values,
+                        dtype=h5py.string_dtype())
+                else:
+                    group.create_dataset(
+                        column, data=self.grid[column].values)
+        finally:
+            hdf5file.close()
+        print("Data saved successfully.")
 
-        print('done')
-
-    def save_to_shp(self, path_to_shp):
+    def save_to_csv(self, path_to_csv):
         """
         Save the grid data and cell yearly average values for each component
-        of the water budget to a shapefile.
+        of the water budget to a csv file.
         """
-        print('\rInitialize the shapefile...', end=' ')
-        point_geo = produce_point_geometry(
-            self.grid['lat_dd'].values, self.grid['lon_dd'].values)
-        crs = ("+proj=longlat +ellps=GRS80 +datum=NAD83 "
-               "+towgs84=0,0,0,0,0,0,0 +no_defs")
-        shp = GeoDataFrame(self.grid, crs=crs, geometry=point_geo)
-        print('done')
-        print('\rAdding results to the shapefile...', end=' ')
+        print("Saving data to {}...".format(osp.basename(path_to_csv)))
+        df = self.grid[['lat_dd', 'lon_dd']].copy()
         yearly_avg = self.calc_cells_yearly_avg()
         for key, value in yearly_avg.items():
-            shp.loc[self.data['cid'], key] = value
-        print('done')
-        print('\rSaving data to the shapefile...', end=' ')
-        if not osp.exists(osp.dirname(path_to_shp)):
-            os.makedirs(osp.dirname(path_to_shp))
-        shp.to_file(path_to_shp, driver='ESRI Shapefile')
-        print('done')
+            df[key] = value
+        df.to_csv(path_to_csv, encoding='utf8')
+        print("Data saved successfully.")
 
     # ---- Calcul
 

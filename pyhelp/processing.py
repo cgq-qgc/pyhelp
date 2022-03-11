@@ -8,7 +8,6 @@
 
 
 # ---- Standard Library Imports
-
 import os
 import os.path as osp
 from multiprocessing import Pool
@@ -18,11 +17,9 @@ import csv
 import calendar
 
 # ---- Third Party imports
-
 import numpy as np
 
 # ---- Local Libraries Imports
-
 from pyhelp import HELP3O
 
 DEL_TEMPFILES = True
@@ -44,7 +41,7 @@ def run_help_allcells(cellparams, ncore=None):
     """Run HELP in batch for multiple cells."""
     output = {}
     ncore = max(mp.cpu_count() if ncore is None else ncore, 1)
-    tstart = time.clock()
+    tstart = time.perf_counter()
     calcul_progress = 0
     N = len(cellparams)
     pool = Pool(ncore)
@@ -52,11 +49,11 @@ def run_help_allcells(cellparams, ncore=None):
         output[cell[0]] = cell[1]
         calcul_progress += 1
         progress_pct = calcul_progress/N*100
-        tpassed = time.clock() - tstart
+        tpassed = time.perf_counter() - tstart
         tremain = (100-progress_pct)*tpassed/progress_pct/60
         print(('\rHELP simulation in progress: %3.1f%% (%0.1f min remaining)'
                "     ") % (progress_pct, tremain), end='')
-    calcul_time = (time.clock() - tstart)
+    calcul_time = (time.perf_counter() - tstart)
     print('\nTask completed in %0.2f sec' % calcul_time)
 
     return output
@@ -68,7 +65,7 @@ def read_monthly_help_output(filename):
     """
     Read the monthly output from .OUT HELP file and return the data as
     numpy arrays stored in a dictionary. Support the output format that was
-    modified from HELP 3.07.
+    modified from HELP 3.07 (see PR#2).
     """
     with open(filename, 'r') as csvfile:
         csvread = list(csv.reader(csvfile))

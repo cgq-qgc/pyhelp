@@ -9,20 +9,17 @@ source:
 
 requirements:
   host:
-    - python ==3.6
-    - numpy 1.15.*
+    - python
+    - numpy
     - m2w64-toolchain
     - libpython
   run:
-    - python ==3.6
+    - python
     - numpy
     - matplotlib
+    - pandas
     - scipy
-    - geopandas
-    - xlrd
-    - netcdf4
-    - h5py
-    - pytables
+    - h5py=3
     
 about:
   home: https://github.com/cgq-qgc/pyhelp

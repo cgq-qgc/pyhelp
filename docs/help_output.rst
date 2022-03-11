@@ -10,7 +10,7 @@ HelpOutput
 Utilities
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 .. automethod:: pyhelp.output.HelpOutput.save_to_hdf5
-.. automethod:: pyhelp.output.HelpOutput.save_to_shp
+.. automethod:: pyhelp.output.HelpOutput.save_to_csv
 
 Calcul
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

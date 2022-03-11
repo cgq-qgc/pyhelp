@@ -6,6 +6,7 @@ connect_table.npy
 /example/help_input_files/*
 backup/
 H3OFS32F.exe
+/docs/html/*
 
 # Shapefiles
 *.cpg
