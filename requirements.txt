@@ -1,8 +1,6 @@
 numpy
 scipy
 pandas
-xlrd
-netcdf4
 h5py
 tables
 matplotlib
