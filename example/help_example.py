@@ -36,8 +36,8 @@ if __name__ == '__main__':
     output = helpm.calc_help_cells(help_output_hdf5, cellnames, tfsoil=-3)
 
     # Export and save the data to an ESRI shapefile.
-    help_output_shp = osp.join(workdir, 'help_example.shp')
-    shp = output.save_to_shp(help_output_shp)
+    filepath = osp.join(workdir, 'help_example_yearly.csv')
+    df = output.save_to_csv(filepath)
 
     # Plot some results.
     output.plot_area_monthly_avg()
