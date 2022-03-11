@@ -72,11 +72,13 @@ class HelpOutput(Mapping):
             group = hdf5file.create_group('data')
             for key in list(self.data.keys()):
                 if key == 'cid':
-                    # This is required to avoid a "TypeError: No conversion
-                    # path for dtype: dtype('<U5')".
-                    # See https://github.com/h5py/h5py/issues/289
+                    # See http://docs.h5py.org/en/latest/strings.html as to
+                    # why this is necessary to do this in order to save a list
+                    # of strings in a dataset with h5py.
                     group.create_dataset(
-                        key, data=[np.string_(i) for i in self.data['cid']])
+                        key,
+                        data=self.data[key],
+                        dtype=h5py.string_dtype())
                 else:
                     group.create_dataset(key, data=self.data[key])
 
@@ -86,11 +88,13 @@ class HelpOutput(Mapping):
             group.attrs['index'] = list(self.grid.index)
             for column in list(self.grid.columns):
                 if column == 'cid':
-                    # This is required to avoid a "TypeError: No conversion
-                    # path for dtype: dtype('<U5')".
-                    # See https://github.com/h5py/h5py/issues/289
+                    # See http://docs.h5py.org/en/latest/strings.html as to
+                    # why this is necessary to do this in order to save a list
+                    # of strings in a dataset with h5py.
                     group.create_dataset(
-                        column, data=[np.string_(i) for i in self.data['cid']])
+                        column,
+                        data=self.grid[column].values,
+                        dtype=h5py.string_dtype())
                 else:
                     group.create_dataset(
                         column, data=self.grid[column].values)
