@@ -19,8 +19,7 @@ requirements:
     - matplotlib
     - pandas
     - scipy
-    - h5py
-    - pytables
+    - h5py=3
     
 about:
   home: https://github.com/cgq-qgc/pyhelp

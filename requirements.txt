@@ -1,6 +1,5 @@
 numpy
 scipy
 pandas
-h5py
-tables
+h5py=3
 matplotlib

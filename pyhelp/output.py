@@ -33,18 +33,7 @@ class HelpOutput(Mapping):
             self.data = path_or_dict['data']
             self.grid = path_or_dict['grid']
         elif isinstance(path_or_dict, str) and osp.exists(path_or_dict):
-            # Load the data from an HDF5 file saved on disk.
-            hdf5 = h5py.File(path_or_dict, mode='r+')
-            self.data = {}
-            for key in list(hdf5['data'].keys()):
-                if key == 'cid':
-                    self.data[key] = np.array(hdf5['data'][key]).astype(str)
-                else:
-                    self.data[key] = np.array(hdf5['data'][key])
-            hdf5.close()
-
-            # Load the grid from an HDF5 file saved on disk.
-            self.grid = pd.read_hdf(path_or_dict, 'grid')
+            self.load_from_hdf5(path_or_dict)
         else:
             self.data = None
             self.grid = None
@@ -58,27 +47,73 @@ class HelpOutput(Mapping):
     def __len__(self):
         return len(self.data['cid'])
 
+    def load_from_hdf5(self, path_to_hdf5):
+        """Read data and grid from an HDF5 file at the specified location."""
+        print(f"Loading data and grid from {path_to_hdf5}")
+        hdf5 = h5py.File(path_to_hdf5, mode='r+')
+        try:
+            # Load the data.
+            self.data = {}
+            for key in list(hdf5['data'].keys()):
+                values = np.array(hdf5['data'][key])
+                if key == 'cid':
+                    values = values.astype(str)
+                self.data[key] = values
+
+            # Load the grid.
+            self.grid = pd.DataFrame(
+                data=[],
+                columns=hdf5['grid'].attrs['columns'],
+                index=hdf5['grid'].attrs['index'])
+            for key in list(hdf5['grid'].keys()):
+                values = np.array(hdf5['grid'][key])
+                if key == 'cid':
+                    values = values.astype(str)
+                self.grid.loc[:, key] = values
+        except Exception as e:
+            print(e)
+            self.data = None
+            self.grid = None
+        finally:
+            hdf5.close()
+
     def save_to_hdf5(self, path_to_hdf5):
         """Save the data and grid to an HDF5 file at the specified location."""
         print("Saving data to {}...".format(osp.basename(path_to_hdf5)))
-
-        # Save the data.
         hdf5file = h5py.File(path_to_hdf5, mode='w')
-        datagrp = hdf5file.create_group('data')
-        for key in list(self.data.keys()):
-            if key == 'cid':
-                # This is required to avoid a "TypeError: No conversion path
-                # for dtype: dtype('<U5')".
-                # See https://github.com/h5py/h5py/issues/289
-                datagrp.create_dataset(
-                    key, data=[np.string_(i) for i in self.data['cid']])
-            else:
-                datagrp.create_dataset(key, data=self.data[key])
-        hdf5file.close()
+        try:
+            # Save the data.
+            group = hdf5file.create_group('data')
+            for key in list(self.data.keys()):
+                if key == 'cid':
+                    # See http://docs.h5py.org/en/latest/strings.html as to
+                    # why this is necessary to do this in order to save a list
+                    # of strings in a dataset with h5py.
+                    group.create_dataset(
+                        key,
+                        data=self.data[key],
+                        dtype=h5py.string_dtype())
+                else:
+                    group.create_dataset(key, data=self.data[key])
 
-        # Save the grid.
-        self.grid.to_hdf(path_to_hdf5, key='grid', mode='a')
-
+            # Save the grid.
+            group = hdf5file.create_group('grid')
+            group.attrs['columns'] = list(self.grid.columns)
+            group.attrs['index'] = list(self.grid.index)
+            for column in list(self.grid.columns):
+                if column == 'cid':
+                    # See http://docs.h5py.org/en/latest/strings.html as to
+                    # why this is necessary to do this in order to save a list
+                    # of strings in a dataset with h5py.
+                    group.create_dataset(
+                        column,
+                        data=self.grid[column].values,
+                        dtype=h5py.string_dtype())
+                else:
+                    group.create_dataset(
+                        column, data=self.grid[column].values)
+        finally:
+            hdf5file.close()
         print("Data saved successfully.")
 
     def save_to_csv(self, path_to_csv):
