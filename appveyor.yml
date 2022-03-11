@@ -58,7 +58,7 @@ install:
   - conda create -n pyhelp python=${PYTHON_VERSION}
   - activate pyhelp
 
-  - conda install pyhelp scipy h5py pytables pandas matplotlib pip m2w64-toolchain conda-build
+  - conda install scipy h5py pytables pandas matplotlib pip m2w64-toolchain conda-build
   - pip install codecov pytest pytest-cov
 
   # Check that we have still the expected version and architecture for Python
