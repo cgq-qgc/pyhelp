@@ -380,7 +380,7 @@ class HelpManager(object):
         Calcul the yearly water budget for cells that are located in
         surface water bodies.
         """
-        tstart = time.clock()
+        tstart = time.perf_counter()
         print("Calculating budget for water cells...", end=' ')
         cellnames = self.get_water_cellnames(cellnames)
         lat_dd, lon_dd = self.get_latlon_for_cellnames(cellnames)
@@ -407,7 +407,7 @@ class HelpManager(object):
 
         if path_outfile:
             savedata_to_hdf5(output, path_outfile)
-        calcul_time = (time.clock() - tstart)
+        calcul_time = (time.perf_counter() - tstart)
         print("done")
         print('Task completed in %0.2f sec' % calcul_time)
         return output
