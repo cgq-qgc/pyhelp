@@ -54,9 +54,10 @@ install:
   # Setup Conda.
   - conda config --set always_yes yes
   - conda config --set auto_update_conda no
+  - conda update -q conda
 
   - "conda create -n pyhelp python=%PYTHON_VERSION%"
-  - "conda activate pyhelp"
+  - "call activate pyhelp"
 
   - conda install scipy h5py pytables pandas matplotlib pip m2w64-toolchain conda-build
   - pip install codecov pytest pytest-cov
