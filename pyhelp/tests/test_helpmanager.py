@@ -1,15 +1,16 @@
 # -*- coding: utf-8 -*-
 # =============================================================================
-# Copyright © 2018 PyHelp Project Contributors
-# https://github.com/jnsebgosselin/gwhat
+# Copyright © PyHelp Project Contributors
+# https://github.com/cgq-qgc/pyhelp
 #
 # This file is part of PyHelp.
-# Licensed under the terms of the GNU General Public License.
+# Licensed under the terms of the MIT License.
 # =============================================================================
 
 # ---- Standard Library Imports
 import os
 import os.path as osp
+import importlib
 
 
 # ---- Third party imports

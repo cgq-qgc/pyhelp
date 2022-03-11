@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
-
+# =============================================================================
 # Copyright © PyHelp Project Contributors
 # https://github.com/cgq-qgc/pyhelp
 #
 # This file is part of PyHelp.
-# Licensed under the terms of the GNU General Public License.
+# Licensed under the terms of the MIT License.
+# =============================================================================
 
 # ---- Standard Library Imports
-
 import os
 import os.path as osp
 import csv
@@ -15,13 +15,10 @@ from datetime import datetime
 import time
 
 # ---- Third Party imports
-
 import numpy as np
 import pandas as pd
-import h5py
 
 # ---- Local Libraries Imports
-
 from pyhelp.preprocessing import write_d10d11_allcells, format_d10d11_inputs
 from pyhelp.processing import run_help_allcells
 from pyhelp.utils import (savedata_to_hdf5, calc_dist_from_coord,
@@ -93,7 +90,6 @@ class HelpManager(object):
         self.load_weather_input_data()
 
     # ---- Connect tables
-
     @property
     def path_connect_tables(self):
         return osp.join(self.inputdir, FNAME_CONN_TABLES)
@@ -110,7 +106,6 @@ class HelpManager(object):
         np.save(self.path_connect_tables, self.connect_tables)
 
     # ---- Grid and Input
-
     def load_input_grid(self):
         """
         Load input grid data.
@@ -413,7 +408,6 @@ class HelpManager(object):
         return output
 
     # ---- Grid Utilities
-
     def get_water_cellnames(self, cellnames):
         """
         Take a list of cellnames and return only those that are considered

@@ -17,8 +17,8 @@ requirements:
     - python
     - numpy
     - matplotlib
+    - pandas
     - scipy
-    - geopandas
     - h5py=3
     
 about:

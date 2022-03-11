@@ -1,29 +1,24 @@
 # -*- coding: utf-8 -*-
-
+# =============================================================================
 # Copyright © PyHelp Project Contributors
 # https://github.com/cgq-qgc/pyhelp
 #
 # This file is part of PyHelp.
-# Licensed under the terms of the GNU General Public License.
+# Licensed under the terms of the MIT License.
+# =============================================================================
 
 
 # ---- Standard Library imports
-import os
 import os.path as osp
 from collections.abc import Mapping
 
 
 # ---- Third party imports
 import matplotlib.pyplot as plt
-import matplotlib.transforms as transforms
 import pandas as pd
-from geopandas import GeoDataFrame
 import numpy as np
 import h5py
 from scipy.stats import linregress
-
-# ---- Local imports
-from pyhelp.maps import produce_point_geometry
 
 
 class HelpOutput(Mapping):
@@ -121,28 +116,18 @@ class HelpOutput(Mapping):
             hdf5file.close()
         print("Data saved successfully.")
 
-    def save_to_shp(self, path_to_shp):
+    def save_to_csv(self, path_to_csv):
         """
         Save the grid data and cell yearly average values for each component
-        of the water budget to a shapefile.
+        of the water budget to a csv file.
         """
-        print('\rInitialize the shapefile...', end=' ')
-        point_geo = produce_point_geometry(
-            self.grid['lat_dd'].values, self.grid['lon_dd'].values)
-        crs = ("+proj=longlat +ellps=GRS80 +datum=NAD83 "
-               "+towgs84=0,0,0,0,0,0,0 +no_defs")
-        shp = GeoDataFrame(self.grid, crs=crs, geometry=point_geo)
-        print('done')
-        print('\rAdding results to the shapefile...', end=' ')
+        print("Saving data to {}...".format(osp.basename(path_to_csv)))
+        df = self.grid[['lat_dd', 'lon_dd']].copy()
         yearly_avg = self.calc_cells_yearly_avg()
         for key, value in yearly_avg.items():
-            shp.loc[self.data['cid'], key] = value
-        print('done')
-        print('\rSaving data to the shapefile...', end=' ')
-        if not osp.exists(osp.dirname(path_to_shp)):
-            os.makedirs(osp.dirname(path_to_shp))
-        shp.to_file(path_to_shp, driver='ESRI Shapefile')
-        print('done')
+            df[key] = value
+        df.to_csv(path_to_csv, encoding='utf8')
+        print("Data saved successfully.")
 
     # ---- Calcul
 
