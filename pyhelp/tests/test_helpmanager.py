@@ -52,7 +52,7 @@ def helpm(example_folder):
 
 # ---- Test HelpManager
 def test_import_pytables():
-    import tables
+    assert importlib.import_module('h5py')
     assert importlib.import_module('tables')
 
 
