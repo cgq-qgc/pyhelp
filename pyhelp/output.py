@@ -38,18 +38,7 @@ class HelpOutput(Mapping):
             self.data = path_or_dict['data']
             self.grid = path_or_dict['grid']
         elif isinstance(path_or_dict, str) and osp.exists(path_or_dict):
-            # Load the data from an HDF5 file saved on disk.
-            hdf5 = h5py.File(path_or_dict, mode='r+')
-            self.data = {}
-            for key in list(hdf5['data'].keys()):
-                if key == 'cid':
-                    self.data[key] = hdf5['data'][key].value.astype(str)
-                else:
-                    self.data[key] = hdf5['data'][key].value
-            hdf5.close()
-
-            # Load the grid from an HDF5 file saved on disk.
-            self.grid = pd.read_hdf(path_or_dict, 'grid')
+            self.load_from_hdf5(path_or_dict)
         else:
             self.data = None
             self.grid = None
@@ -62,6 +51,36 @@ class HelpOutput(Mapping):
 
     def __len__(self):
         return len(self.data['cid'])
+
+    def load_from_hdf5(self, path_to_hdf5):
+        """Read data and grid from an HDF5 file at the specified location."""
+        print(f"Loading data and grid from {path_to_hdf5}")
+        hdf5 = h5py.File(path_to_hdf5, mode='r+')
+        try:
+            # Load the data.
+            self.data = {}
+            for key in list(hdf5['data'].keys()):
+                values = np.array(hdf5['data'][key])
+                if key == 'cid':
+                    values = values.astype(str)
+                self.data[key] = values
+
+            # Load the grid.
+            self.grid = pd.DataFrame(
+                data=[],
+                columns=hdf5['grid'].attrs['columns'],
+                index=hdf5['grid'].attrs['index'])
+            for key in list(hdf5['grid'].keys()):
+                values = np.array(hdf5['grid'][key])
+                if key == 'cid':
+                    values = values.astype(str)
+                self.grid.loc[:, key] = values
+        except Exception as e:
+            print(e)
+            self.data = None
+            self.grid = None
+        finally:
+            hdf5.close()
 
     def save_to_hdf5(self, path_to_hdf5):
         """Save the data and grid to an HDF5 file at the specified location."""
