@@ -29,10 +29,10 @@ following command in a terminal:
 
 .. code-block:: bash
 
-   conda create -n my_new_env_name python=3.7.*
+   conda create -n my_new_env_name python=3.8.*
 
-If you want to use Python 3.6 instead, simply replace the ``python=3.7.*``
-argument by ``python=3.6.*``.
+If you want to use Python 3.7 instead, simply replace the ``python=3.8.*``
+argument by ``python=3.7.*``.
 
 Then, PyHELP can be installed, along with all its dependencies, by executing
 the following command in a terminal:
@@ -62,25 +62,14 @@ Install with Pip
 
 It is also possible to install PyHELP with `pip`_, but be aware that pip
 installations are for advanced users.
-PyHELP depends on several low-level libraries for geospatial analysis, and
-this may cause dependency conflicts if you are not careful.
 
-First, you will need to download and install `Python 3.6 or 3.7`_ on your
+First, you will need to download and install `Python 3.7 or 3.8`_ on your
 computer.
+
 Then you will need to install all the dependencies that are listed in
 the section :ref:`sec_requirements` below.
-Unless you really know what you are doing, we strongly recommand against
-installing these dependencies directly from the `The Python Package Index (PyPI)`_
-with pip, because you will most likely run into installation problems and
-dependency conflicts.
-The easiest and safest way to install PyHELP's depencies on Windows is to
-download Wheels from Christopher Gohlke's
-`Unofficial Windows Binaries for Python Extension Packages`_ and
-`install them with pip`_.
-Be carefull to install the packages that were built for Windows 64bits and
-the version of Python that you downloaded and installed on your computer.
 
-Then, you can install PyHELP with pip by executing the following command
+Finally, you can install PyHELP with pip by executing the following command
 in a terminal:
 
 .. code-block:: bash
@@ -92,7 +81,7 @@ in a terminal:
 Install PyHELP from source
 ---------------------------------
 
-If you need to use PyHELP with a version of Python older than 3.6 or
+If you need to use PyHELP with a version of Python other than 3.7 or 3.8, or
 if you are working on Linux or macOS, you will have to build and install
 PyHELP from source.
 Below is a step-by-step guide that describe how to achieve this.
@@ -176,6 +165,6 @@ Requirements
 .. _GUI client: https://git-scm.com/download/gui/windows
 .. _install them with pip:  https://pip.pypa.io/en/stable/user_guide/#installing-from-wheels
 .. _pip: https://pypi.org/project/pip/
-.. _Python 3.6 or 3.7: https://www.python.org/downloads/
+.. _Python 3.7 or 3.8: https://www.python.org/downloads/
 .. _The Python Package Index (PyPI): https://pypi.org/
 .. _Unofficial Windows Binaries for Python Extension Packages: https://www.lfd.uci.edu/~gohlke/pythonlibs/
