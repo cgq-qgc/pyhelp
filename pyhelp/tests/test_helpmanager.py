@@ -10,7 +10,6 @@
 # ---- Standard Library Imports
 import os
 import os.path as osp
-import importlib
 
 
 # ---- Third party imports
@@ -24,7 +23,9 @@ from pyhelp.managers import HelpManager
 from pyhelp.output import HelpOutput
 
 
+# =============================================================================
 # ---- Fixtures
+# =============================================================================
 @pytest.fixture(scope="module")
 def example_folder():
     return osp.join(osp.dirname(__rootdir__), 'example')
@@ -50,7 +51,9 @@ def helpm(example_folder):
     return manager
 
 
+# =============================================================================
 # ---- Test HelpManager
+# =============================================================================
 def test_autoread_input(helpm):
     """
     Test that the input files are read automatically when instantiating
@@ -70,7 +73,6 @@ def test_calc_help_cells(helpm, output_file):
     assert osp.exists(output_file)
 
 
-# ---- Test HelpOutput
 def test_validate_results(output_file):
     """Test that the water budget results are as expected. """
     output = HelpOutput(output_file)

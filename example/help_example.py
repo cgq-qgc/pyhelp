@@ -21,7 +21,7 @@ if __name__ == '__main__':
 
     # Generates the input files required by the HELP model for each cell
     # of the grid.
-    # helpm.build_help_input_files()
+    helpm.build_help_input_files()
 
     # It is possible to run HELP only for a subset of the study area
     # grid cells. To do this, we need to pass a list of cell ids as
