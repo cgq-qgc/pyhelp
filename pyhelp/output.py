@@ -75,10 +75,15 @@ class HelpOutput(Mapping):
                     key, data=[np.string_(i) for i in self.data['cid']])
             else:
                 datagrp.create_dataset(key, data=self.data[key])
-        hdf5file.close()
 
         # Save the grid.
-        self.grid.to_hdf(path_to_hdf5, key='grid', mode='a')
+        group = hdf5file.create_group('grid')
+        # for column in list(self.grid.columns):
+            
+        # self.grid.to_hdf(path_to_hdf5, key='grid', mode='a')
+        
+        
+        hdf5file.close()
 
         print('done')
 
