@@ -4,4 +4,3 @@ pandas
 h5py
 tables
 matplotlib
-geopandas
