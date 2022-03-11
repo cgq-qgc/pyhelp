@@ -10,7 +10,7 @@ source:
 requirements:
   host:
     - python
-    - numpy 1.15.*
+    - numpy
     - m2w64-toolchain
     - libpython
   run:
@@ -19,9 +19,7 @@ requirements:
     - matplotlib
     - scipy
     - geopandas
-    - xlrd
-    - netcdf4
-    - h5py
+    - h5py=3
     
 about:
   home: https://github.com/cgq-qgc/pyhelp
