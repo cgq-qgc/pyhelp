@@ -59,8 +59,8 @@ install:
   - conda config --set always_yes yes
   - conda update -q conda
   - conda config --set auto_update_conda no
-  - conda install scipy geopandas h5py pytables matplotlib pytest pytest-mock pytest-cov pip m2w64-toolchain conda-build
-  - python -m pip install codecov
+  - conda install scipy geopandas h5py=3 matplotlib pip m2w64-toolchain conda-build
+  - python -m pip install codecov pytest pytest-cov
 
   # Check that we have still the expected version and architecture for Python
   - python --version
