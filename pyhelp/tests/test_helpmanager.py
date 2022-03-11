@@ -10,6 +10,7 @@
 # ---- Standard Library Imports
 import os
 import os.path as osp
+import importlib
 
 
 # ---- Third party imports
@@ -50,6 +51,10 @@ def helpm(example_folder):
 
 
 # ---- Test HelpManager
+def test_import_pytables():
+    assert importlib.import_module('tables')
+
+
 def test_autoread_input(helpm):
     """
     Test that the input files are read automatically when instantiating
