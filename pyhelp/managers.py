@@ -27,8 +27,7 @@ from pyhelp.processing import run_help_allcells
 from pyhelp.utils import (savedata_to_hdf5, calc_dist_from_coord,
                           delete_folder_recursively)
 from pyhelp.weather_reader import (
-    save_precip_to_HELP, save_airtemp_to_HELP, save_solrad_to_HELP,
-    InfoClimatGridReader, generate_input_from_cweeds)
+    save_precip_to_HELP, save_airtemp_to_HELP, save_solrad_to_HELP)
 from pyhelp.output import HelpOutput
 
 
@@ -463,34 +462,6 @@ class HelpManager(object):
         lon = np.array(self.grid['lon_dd'].reindex(cells).tolist())
         return lat, lon
 
-    # ---- Input Data Utilities
-    def generate_weather_inputs_from_CWEEDS(
-            self, cweed2_paths, cweed3_paths, year_range=None):
-        """
-        Generate global solar irradiance input data file from CWEEDS files.
-        """
-        year_range = self.year_range if year_range is None else year_range
-        generate_input_from_cweeds(self.workdir, cweed2_paths,
-                                   cweed3_paths, year_range)
-
-    def generate_weather_inputs_from_MDELCC_grid(
-            self, path_to_mddelcc_grid, cellnames=None, year_range=None):
-        """
-        Generate weather input data files from the MDDELCC grid.
-
-        Generate PyHelp csv data file inputs for daily precipitation and
-        average air temperature using data from the MDDELCC spatially
-        distributed daily precipitation and minimum and maximum air
-        temperature grid for a set of lat/lon coordinates.
-        """
-        cellnames = self.cellnames if cellnames is None else cellnames
-        year_range = self.year_range if year_range is None else year_range
-        lat_dd, lon_dd = self.get_latlon_for_cellnames(cellnames)
-
-        mddelcc_grid_mngr = InfoClimatGridReader(path_to_mddelcc_grid)
-        mddelcc_grid_mngr.generate_input_from_MDELCC_grid(
-            self.workdir, lat_dd, lon_dd, year_range)
-
 
 def load_grid_from_csv(path_togrid):
     """
@@ -564,9 +535,6 @@ if __name__ == '__main__':
     cweed3_paths = osp.join(
         workdir, 'CWEEDS', 'CAN_QC_MONTREAL-INTL-A_7025251_CWEEDS2011_T_N.WY3')
     helpm.generate_weather_inputs_from_CWEEDS(cweed2_paths, cweed3_paths)
-
-    path_to_mddelcc_grid = "F:/MeteoGrilleDaily"
-    helpm.generate_weather_inputs_from_MDELCC_grid(path_to_mddelcc_grid)
 
     helpm.build_help_input_files()
     path_hdf5 = osp.join(workdir, 'help_example.out')
