@@ -8,6 +8,7 @@
 # =============================================================================
 
 # ---- Standard Library Imports
+import json
 import os
 import os.path as osp
 import csv
@@ -28,7 +29,7 @@ from pyhelp.weather_reader import (
 from pyhelp.output import HelpOutput
 
 
-FNAME_CONN_TABLES = 'connect_table.npy'
+FNAME_CONN_TABLES = 'connect_table.json'
 INPUT_PRECIP_FNAME = 'precip_input_data.csv'
 INPUT_AIRTEMP_FNAME = 'airtemp_input_data.csv'
 INPUT_SOLRAD_FNAME = 'solrad_input_data.csv'
@@ -43,7 +44,7 @@ class HelpManager(object):
     """
 
     def __init__(self, workdir, year_range):
-        super(HelpManager, self).__init__()
+        super().__init__()
         self.grid = None
         self.precip_data = None
         self.airtemp_data = None
@@ -97,13 +98,16 @@ class HelpManager(object):
     def _setup_connect_tables(self):
         """Setup the connect tables dictionary."""
         if osp.exists(self.path_connect_tables):
-            self.connect_tables = np.load(self.path_connect_tables).item()
+            with open(self.path_connect_tables, 'r') as jsonfile:
+                self.connect_tables = json.load(jsonfile)
         else:
             self.connect_tables = {}
 
     def _save_connect_tables(self):
-        """Save the connect tables dictionary to a numpy binary file."""
-        np.save(self.path_connect_tables, self.connect_tables)
+        """Save the connect tables dictionary to a json text file."""
+        with open(self.path_connect_tables, 'w', encoding='utf-8') as jsonfile:
+            json.dump(self.connect_tables, jsonfile, indent=2,
+                      separators=(",", ": "), ensure_ascii=False)
 
     # ---- Grid and Input
     def load_input_grid(self):
@@ -224,7 +228,7 @@ class HelpManager(object):
             for i, cellname in enumerate(cellnames):
                 dist = calc_dist_from_coord(grid_lat[i], grid_lon[i],
                                             data['lat'], data['lon'])
-                argmin = np.argmin(dist)
+                argmin = int(np.argmin(dist))
 
                 lat, lon = data['lat'][argmin], data['lon'][argmin]
                 help_input_fname = osp.join(help_inputdir,
