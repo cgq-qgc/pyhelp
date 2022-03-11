@@ -17,10 +17,8 @@ requirements:
     - python
     - numpy
     - matplotlib
+    - pandas
     - scipy
-    - geopandas
-    - xlrd
-    - netcdf4
     - h5py
     - pytables
     
