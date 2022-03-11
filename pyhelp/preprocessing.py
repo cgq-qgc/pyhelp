@@ -176,7 +176,7 @@ def format_d10d11_inputs(grid, cellnames, sf_edepth=1, sf_ulai=1):
     Format the evapotranspiration (D11) and soil and design data (D10) in a
     format that is compatible with HELP.
     """
-    tic = time.clock()
+    tic = time.perf_counter()
     d11dat = {}
     d10dat = {}
     N = len(cellnames)
@@ -190,7 +190,7 @@ def format_d10d11_inputs(grid, cellnames, sf_edepth=1, sf_ulai=1):
 
     print("\rFormatting D10 and D11 data for cell %d of %d (%0.1f%%)" %
           (i+1, N, (i+1)/N*100))
-    tac = time.clock()
+    tac = time.perf_counter()
     print('Task completed in %0.2f sec' % (tac-tic))
 
     warnings = [cid for cid, val in d10dat.items() if val is None]
@@ -227,7 +227,7 @@ def write_d10d11_allcells(dirpath, d10data, d11data, ncore=None):
 
     # Prepare soil and design input files (D10).
 
-    tic = time.clock()
+    tic = time.perf_counter()
     iterable = [(osp.join(dirpath, str(cid) + '.D10'), cid, d10data[cid]) for
                 cid in d10data.keys()]
     d10_connect_table = {}
@@ -239,12 +239,12 @@ def write_d10d11_allcells(dirpath, d10data, d11data, ncore=None):
         progress_pct = calcul_progress/N*100
         print("\rCreating D10 input file for cell %d of %d (%0.1f%%)" %
               (calcul_progress, N, progress_pct), end=' ')
-    tac = time.clock()
+    tac = time.perf_counter()
     print('\nTask completed in %0.2f sec' % (tac-tic))
 
     # Prepare evapotranspiration input files (D11).
 
-    tic = time.clock()
+    tic = time.perf_counter()
     iterable = [(osp.join(dirpath, str(cid) + '.D11'), cid, d11data[cid]) for
                 cid in d10data.keys()]
     d11_connect_table = {}
@@ -256,7 +256,7 @@ def write_d10d11_allcells(dirpath, d10data, d11data, ncore=None):
         progress_pct = calcul_progress/N*100
         print("\rCreating D11 input file for cell %d of %d (%0.1f%%)" %
               (calcul_progress, N, progress_pct), end=' ')
-    tac = time.clock()
+    tac = time.perf_counter()
     print('\nTask completed in %0.2f sec' % (tac-tic))
 
     return d10_connect_table, d11_connect_table
