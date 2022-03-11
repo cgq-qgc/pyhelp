@@ -18,8 +18,6 @@ PyHelp input management
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 .. automethod:: pyhelp.HelpManager.load_input_grid
 .. automethod:: pyhelp.HelpManager.load_weather_input_data
-.. automethod:: pyhelp.HelpManager.generate_weather_inputs_from_CWEEDS
-.. automethod:: pyhelp.HelpManager.generate_weather_inputs_from_MDELCC_grid
 
 HELP input management
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -28,7 +26,6 @@ HELP input management
 
 Grid utilities
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
 .. automethod:: pyhelp.HelpManager.get_water_cellnames
 .. automethod:: pyhelp.HelpManager.get_run_cellnames
 .. automethod:: pyhelp.HelpManager.get_latlon_for_cellnames

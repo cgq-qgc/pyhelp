@@ -5,7 +5,6 @@
 [![Documentation Status](https://readthedocs.org/projects/pyhelp/badge/?version=latest)](http://pyhelp.readthedocs.io)
 [![Build status](https://ci.appveyor.com/api/projects/status/ns6s8x0hkd31ffb3/branch/master?svg=true)](https://ci.appveyor.com/project/jnsebgosselin/pyhelp-rd625/branch/master)
 [![codecov](https://codecov.io/gh/cgq-qgc/pyhelp/branch/master/graph/badge.svg)](https://codecov.io/gh/cgq-qgc/pyhelp)
-[![Join the chat at https://gitter.im/cgq-qgc/pyhelp](https://badges.gitter.im/cgq-qgc/pyhelp.svg)](https://gitter.im/cgq-qgc/pyhelp)<br>
 
 PyHELP is an object oriented Python library providing a set of tools to
 estimate spatially distributed groundwater recharge and other hydrological
