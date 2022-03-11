@@ -65,10 +65,6 @@ explicitly force a reload of the weather data from the input data files
 with the :meth:`~pyhelp.HelpManager.load_weather_input_data` method of the
 :class:`~pyhelp.HelpManager` class.
 
-Finally, tools are available to generate automatically the weather input data
-files from various sources of data. This is covered in more details in the
-section `Tools to generate input data files`_.
-
 .. _weather_datafile_example:
 .. figure:: img/weather_input_data.*
     :align: center
@@ -79,24 +75,6 @@ section `Tools to generate input data files`_.
     Example of a correctly formatted input weather data file.
 
 .. _sec_utils_data:
-
-Tools to generate input data files
------------------------------------
-
-Tools are available in PyHelp to generate automatically the weather input data
-files from various sources of data.
-
-The :meth:`~pyhelp.HelpManager.generate_weather_inputs_from_MDELCC_grid` method
-of the :class:`~pyhelp.HelpManager` class can be used to generate automatically
-the precipitation and average air temperature input data files using data from
-the MDDELCC spatially distributed daily meteo grid.
-
-Similarly, the :meth:`~pyhelp.HelpManager.generate_weather_inputs_from_CWEEDS`
-method of the :class:`~pyhelp.HelpManager` class can be used to generate
-automatically the global solar irradiance input data file from a set of
-CWEEDS files.
-
-Please consult the documentation of each method for more details.
 
 Format of the grid input data
 ---------------------------------
@@ -207,24 +185,5 @@ the calibration of the model.
    |              |                 | 5 - Cell not mapped)                   |
    +--------------+-----------------+----------------------------------------+
 
-Example
----------------------------------
-
-Import and instantiate the :class:`~pyhelp.HelpManager` class ::
-
-    >>> from pyhelp import HelpManager
-    >>> helpm = HelpManager("C:/path_to_pyhelp_project")
-
-Generate precipitation and air temperature input files from the MDDELCC
-weather grid ::
-
-    >>> helpm.generate_weather_inputs_from_MDELCC_grid("C:/path_to_mddelcc_grid") 
-
-Generate global solar irradiance input file from CWEEDS files ::
-
-     >>> cweed2_paths = "C:/path_to_cweed2_file"
-     >>> cweed3_paths = "C:/path_to_cweed3_file"
-     >>> helpm.generate_weather_inputs_from_CWEEDS(cweed2_paths, cweed3_paths) 
-     
      
 .. _HELP: https://www.epa.gov/land-research/hydrologic-evaluation-landfill-performance-help-model
