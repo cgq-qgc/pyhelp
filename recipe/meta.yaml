@@ -22,7 +22,6 @@ requirements:
     - xlrd
     - netcdf4
     - h5py
-    - pytables
     
 about:
   home: https://github.com/cgq-qgc/pyhelp
