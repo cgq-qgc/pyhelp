@@ -17,7 +17,6 @@ import time
 # ---- Third Party imports
 import numpy as np
 import pandas as pd
-import h5py
 
 # ---- Local Libraries Imports
 from pyhelp.preprocessing import write_d10d11_allcells, format_d10d11_inputs
@@ -91,7 +90,6 @@ class HelpManager(object):
         self.load_weather_input_data()
 
     # ---- Connect tables
-
     @property
     def path_connect_tables(self):
         return osp.join(self.inputdir, FNAME_CONN_TABLES)
@@ -108,7 +106,6 @@ class HelpManager(object):
         np.save(self.path_connect_tables, self.connect_tables)
 
     # ---- Grid and Input
-
     def load_input_grid(self):
         """
         Load input grid data.
@@ -411,7 +408,6 @@ class HelpManager(object):
         return output
 
     # ---- Grid Utilities
-
     def get_water_cellnames(self, cellnames):
         """
         Take a list of cellnames and return only those that are considered
