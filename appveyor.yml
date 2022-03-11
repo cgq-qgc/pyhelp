@@ -65,7 +65,7 @@ install:
   # Check that we have still the expected version and architecture for Python
   - python --version
   - python -c "import struct; print(struct.calcsize('P') * 8)"
-  
+
   # Add mingw-w64 to SYS PATH.
   - set "PATH=%PYTHON%/Library/mingw-w64/bin;%PATH%"
 

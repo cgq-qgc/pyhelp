@@ -37,7 +37,7 @@ if __name__ == '__main__':
 
     # Export and save the data to an ESRI shapefile.
     filepath = osp.join(workdir, 'help_example_yearly.csv')
-    df = output.save_to_csv(filepath)
+    output.save_to_csv(filepath)
 
     # Plot some results.
     output.plot_area_monthly_avg()
