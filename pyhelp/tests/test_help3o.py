@@ -54,7 +54,7 @@ def rca_params(rca_folder, tmp_path):
             tfsoil)
 
 
-# ---- Test HelpManager
+# ---- Tests
 def test_run_help3o(rca_params):
     """
     Test that the HELP3O extension run and create an output file as expected.
