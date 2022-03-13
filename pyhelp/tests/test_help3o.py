@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
-
-# Copyright © 2018 PyHelp Project Contributors
-# https://github.com/jnsebgosselin/gwhat
+# =============================================================================
+# Copyright © PyHelp Project Contributors
+# https://github.com/cgq-qgc/pyhelp
 #
 # This file is part of PyHelp.
-# Licensed under the terms of the GNU General Public License.
+# Licensed under the terms of the MIT License.
+# =============================================================================
 
 
 # ---- Standard Library Imports
@@ -25,17 +26,12 @@ from pyhelp.processing import run_help_singlecell
 
 # ---- Fixtures
 @pytest.fixture(scope="module")
-def test_folder():
-    return osp.join(osp.dirname(__rootdir__), 'pyhelp', 'tests')
+def rca_folder():
+    return osp.join(__rootdir__, 'tests', 'rca_original_testcase_1997')
 
 
-@pytest.fixture(scope="module")
-def rca_folder(test_folder):
-    return osp.join(test_folder, 'rca_original_testcase_1997')
-
-
-@pytest.fixture(scope="module")
-def rca_params(rca_folder):
+@pytest.fixture
+def rca_params(rca_folder, tmp_path):
     daily_out = 0
     monthly_out = 1
     yearly_out = 0
@@ -48,7 +44,7 @@ def rca_params(rca_folder):
             osp.join(rca_folder, 'RCRA.D13'),
             osp.join(rca_folder, 'RCRA.D11'),
             osp.join(rca_folder, 'RCRA.D10'),
-            osp.join(rca_folder, 'NEW_RCA.OUT'),
+            osp.join(tmp_path, 'NEW_RCA.OUT'),
             daily_out,
             monthly_out,
             yearly_out,
@@ -58,15 +54,11 @@ def rca_params(rca_folder):
             tfsoil)
 
 
-# ---- Test HelpManager
+# ---- Tests
 def test_run_help3o(rca_params):
     """
     Test that the HELP3O extension run and create an output file as expected.
     """
-    if osp.exists(rca_params[5]):
-        os.remove(rca_params[5])
-    assert not osp.exists(rca_params[5])
-
     HELP3O.run_simulation(*rca_params)
     assert osp.exists(rca_params[5])
 
@@ -76,17 +68,13 @@ def test_run_help_singlecell(rca_params):
     Run HELP for a single cell using the RCA test case and assert that the
     results are as expected.
     """
-    if osp.exists(rca_params[5]):
-        os.remove(rca_params[5])
-    assert not osp.exists(rca_params[5])
-
     cellname, results = run_help_singlecell(('rca', rca_params))
     assert not osp.exists(rca_params[5])
     assert cellname == 'rca'
 
     # Precipitations.
     precip = np.sum(results['precip'] * 0.0393701, axis=1)
-    for i, expected_result in enumerate([48.5, 58.32, 56.71]):
+    for i, expected_result in enumerate([48.53, 58.32, 56.71]):
         assert abs(precip[i] - expected_result) < 0.1, 'precip year %i' % i
 
     # Runoff.
@@ -105,11 +93,13 @@ def test_run_help_singlecell(rca_params):
         assert abs(evapo[i] - expected_result) < 0.1, 'evapo year %i' % i
 
     # Superficial subsurface runoff.
+    # (DRAINAGE COLLECTED FROM LAYER  2)
     subrun1 = np.sum(results['subrun1'] * 0.0393701, axis=1)
     for i, expected_result in enumerate([15.4971, 22.8698, 19.1360]):
         assert abs(subrun1[i] - expected_result) < 0.1, 'subrun1 year %i' % i
 
     # Deep subsurface runoff.
+    # (DRAINAGE COLLECTED FROM LAYER  7 + DRAINAGE COLLECTED FROM LAYER  9)
     subrun2 = np.sum(results['subrun2'] * 0.0393701, axis=1)
     expected_results = (0.0543 + 0.0833, 0.1481 + 0.1658, 0.1835 + 0.1935)
     for i, expected_result in enumerate(expected_results):
