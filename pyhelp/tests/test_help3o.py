@@ -73,7 +73,7 @@ def test_run_help_singlecell(rca_params):
 
     # Precipitations.
     precip = np.sum(results['precip'] * 0.0393701, axis=1)
-    for i, expected_result in enumerate([48.5, 58.32, 56.71]):
+    for i, expected_result in enumerate([48.53, 58.32, 56.71]):
         assert abs(precip[i] - expected_result) < 0.1, 'precip year %i' % i
 
     # Runoff.
