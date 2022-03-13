@@ -30,6 +30,7 @@ def rca_folder():
     return osp.join(__rootdir__, 'tests', 'rca_original_testcase_1997')
 
 
+@pytest.fixture
 def rca_params(rca_folder, tmp_path):
     daily_out = 0
     monthly_out = 1
