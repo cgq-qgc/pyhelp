@@ -25,17 +25,11 @@ from pyhelp.processing import run_help_singlecell
 
 # ---- Fixtures
 @pytest.fixture(scope="module")
-def test_folder():
-    return osp.join(osp.dirname(__rootdir__), 'pyhelp', 'tests')
+def rca_folder():
+    return osp.join(__rootdir__, 'tests', 'rca_original_testcase_1997')
 
 
-@pytest.fixture(scope="module")
-def rca_folder(test_folder):
-    return osp.join(test_folder, 'rca_original_testcase_1997')
-
-
-@pytest.fixture(scope="module")
-def rca_params(rca_folder):
+def rca_params(rca_folder, tmp_path):
     daily_out = 0
     monthly_out = 1
     yearly_out = 0
@@ -48,7 +42,7 @@ def rca_params(rca_folder):
             osp.join(rca_folder, 'RCRA.D13'),
             osp.join(rca_folder, 'RCRA.D11'),
             osp.join(rca_folder, 'RCRA.D10'),
-            osp.join(rca_folder, 'NEW_RCA.OUT'),
+            osp.join(tmp_path, 'NEW_RCA.OUT'),
             daily_out,
             monthly_out,
             yearly_out,
@@ -63,10 +57,6 @@ def test_run_help3o(rca_params):
     """
     Test that the HELP3O extension run and create an output file as expected.
     """
-    if osp.exists(rca_params[5]):
-        os.remove(rca_params[5])
-    assert not osp.exists(rca_params[5])
-
     HELP3O.run_simulation(*rca_params)
     assert osp.exists(rca_params[5])
 
@@ -76,10 +66,6 @@ def test_run_help_singlecell(rca_params):
     Run HELP for a single cell using the RCA test case and assert that the
     results are as expected.
     """
-    if osp.exists(rca_params[5]):
-        os.remove(rca_params[5])
-    assert not osp.exists(rca_params[5])
-
     cellname, results = run_help_singlecell(('rca', rca_params))
     assert not osp.exists(rca_params[5])
     assert cellname == 'rca'
