@@ -92,11 +92,13 @@ def test_run_help_singlecell(rca_params):
         assert abs(evapo[i] - expected_result) < 0.1, 'evapo year %i' % i
 
     # Superficial subsurface runoff.
+    # (DRAINAGE COLLECTED FROM LAYER  2)
     subrun1 = np.sum(results['subrun1'] * 0.0393701, axis=1)
     for i, expected_result in enumerate([15.4971, 22.8698, 19.1360]):
         assert abs(subrun1[i] - expected_result) < 0.1, 'subrun1 year %i' % i
 
     # Deep subsurface runoff.
+    # (DRAINAGE COLLECTED FROM LAYER  7 + DRAINAGE COLLECTED FROM LAYER  9)
     subrun2 = np.sum(results['subrun2'] * 0.0393701, axis=1)
     expected_results = (0.0543 + 0.0833, 0.1481 + 0.1658, 0.1835 + 0.1935)
     for i, expected_result in enumerate(expected_results):
