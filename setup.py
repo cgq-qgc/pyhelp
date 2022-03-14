@@ -42,6 +42,13 @@ HELPEXT = Extension(name='pyhelp.HELP3O',
                                      "-static-libgcc"]
                     )
 
+INSTALL_REQUIRES = [
+    'numpy',
+    'scipy'
+    'pandas'
+    'h5py>=3'
+    'matplotlib']
+
 setup(name='pyhelp',
       version=__version__,
       description=('A Python library for the assessment of spatially '
@@ -57,6 +64,8 @@ setup(name='pyhelp',
       packages=setuptools.find_packages(),
       package_data={'pyhelp': ['*.pyd']},
       include_package_data=True,
+      python_requires='=3.7.*,=3.8.*',
+      install_requires=INSTALL_REQUIRES,
       classifiers=["License :: OSI Approved :: MIT License",
                    "Operating System :: Microsoft :: Windows",
                    "Programming Language :: Python :: 3.7",
