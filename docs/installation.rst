@@ -1,11 +1,11 @@
 Installation
 =================================
 
-Pip Wheels and Conda packages are both available for Python 3.6 and 3.7 on the
+Pip Wheels and Conda packages are both available for Python 3.7 and 3.8 on the
 Windows 64bits plateform.
-If you need to use PyHELP with a version of Python older than 3.6 or if you
-are working on Linux or macOS, you will have to build and install PyHELP from
-source.
+If you need to use PyHELP with a version of Python other than 3.7 or 3.8, or
+if you are working on Linux or macOS, you will have to build and install
+PyHELP from source.
 
 Install with Conda
 ---------------------------------
@@ -66,10 +66,7 @@ installations are for advanced users.
 First, you will need to download and install `Python 3.7 or 3.8`_ on your
 computer.
 
-Then you will need to install all the dependencies that are listed in
-the section :ref:`sec_requirements` below.
-
-Finally, you can install PyHELP with pip by executing the following command
+Then, you can install PyHELP with pip by executing the following command
 in a terminal:
 
 .. code-block:: bash
@@ -140,16 +137,12 @@ Below is a step-by-step guide that describe how to achieve this.
 Requirements
 -----------------------------------------------
 
-- `Python <https://www.python.org/>`_ == 3.6
+- `Python <https://www.python.org/>`_
 - `Matplotlib <https://matplotlib.org/>`_
 - `Numpy <https://www.numpy.org/>`_
 - `Pandas <https://pandas.pydata.org/>`_
 - `Scipy <https://www.scipy.org/>`_
-- `xlrd <https://github.com/python-excel/xlrd/>`_
-- `netCDF4 <http://unidata.github.io/netcdf4-python/>`_
 - `H5py <https://www.h5py.org/>`_
-- `GeoPandas <http://geopandas.org/>`_
-- `PyTables <https://www.pytables.org/>`_
 
 .. _Anaconda cgq-qgc channel: https://anaconda.org/cgq-qgc/pyhelp
 .. _Anaconda: https://www.anaconda.com/download/
