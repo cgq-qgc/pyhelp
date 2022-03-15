@@ -30,21 +30,20 @@ class Mock(MagicMock):
 
 
 MOCK_MODULES = ['pyhelp.HELP3O', 'matplotlib', 'matplotlib.pyplot', 'numpy',
-                'matplotlib.transforms', 'pandas', 'netCDF4', 'geopandas',
-                'xlrd', 'xlrd.xldate', 'h5py', 'scipy', 'scipy.stats',
-                'shapely', 'shapely.geometry']
+                'matplotlib.transforms', 'pandas', 'h5py', 'scipy',
+                'scipy.stats']
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
 # -- Project information -----------------------------------------------------
 
-project = 'PyHelp'
-copyright = '2018, Jean-Sébastien Gosselin'
+project = 'PyHELP'
+copyright = '2018-2022, Jean-Sébastien Gosselin'
 author = 'Jean-Sébastien Gosselin'
 
 # The short X.Y version
 version = ''
 # The full version, including alpha/beta/rc tags
-release = '0.1.0'
+release = '0.2.0'
 
 
 # -- General configuration ---------------------------------------------------
