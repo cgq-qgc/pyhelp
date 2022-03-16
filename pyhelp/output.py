@@ -7,6 +7,7 @@
 # Licensed under the terms of the MIT License.
 # -----------------------------------------------------------------------------
 
+from __future__ import annotations
 
 # ---- Standard Library imports
 import os.path as osp
@@ -26,7 +27,7 @@ class HelpOutput(Mapping):
     with the :class:`~pyhelp.HelpManager` class.
     """
 
-    def __init__(self, path_or_dict):
+    def __init__(self, path_or_dict: str | dict):
         super(HelpOutput, self).__init__()
         if isinstance(path_or_dict, dict):
             self.data = path_or_dict['data']
@@ -46,7 +47,7 @@ class HelpOutput(Mapping):
     def __len__(self):
         return len(self.data['cid'])
 
-    def load_from_hdf5(self, path_to_hdf5):
+    def load_from_hdf5(self, path_to_hdf5: str):
         """Read data and grid from an HDF5 file at the specified location."""
         print(f"Loading data and grid from {path_to_hdf5}")
         hdf5 = h5py.File(path_to_hdf5, mode='r+')
@@ -76,7 +77,7 @@ class HelpOutput(Mapping):
         finally:
             hdf5.close()
 
-    def save_to_hdf5(self, path_to_hdf5):
+    def save_to_hdf5(self, path_to_hdf5: str):
         """Save the data and grid to an HDF5 file at the specified location."""
         print("Saving data to {}...".format(osp.basename(path_to_hdf5)))
         hdf5file = h5py.File(path_to_hdf5, mode='w')
