@@ -12,8 +12,6 @@ from __future__ import annotations
 # ---- Standard Library imports
 import os.path as osp
 
-
-
 # ---- Third party imports
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -177,7 +175,6 @@ class HelpOutput(object):
                 for key in keys}
 
     # ---- Plots
-
     def _create_figure(self, fsize=None, margins=None):
         """
         Create and return a figure and an axe mpl object using the
