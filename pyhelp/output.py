@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # -----------------------------------------------------------------------------
-# Copyright © PyHelp Project Contributors
+# Copyright © PyHELP Project Contributors
 # https://github.com/cgq-qgc/pyhelp
 #
 # This file is part of PyHELP.
@@ -11,7 +11,6 @@
 # ---- Standard Library imports
 import os.path as osp
 from collections.abc import Mapping
-
 
 # ---- Third party imports
 import matplotlib.pyplot as plt
@@ -130,7 +129,6 @@ class HelpOutput(Mapping):
         print("Data saved successfully.")
 
     # ---- Calcul
-
     def calc_area_monthly_avg(self):
         """
         Calcul the monthly values of the water budget in mm/month for the

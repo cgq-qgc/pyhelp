@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
-# =============================================================================
-# Copyright © PyHelp Project Contributors
+# -----------------------------------------------------------------------------
+# Copyright © PyHELP Project Contributors
 # https://github.com/cgq-qgc/pyhelp
 #
-# This file is part of PyHelp.
+# This file is part of PyHELP.
 # Licensed under the terms of the MIT License.
-# =============================================================================
+# -----------------------------------------------------------------------------
 
 # ---- Standard Library Imports
 import json
