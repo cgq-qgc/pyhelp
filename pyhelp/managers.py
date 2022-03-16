@@ -212,13 +212,13 @@ class HelpManager(object):
         self._save_connect_tables()
         print("done")
 
-    def _generate_d4d7d13_input_files(self, cellnames=None):
+    def _generate_d4d7d13_input_files(self, cellnames: list = None):
         """
         Generate the D4, D7, and D13 HELP input datafiles for each cell.
 
-        D4 : total precipitation
-        D7 : mean air temperature
-        D13 : solar radiation
+        D4: Total precipitation.
+        D7: Mean air temperature.
+        D13: Solar radiation.
         """
         if self.grid is None:
             return
