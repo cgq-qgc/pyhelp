@@ -22,31 +22,30 @@ from pyhelp import __rootdir__
 from pyhelp.managers import HelpManager
 from pyhelp.output import HelpOutput
 
+EXAMPLE_FOLDER = osp.join(osp.dirname(__rootdir__), 'example')
+INPUT_FILES = {
+    'airtemp': osp.join(EXAMPLE_FOLDER, 'airtemp_input_data.csv'),
+    'precip': osp.join(EXAMPLE_FOLDER, 'precip_input_data.csv'),
+    'solrad': osp.join(EXAMPLE_FOLDER, 'solrad_input_data.csv'),
+    'grid': osp.join(EXAMPLE_FOLDER, 'input_grid.csv')}
+
 
 # =============================================================================
 # ---- Fixtures
 # =============================================================================
 @pytest.fixture(scope="module")
-def example_folder():
-    return osp.join(osp.dirname(__rootdir__), 'example')
+def output_dir(tmp_path_factory):
+    return tmp_path_factory.getbasetemp()
 
 
 @pytest.fixture(scope="module")
-def input_files(example_folder):
-    return {'airtemp': osp.join(example_folder, 'airtemp_input_data.csv'),
-            'precip': osp.join(example_folder, 'precip_input_data.csv'),
-            'solrad': osp.join(example_folder, 'solrad_input_data.csv'),
-            'grid': osp.join(example_folder, 'input_grid.csv')}
-
-
-@pytest.fixture(scope="module")
-def output_file(example_folder):
-    return osp.join(example_folder, 'help_example.out')
+def output_file(output_dir):
+    return osp.join(output_dir, 'help_example.out')
 
 
 @pytest.fixture
-def helpm(example_folder):
-    manager = HelpManager(example_folder, year_range=(2000, 2010))
+def helpm():
+    manager = HelpManager(EXAMPLE_FOLDER)
     return manager
 
 
@@ -76,7 +75,7 @@ def test_validate_results(output_file):
         assert abs(np.sum(area_yrly_avg[key]) - expected_results[key]) < 1, key
 
 
-def test_plot_water_budget(output_file, example_folder):
+def test_plot_water_budget(output_dir, output_file):
     """
     Test that the water budget plots are created and saved as expected.
 
@@ -84,15 +83,15 @@ def test_plot_water_budget(output_file, example_folder):
     """
     output = HelpOutput(output_file)
 
-    figfilename = osp.join(example_folder, 'area_monthly_avg.pdf')
+    figfilename = osp.join(output_dir, 'area_monthly_avg.pdf')
     output.plot_area_monthly_avg(figfilename)
     assert osp.exists(figfilename)
 
-    figfilename = osp.join(example_folder, 'area_yearly_avg.pdf')
+    figfilename = osp.join(output_dir, 'area_yearly_avg.pdf')
     output.plot_area_yearly_avg(figfilename)
     assert osp.exists(figfilename)
 
-    figfilename = osp.join(example_folder, 'area_yearly_series.pdf')
+    figfilename = osp.join(output_dir, 'area_yearly_series.pdf')
     output.plot_area_yearly_series(figfilename)
     assert osp.exists(figfilename)
 
