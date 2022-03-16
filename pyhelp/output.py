@@ -11,7 +11,8 @@ from __future__ import annotations
 
 # ---- Standard Library imports
 import os.path as osp
-from collections.abc import Mapping
+
+
 
 # ---- Third party imports
 import matplotlib.pyplot as plt
@@ -21,14 +22,14 @@ import h5py
 from scipy.stats import linregress
 
 
-class HelpOutput(Mapping):
+class HelpOutput(object):
     """
     A container to read and post-process monthly water budget results produced
     with the :class:`~pyhelp.HelpManager` class.
     """
 
     def __init__(self, path_or_dict: str | dict):
-        super(HelpOutput, self).__init__()
+        super().__init__()
         if isinstance(path_or_dict, dict):
             self.data = path_or_dict['data']
             self.grid = path_or_dict['grid']
@@ -37,15 +38,6 @@ class HelpOutput(Mapping):
         else:
             self.data = None
             self.grid = None
-
-    def __getitem__(self):
-        pass
-
-    def __iter__(self):
-        pass
-
-    def __len__(self):
-        return len(self.data['cid'])
 
     def load_from_hdf5(self, path_to_hdf5: str):
         """Read data and grid from an HDF5 file at the specified location."""
