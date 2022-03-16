@@ -53,17 +53,6 @@ def helpm(example_folder):
 # =============================================================================
 # ---- Tests
 # =============================================================================
-def test_autoread_input(helpm):
-    """
-    Test that the input files are read automatically when instantiating
-    the HelpManager.
-    """
-    assert helpm.precip_data is not None
-    assert helpm.airtemp_data is not None
-    assert helpm.solrad_data is not None
-    assert helpm.grid is not None
-
-
 def test_calc_help_cells(helpm, output_file):
     """Test that the HelpManager is able to run water budget calculation."""
     cellnames = helpm.cellnames[:100]
