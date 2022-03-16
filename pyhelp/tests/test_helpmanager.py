@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
-# =============================================================================
-# Copyright © PyHelp Project Contributors
+# -----------------------------------------------------------------------------
+# Copyright © PyHELP Project Contributors
 # https://github.com/cgq-qgc/pyhelp
 #
-# This file is part of PyHelp.
+# This file is part of PyHELP.
 # Licensed under the terms of the MIT License.
-# =============================================================================
+# -----------------------------------------------------------------------------
 
-# ---- Standard Library Imports
+# ---- Standard library imports
 import os
 import os.path as osp
 
@@ -17,7 +17,7 @@ import numpy as np
 import pytest
 
 
-# ---- Local library Imports
+# ---- Local library imports
 from pyhelp import __rootdir__
 from pyhelp.managers import HelpManager
 from pyhelp.output import HelpOutput
@@ -36,8 +36,7 @@ def input_files(example_folder):
     return {'airtemp': osp.join(example_folder, 'airtemp_input_data.csv'),
             'precip': osp.join(example_folder, 'precip_input_data.csv'),
             'solrad': osp.join(example_folder, 'solrad_input_data.csv'),
-            'grid': osp.join(example_folder, 'input_grid.csv')
-            }
+            'grid': osp.join(example_folder, 'input_grid.csv')}
 
 
 @pytest.fixture(scope="module")
@@ -52,7 +51,7 @@ def helpm(example_folder):
 
 
 # =============================================================================
-# ---- Test HelpManager
+# ---- Tests
 # =============================================================================
 def test_autoread_input(helpm):
     """

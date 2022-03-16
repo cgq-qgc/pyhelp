@@ -1,17 +1,17 @@
 # -*- coding: utf-8 -*-
 # -----------------------------------------------------------------------------
-# Copyright © PyHelp Project Contributors
+# Copyright © PyHELP Project Contributors
 # https://github.com/cgq-qgc/pyhelp
 #
 # This file is part of PyHELP.
 # Licensed under the terms of the MIT License.
 # -----------------------------------------------------------------------------
 
+from __future__ import annotations
 
 # ---- Standard Library imports
 import os.path as osp
 from collections.abc import Mapping
-
 
 # ---- Third party imports
 import matplotlib.pyplot as plt
@@ -27,7 +27,7 @@ class HelpOutput(Mapping):
     with the :class:`~pyhelp.HelpManager` class.
     """
 
-    def __init__(self, path_or_dict):
+    def __init__(self, path_or_dict: str | dict):
         super(HelpOutput, self).__init__()
         if isinstance(path_or_dict, dict):
             self.data = path_or_dict['data']
@@ -47,7 +47,7 @@ class HelpOutput(Mapping):
     def __len__(self):
         return len(self.data['cid'])
 
-    def load_from_hdf5(self, path_to_hdf5):
+    def load_from_hdf5(self, path_to_hdf5: str):
         """Read data and grid from an HDF5 file at the specified location."""
         print(f"Loading data and grid from {path_to_hdf5}")
         hdf5 = h5py.File(path_to_hdf5, mode='r+')
@@ -63,21 +63,15 @@ class HelpOutput(Mapping):
             # Load the grid.
             self.grid = pd.DataFrame(
                 data=[],
-                columns=hdf5['grid'].attrs['columns'],
-                index=hdf5['grid'].attrs['index'])
-            for key in list(hdf5['grid'].keys()):
-                values = np.array(hdf5['grid'][key])
-                if key == 'cid':
-                    values = values.astype(str)
-                self.grid.loc[:, key] = values
-        except Exception as e:
-            print(e)
-            self.data = None
-            self.grid = None
+                columns=np.array(hdf5['grid']['__columns__']).astype(str),
+                index=np.array(hdf5['grid']['__index__']).astype(str))
+            for column in self.grid.columns:
+                self.grid.loc[:, key] = np.array(hdf5['grid'][column])
         finally:
             hdf5.close()
+        print("Data and grid loaded successfully.")
 
-    def save_to_hdf5(self, path_to_hdf5):
+    def save_to_hdf5(self, path_to_hdf5: str):
         """Save the data and grid to an HDF5 file at the specified location."""
         print("Saving data to {}...".format(osp.basename(path_to_hdf5)))
         hdf5file = h5py.File(path_to_hdf5, mode='w')
@@ -97,10 +91,21 @@ class HelpOutput(Mapping):
                     group.create_dataset(key, data=self.data[key])
 
             # Save the grid.
+
+            # See http://docs.h5py.org/en/latest/strings.html as to
+            # why this is necessary to do this in order to save a list
+            # of strings in a dataset with h5py.
+
             group = hdf5file.create_group('grid')
-            group.attrs['columns'] = list(self.grid.columns)
-            group.attrs['index'] = list(self.grid.index)
-            for column in list(self.grid.columns):
+            group.create_dataset(
+                '__columns__',
+                data=self.grid.columns.values,
+                dtype=h5py.string_dtype())
+            group.create_dataset(
+                '__index__',
+                data=self.grid.index.values,
+                dtype=h5py.string_dtype())
+            for column in self.grid.columns:
                 if column == 'cid':
                     # See http://docs.h5py.org/en/latest/strings.html as to
                     # why this is necessary to do this in order to save a list
@@ -109,9 +114,12 @@ class HelpOutput(Mapping):
                         column,
                         data=self.grid[column].values,
                         dtype=h5py.string_dtype())
-                else:
-                    group.create_dataset(
-                        column, data=self.grid[column].values)
+                if column == 'cid':
+                    # The 'cid' is already stored in the index, we don't
+                    # want to store the same information in a column also.
+                    continue
+                group.create_dataset(
+                    column, data=self.grid[column].values)
         finally:
             hdf5file.close()
         print("Data saved successfully.")
@@ -130,7 +138,6 @@ class HelpOutput(Mapping):
         print("Data saved successfully.")
 
     # ---- Calcul
-
     def calc_area_monthly_avg(self):
         """
         Calcul the monthly values of the water budget in mm/month for the
