@@ -27,7 +27,6 @@ class HelpOutput(object):
     """
 
     def __init__(self, path_or_dict: str | dict):
-        super().__init__()
         if isinstance(path_or_dict, dict):
             self.data = path_or_dict['data']
             self.grid = path_or_dict['grid']
