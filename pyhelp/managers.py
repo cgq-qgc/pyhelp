@@ -45,7 +45,7 @@ class HelpManager(object):
     regional scale with the HELP model.
     """
 
-    def __init__(self, workdir, year_range):
+    def __init__(self, workdir):
         super().__init__()
         self.grid = None
         self.precip_data = None
@@ -55,7 +55,6 @@ class HelpManager(object):
         self._workdir = None
         self.set_workdir(workdir)
 
-        self.year_range = year_range
         self._setup_connect_tables()
 
     @property
@@ -340,7 +339,10 @@ class HelpManager(object):
             summary_out = 0
 
             unit_system = 2  # IP if 1 else SI
-            simu_nyear = self.year_range[1] - self.year_range[0] + 1
+
+            year_start = np.min(self.precip_data['years'])
+            year_end = np.max(self.precip_data['years'])
+            simu_nyear = year_end - year_start + 1
 
             cellparams[cellname] = (fpath_d4, fpath_d7, fpath_d13, fpath_d11,
                                     fpath_d10, fpath_out, daily_out,
@@ -433,8 +435,9 @@ class HelpManager(object):
         cellnames = self.get_water_cellnames(cellnames)
         lat_dd, lon_dd = self.get_latlon_for_cellnames(cellnames)
 
-        year_range = np.arange(
-            self.year_range[0], self.year_range[1] + 1).astype(int)
+        year_start = np.min(self.precip_data['years'])
+        year_end = np.max(self.precip_data['years'])
+        year_range = np.arange(year_start, year_end + 1).astype(int)
         nyr = len(year_range)
 
         output = {}
