@@ -8,12 +8,14 @@
 # -----------------------------------------------------------------------------
 
 # ---- Standard Library Imports
+import calendar
 import json
 import os
 import os.path as osp
 import csv
 from datetime import datetime
 import time
+import itertools
 
 # ---- Third Party imports
 import numpy as np
@@ -43,7 +45,7 @@ class HelpManager(object):
     regional scale with the HELP model.
     """
 
-    def __init__(self, workdir, year_range):
+    def __init__(self, workdir):
         super().__init__()
         self.grid = None
         self.precip_data = None
@@ -53,7 +55,6 @@ class HelpManager(object):
         self._workdir = None
         self.set_workdir(workdir)
 
-        self.year_range = year_range
         self._setup_connect_tables()
 
     @property
@@ -134,14 +135,61 @@ class HelpManager(object):
         respectively, :file:`precip_input_data.csv`,
         :file:`airtemp_input_data.csv`, and :file:`solrad_input_data.csv`.
         """
-        print('Reading input weather data from csv...', end=' ')
+        print('Reading input weather data from csv...')
         self.precip_data = load_weather_from_csv(
             osp.join(self.workdir, INPUT_PRECIP_FNAME))
         self.airtemp_data = load_weather_from_csv(
             osp.join(self.workdir, INPUT_AIRTEMP_FNAME))
         self.solrad_data = load_weather_from_csv(
             osp.join(self.workdir, INPUT_SOLRAD_FNAME))
-        print('done')
+
+        datasets = [self.precip_data, self.airtemp_data, self.solrad_data]
+        datasets_name = {
+            id(self.precip_data): 'Precipitation',
+            id(self.airtemp_data): 'Air temperature',
+            id(self.solrad_data): 'Solar radiation'}
+
+        # Check that each year are complete in each dataset.
+        for dataset in datasets:
+            if dataset is None:
+                continue
+
+            years = np.array(dataset['years'])
+            name = datasets_name[id(dataset)]
+            for year in years:
+                ndays = np.sum(years == year)
+                if ndays != (366 if calendar.isleap(year) else 365):
+                    raise ValueError((
+                        "{} data for year {} only have {} daily values and "
+                        "is not complete"
+                        ).format(name, year, ndays))
+
+        # Check that the datasets are synchroneous.
+        for data1, data2 in itertools.combinations(datasets, 2):
+            if data1 is None or data2 is None:
+                continue
+
+            x1 = np.array(data1['datestrings'])
+            x2 = np.array(data2['datestrings'])
+            name1 = datasets_name[id(data1)]
+            name2 = datasets_name[id(data2)]
+
+            # Check that the length of the datasets matches.
+            if len(x1) != len(x2):
+                raise ValueError((
+                    "The lenght of the {} and {} data does not "
+                    "match: {} != {}."
+                    ).format(name1.lower(), name2.lower(),
+                             len(x1), len(x2)))
+
+            # Check that the datetimes of the datasets match.
+            match = (x1 == x2)
+            if not match.all():
+                raise ValueError((
+                    "{} and {} data does not match: {} != {}."
+                    ).format(name1, name2.lower(),
+                             x1[~match][0], x2[~match][0]))
+        print('Input weather data read successfully.')
 
     # ---- HELP input files creation
     def clear_cache(self):
@@ -193,13 +241,13 @@ class HelpManager(object):
         self._save_connect_tables()
         print("done")
 
-    def _generate_d4d7d13_input_files(self, cellnames=None):
+    def _generate_d4d7d13_input_files(self, cellnames: list = None):
         """
         Generate the D4, D7, and D13 HELP input datafiles for each cell.
 
-        D4 : total precipitation
-        D7 : mean air temperature
-        D13 : solar radiation
+        D4: Total precipitation.
+        D7: Mean air temperature.
+        D13: Solar radiation.
         """
         if self.grid is None:
             return
@@ -291,7 +339,10 @@ class HelpManager(object):
             summary_out = 0
 
             unit_system = 2  # IP if 1 else SI
-            simu_nyear = self.year_range[1] - self.year_range[0] + 1
+
+            year_start = np.min(self.precip_data['years'])
+            year_end = np.max(self.precip_data['years'])
+            simu_nyear = year_end - year_start + 1
 
             cellparams[cellname] = (fpath_d4, fpath_d7, fpath_d13, fpath_d11,
                                     fpath_d10, fpath_out, daily_out,
@@ -384,8 +435,9 @@ class HelpManager(object):
         cellnames = self.get_water_cellnames(cellnames)
         lat_dd, lon_dd = self.get_latlon_for_cellnames(cellnames)
 
-        year_range = np.arange(
-            self.year_range[0], self.year_range[1] + 1).astype(int)
+        year_start = np.min(self.precip_data['years'])
+        year_end = np.max(self.precip_data['years'])
+        year_range = np.arange(year_start, year_end + 1).astype(int)
         nyr = len(year_range)
 
         output = {}

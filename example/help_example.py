@@ -14,10 +14,11 @@ if __name__ == '__main__':
     #    https://docs.python.org/3.6/library/
     #    multiprocessing.html#programming-guidelines
 
-    # Instantiate the HelpManager and calculate the monthrly water budget
-    # for the 2000-2010 period.
-    workdir = "C:/Users/jean-/Documents/Data/example_pyhelp"
-    helpm = HelpManager(workdir, year_range=(2000, 2010))
+    # Define the directory where the weather and grid input files are saved.
+    workdir = osp.dirname(__file__)
+
+    # Instantiate the HelpManager.
+    helpm = HelpManager(workdir)
 
     # Generates the input files required by the HELP model for each cell
     # of the grid.
@@ -32,8 +33,8 @@ if __name__ == '__main__':
 
     # If we pass a filename in argument to the calc_help_cells method, the
     # monthly output data will be automatically saved to disk as an HDF5 file.
-    help_output_hdf5 = osp.join(helpm.workdir, 'help_example.out')
-    output = helpm.calc_help_cells(help_output_hdf5, cellnames, tfsoil=-3)
+    filepath = osp.join(workdir, 'help_example.out')
+    output = helpm.calc_help_cells(filepath, cellnames, tfsoil=-3)
 
     # Export and save the data to an ESRI shapefile.
     filepath = osp.join(workdir, 'help_example_yearly.csv')
@@ -46,5 +47,5 @@ if __name__ == '__main__':
 
     # Calculate the yearly water budget for surface water cells.
     evp_surf = 650
-    surf_output_hdf5 = osp.join(workdir, 'surf_example.out')
-    output_surf = helpm.calc_surf_water_cells(evp_surf, surf_output_hdf5)
+    filepath = osp.join(workdir, 'surf_example.out')
+    output_surf = helpm.calc_surf_water_cells(evp_surf, filepath)
