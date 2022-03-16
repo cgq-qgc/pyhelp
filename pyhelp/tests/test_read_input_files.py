@@ -29,7 +29,7 @@ VARNAMES = ['precip', 'airtemp', 'solrad']
 # =============================================================================
 @pytest.fixture
 def helpm(tmp_path):
-    manager = HelpManager(tmp_path, year_range=(2000, 2010))
+    manager = HelpManager(tmp_path)
 
     assert manager.precip_data is None
     assert manager.airtemp_data is None
