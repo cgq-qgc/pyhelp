@@ -8,12 +8,14 @@
 # -----------------------------------------------------------------------------
 
 # ---- Standard Library Imports
+import calendar
 import json
 import os
 import os.path as osp
 import csv
 from datetime import datetime
 import time
+import itertools
 
 # ---- Third Party imports
 import numpy as np
@@ -142,24 +144,52 @@ class HelpManager(object):
         self.solrad_data = load_weather_from_csv(
             osp.join(self.workdir, INPUT_SOLRAD_FNAME))
 
-        if self.precip_data is not None and self.airtemp_data is not None:
-            match = (np.array(self.precip_data['datetimes']) ==
-                     np.array(self.airtemp_data['datetimes']))
-            if not match.all():
-                val1 = self.precip_data['datestrings'][~match][0]
-                val2 = self.airtemp_data['datestrings'][~match][0]
+        datasets = [self.precip_data, self.airtemp_data, self.solrad_data]
+        datasets_name = {
+            id(self.precip_data): 'Precipitation',
+            id(self.airtemp_data): 'Air temperature',
+            id(self.solrad_data): 'Solar radiation'}
+
+        # Check that each year are complete in each dataset.
+        for dataset in datasets:
+            if dataset is None:
+                continue
+
+            years = np.array(dataset['years'])
+            name = datasets_name[id(dataset)]
+            for year in years:
+                ndays = np.sum(years == year)
+                if ndays != (366 if calendar.isleap(year) else 365):
+                    raise ValueError((
+                        "{} data for year {} only have {} daily values and "
+                        "is not complete"
+                        ).format(name, year, ndays))
+
+        # Check that the datasets are synchroneous.
+        for data1, data2 in itertools.combinations(datasets, 2):
+            if data1 is None or data2 is None:
+                continue
+
+            x1 = np.array(data1['datestrings'])
+            x2 = np.array(data2['datestrings'])
+            name1 = datasets_name[id(data1)]
+            name2 = datasets_name[id(data2)]
+
+            # Check that the length of the datasets matches.
+            if len(x1) != len(x2):
                 raise ValueError((
-                    "Precipitation and Air temperature data "
-                    "does not match: {} != {}.").format(val1, val2))
-        if self.precip_data is not None and self.solrad_data is not None:
-            match = (np.array(self.precip_data['datetimes']) ==
-                     np.array(self.solrad_data['datetimes']))
+                    "The lenght of the {} and {} data does not "
+                    "match: {} != {}."
+                    ).format(name1.lower(), name2.lower(),
+                             len(x1), len(x2)))
+
+            # Check that the datetimes of the datasets match.
+            match = (x1 == x2)
             if not match.all():
-                val1 = self.precip_data['datestrings'][~match][0]
-                val2 = self.solrad_data['datestrings'][~match][0]
                 raise ValueError((
-                    "Precipitation and Solar radiation data "
-                    "does not match: {} != {}.").format(val1, val2))
+                    "{} and {} data does not match: {} != {}."
+                    ).format(name1, name2.lower(),
+                             x1[~match][0], x2[~match][0]))
         print('Input weather data read successfully.')
 
     # ---- HELP input files creation
