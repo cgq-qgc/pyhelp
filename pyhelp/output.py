@@ -63,19 +63,13 @@ class HelpOutput(Mapping):
             # Load the grid.
             self.grid = pd.DataFrame(
                 data=[],
-                columns=hdf5['grid'].attrs['columns'],
-                index=hdf5['grid'].attrs['index'])
-            for key in list(hdf5['grid'].keys()):
-                values = np.array(hdf5['grid'][key])
-                if key == 'cid':
-                    values = values.astype(str)
-                self.grid.loc[:, key] = values
-        except Exception as e:
-            print(e)
-            self.data = None
-            self.grid = None
+                columns=np.array(hdf5['grid']['__columns__']).astype(str),
+                index=np.array(hdf5['grid']['__index__']).astype(str))
+            for column in self.grid.columns:
+                self.grid.loc[:, key] = np.array(hdf5['grid'][column])
         finally:
             hdf5.close()
+        print("Data and grid loaded successfully.")
 
     def save_to_hdf5(self, path_to_hdf5: str):
         """Save the data and grid to an HDF5 file at the specified location."""
@@ -97,10 +91,21 @@ class HelpOutput(Mapping):
                     group.create_dataset(key, data=self.data[key])
 
             # Save the grid.
+
+            # See http://docs.h5py.org/en/latest/strings.html as to
+            # why this is necessary to do this in order to save a list
+            # of strings in a dataset with h5py.
+
             group = hdf5file.create_group('grid')
-            group.attrs['columns'] = list(self.grid.columns)
-            group.attrs['index'] = list(self.grid.index)
-            for column in list(self.grid.columns):
+            group.create_dataset(
+                '__columns__',
+                data=self.grid.columns.values,
+                dtype=h5py.string_dtype())
+            group.create_dataset(
+                '__index__',
+                data=self.grid.index.values,
+                dtype=h5py.string_dtype())
+            for column in self.grid.columns:
                 if column == 'cid':
                     # See http://docs.h5py.org/en/latest/strings.html as to
                     # why this is necessary to do this in order to save a list
@@ -109,9 +114,12 @@ class HelpOutput(Mapping):
                         column,
                         data=self.grid[column].values,
                         dtype=h5py.string_dtype())
-                else:
-                    group.create_dataset(
-                        column, data=self.grid[column].values)
+                if column == 'cid':
+                    # The 'cid' is already stored in the index, we don't
+                    # want to store the same information in a column also.
+                    continue
+                group.create_dataset(
+                    column, data=self.grid[column].values)
         finally:
             hdf5file.close()
         print("Data saved successfully.")
