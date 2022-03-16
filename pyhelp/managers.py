@@ -134,14 +134,33 @@ class HelpManager(object):
         respectively, :file:`precip_input_data.csv`,
         :file:`airtemp_input_data.csv`, and :file:`solrad_input_data.csv`.
         """
-        print('Reading input weather data from csv...', end=' ')
+        print('Reading input weather data from csv...')
         self.precip_data = load_weather_from_csv(
             osp.join(self.workdir, INPUT_PRECIP_FNAME))
         self.airtemp_data = load_weather_from_csv(
             osp.join(self.workdir, INPUT_AIRTEMP_FNAME))
         self.solrad_data = load_weather_from_csv(
             osp.join(self.workdir, INPUT_SOLRAD_FNAME))
-        print('done')
+
+        if self.precip_data is not None and self.airtemp_data is not None:
+            match = (np.array(self.precip_data['datetimes']) ==
+                     np.array(self.airtemp_data['datetimes']))
+            if not match.all():
+                val1 = self.precip_data['datestrings'][~match][0]
+                val2 = self.airtemp_data['datestrings'][~match][0]
+                raise ValueError((
+                    "Precipitation and Air temperature data "
+                    "does not match: {} != {}.").format(val1, val2))
+        if self.precip_data is not None and self.solrad_data is not None:
+            match = (np.array(self.precip_data['datetimes']) ==
+                     np.array(self.solrad_data['datetimes']))
+            if not match.all():
+                val1 = self.precip_data['datestrings'][~match][0]
+                val2 = self.solrad_data['datestrings'][~match][0]
+                raise ValueError((
+                    "Precipitation and Solar radiation data "
+                    "does not match: {} != {}.").format(val1, val2))
+        print('Input weather data read successfully.')
 
     # ---- HELP input files creation
     def clear_cache(self):
