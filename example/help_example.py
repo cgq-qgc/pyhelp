@@ -14,9 +14,9 @@ if __name__ == '__main__':
     #    https://docs.python.org/3.6/library/
     #    multiprocessing.html#programming-guidelines
 
-    # Instantiate the HelpManager and calculate the monthrly water budget
-    # for the 2000-2010 period.
-    workdir = "C:/Users/jean-/Documents/Data/example_pyhelp"
+    # Instantiate the HelpManager and provide the path of the directory
+    # where the weather and grid input files are saved.
+    workdir = osp.dirname(__file__)
     helpm = HelpManager(workdir, year_range=(2000, 2010))
 
     # Generates the input files required by the HELP model for each cell
