@@ -10,14 +10,11 @@
 from __future__ import annotations
 
 # ---- Standard Library Imports
-import calendar
 import json
 import os
 import os.path as osp
 import csv
-from datetime import datetime
 import time
-import itertools
 
 # ---- Third Party imports
 import numpy as np
@@ -137,7 +134,7 @@ class HelpManager(object):
         respectively, :file:`precip_input_data.csv`,
         :file:`airtemp_input_data.csv`, and :file:`solrad_input_data.csv`.
         """
-        print('Reading input weather data from csv...')
+        print('Reading input weather data from csv...', end=' ')
         self.precip_data = load_weather_from_csv(
             osp.join(self.workdir, INPUT_PRECIP_FNAME))
         self.airtemp_data = load_weather_from_csv(
@@ -156,7 +153,7 @@ class HelpManager(object):
             if dataset is None:
                 continue
 
-            years = np.array(dataset['years'])
+            years = dataset.index.year
             name = datasets_name[id(dataset)]
             for year in years:
                 ndays = np.sum(years == year)
@@ -167,14 +164,14 @@ class HelpManager(object):
                         ).format(name, year, ndays))
 
         # Check that the datasets are synchroneous.
-        for data1, data2 in itertools.combinations(datasets, 2):
-            if data1 is None or data2 is None:
+        for dset1, dset2 in itertools.combinations(datasets, 2):
+            if dset1 is None or dset2 is None:
                 continue
 
-            x1 = np.array(data1['datestrings'])
-            x2 = np.array(data2['datestrings'])
-            name1 = datasets_name[id(data1)]
-            name2 = datasets_name[id(data2)]
+            x1 = dset1.index.values
+            x2 = dset2.index.values
+            name1 = datasets_name[id(dset1)]
+            name2 = datasets_name[id(dset2)]
 
             # Check that the length of the datasets matches.
             if len(x1) != len(x2):
