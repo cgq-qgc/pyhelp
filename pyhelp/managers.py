@@ -274,22 +274,30 @@ class HelpManager(object):
 
             file_conn_tbl = {}
             index_conn_tbl = {}
+            data_lat = data.columns.get_level_values('lat_dd').values
+            data_lon = data.columns.get_level_values('lon_dd').values
             for i, cellname in enumerate(cellnames):
                 dist = calc_dist_from_coord(grid_lat[i], grid_lon[i],
-                                            data['lat'], data['lon'])
+                                            data_lat, data_lon)
                 argmin = int(np.argmin(dist))
 
-                lat, lon = data['lat'][argmin], data['lon'][argmin]
-                help_input_fname = osp.join(help_inputdir,
-                                            fformat.format(lat, lon, fext))
+                lat = data_lat[argmin]
+                lon = data_lon[argmin]
+                help_input_fname = osp.join(
+                    help_inputdir, fformat.format(lat, lon, fext))
                 if not osp.exists(help_input_fname):
                     city = '{} at {:3.1f} ; {:3.1f}'.format(var, lat, lon)
                     if var in ('precip', 'airtemp'):
-                        to_help_func(help_input_fname, data['years'],
-                                     data['data'][:, argmin], city)
+                        to_help_func(help_input_fname,
+                                     data.index.year.values,
+                                     data.values[:, argmin],
+                                     city)
                     elif var == 'solrad':
-                        to_help_func(help_input_fname, data['years'],
-                                     data['data'][:, argmin], city, lat)
+                        to_help_func(help_input_fname,
+                                     data.index.year.values,
+                                     data.values[:, argmin],
+                                     city,
+                                     lat)
 
                 file_conn_tbl[cellname] = help_input_fname
                 index_conn_tbl[cellname] = argmin
