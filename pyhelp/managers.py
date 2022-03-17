@@ -7,6 +7,8 @@
 # Licensed under the terms of the MIT License.
 # -----------------------------------------------------------------------------
 
+from __future__ import annotations
+
 # ---- Standard Library Imports
 import calendar
 import json
@@ -537,44 +539,51 @@ def load_grid_from_csv(path_togrid):
     return grid
 
 
-def load_weather_from_csv(filename):
+def load_weather_from_csv(filename: str) -> pd.DataFrame:
     """
     Load daily precipitation, average air temperature, or global solar
-    radiation data from a correctly formatted PyHelp weather input files.
-    The latitudes, longitudes, dates, and weather data values are stored in
-    numpy arrays and returned as a dict with, respectively, the keys
-    'lat', 'lon', 'dates', and 'data'.
+    radiation data from a correctly formatted PyHELP weather input files.
+
+    The data are saved in a pandas dataframe where the index corresponds
+    to the dates and the columns to latitudes and longitudes of each
+    data series.
     """
     if not osp.exists(filename):
         return None
 
-    lat, lon, datestrings, data = [], [], [], []
     with open(filename, 'r') as csvfile:
         reader = list(csv.reader(csvfile, delimiter=','))
 
+    # Get the latitudes and longitudes and the number of lines that
+    # are located above the data block.
+    latitudes = None
+    longitudes = None
     for i, line in enumerate(reader):
         if not line or not line[0]:
             continue
 
         if line[0].lower().strip().startswith('lat'):
-            lat = np.array(line[1:]).astype('float')
+            latitudes = np.array(line[1:]).astype('float')
         elif line[0].lower().strip().startswith('lon'):
-            lon = np.array(line[1:]).astype('float')
-        elif all((len(lat), len(lon))):
-            date_data = np.array(reader[i:])
-            datestrings = date_data[:, 0]
-            data = date_data[:, 1:].astype('float')
+            longitudes = np.array(line[1:]).astype('float')
+        elif latitudes is not None and longitudes is not None:
             break
 
-    datetimes = [datetime.strptime(ds, "%d/%m/%Y") for ds in datestrings]
-    years = [dt.year for dt in datetimes]
+    dataf = pd.read_csv(
+        filename,
+        header=None,
+        index_col=[0],
+        skiprows=i,
+        skip_blank_lines=False,
+        parse_dates=True,
+        infer_datetime_format=True,
+        dayfirst=True)
+    dataf.index.name = 'date'
+    dataf.columns = pd.MultiIndex.from_tuples(
+        [(lat, lon) for lat, lon in zip(latitudes, longitudes)],
+        names=['lat_dd', 'lon_dd'])
 
-    if all((len(lat), len(lon), len(datestrings), len(data))):
-        return {'lat': lat, 'lon': lon, 'datestrings': datestrings,
-                'datetimes': datetimes, 'years': years, 'data': data}
-    else:
-        print("Failed to read data from {}.".format(osp.basename(filename)))
-        return None
+    return dataf
 
 
 if __name__ == '__main__':
