@@ -349,8 +349,8 @@ class HelpManager(object):
 
             unit_system = 2  # IP if 1 else SI
 
-            year_start = np.min(self.precip_data['years'])
-            year_end = np.max(self.precip_data['years'])
+            year_start = self.precip_data.index.year.min()
+            year_end = self.precip_data.index.year.max()
             simu_nyear = year_end - year_start + 1
 
             cellparams[cellname] = (fpath_d4, fpath_d7, fpath_d13, fpath_d11,
@@ -444,8 +444,8 @@ class HelpManager(object):
         cellnames = self.get_water_cellnames(cellnames)
         lat_dd, lon_dd = self.get_latlon_for_cellnames(cellnames)
 
-        year_start = np.min(self.precip_data['years'])
-        year_end = np.max(self.precip_data['years'])
+        year_start = self.precip_data.index.year.min()
+        year_end = self.precip_data.index.year.max()
         year_range = np.arange(year_start, year_end + 1).astype(int)
         nyr = len(year_range)
 
