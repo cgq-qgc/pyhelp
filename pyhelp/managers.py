@@ -450,10 +450,10 @@ class HelpManager(object):
         nyr = len(year_range)
 
         output = {}
-        years = self.precip_data['years']
+        years = self.precip_data.index.year.values
         for i, cellname in enumerate(cellnames):
             precip_indx = self.connect_tables['precip'][cellname]
-            precip = self.precip_data['data'][:, precip_indx]
+            precip = self.precip_data.values[:, precip_indx]
             data = {}
             data['years'] = year_range
             data['rain'] = np.zeros(nyr)
