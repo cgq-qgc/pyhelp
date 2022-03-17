@@ -28,7 +28,7 @@ image:
 
 environment:
   global:
-    PYHELP_VERSION: "v0.2.1.dev0"
+    PYHELP_VERSION: "v0.2.1"
 
   matrix:
     - PYTHON: "C:\\Miniconda37-x64"
