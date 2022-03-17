@@ -579,18 +579,10 @@ def load_weather_from_csv(filename):
 
 if __name__ == '__main__':
     workdir = "C:/Users/User/pyhelp/example"
-    helpm = HelpManager(workdir, year_range=(2010, 2014))
-
-    cweed2_paths = osp.join(workdir, 'CWEEDS', '94792.WY2')
-    cweed3_paths = osp.join(
-        workdir, 'CWEEDS', 'CAN_QC_MONTREAL-INTL-A_7025251_CWEEDS2011_T_N.WY3')
-    helpm.generate_weather_inputs_from_CWEEDS(cweed2_paths, cweed3_paths)
+    helpm = HelpManager(workdir)
 
     helpm.build_help_input_files()
     path_hdf5 = osp.join(workdir, 'help_example.out')
     output_help = helpm.calc_help_cells(path_hdf5, tfsoil=-3)
     path_hdf5 = osp.join(workdir, 'surf_example.out')
     output_surf = helpm.calc_surf_water_cells(650, path_hdf5)
-
-    # precip_data = helpm.precip_data
-    # airtemp_data = helpm.airtemp_data
