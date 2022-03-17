@@ -20,6 +20,9 @@ if __name__ == '__main__':
     # Instantiate the HelpManager.
     helpm = HelpManager(workdir)
 
+    # Note that you can access the weather input data through
+    # the 'precip_data', 'airtemp_data', and 'solrad_data'  attributes.
+
     # Generates the input files required by the HELP model for each cell
     # of the grid.
     helpm.build_help_input_files()

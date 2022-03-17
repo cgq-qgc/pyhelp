@@ -54,22 +54,26 @@ def test_read_input(helpm):
 
     helpm.load_weather_input_data()
 
-    assert len(helpm.airtemp_data['data']) == 365 * 2
-    assert np.unique(helpm.airtemp_data['years']).tolist() == [2001, 2002]
-    assert helpm.airtemp_data['lat'].tolist() == [
+    assert len(helpm.airtemp_data) == 365 * 2
+    assert list(helpm.airtemp_data.index.year.unique()) == [2001, 2002]
+    assert list(helpm.airtemp_data.columns.get_level_values('lat_dd')) == [
         46.1, 45.9, 45.8, 45.9, 46, 46.1]
-    assert helpm.airtemp_data['lon'].tolist() == [
+    assert list(helpm.airtemp_data.columns.get_level_values('lon_dd')) == [
         -74, -74.4, -74.1, -74, -74.1, -74.1]
 
-    assert len(helpm.precip_data['data']) == 365 * 2
-    assert np.unique(helpm.precip_data['years']).tolist() == [2001, 2002]
-    assert helpm.precip_data['lat'].tolist() == [46.1, 45.9, 45.8]
-    assert helpm.precip_data['lon'].tolist() == [-74, -74.4, -74.1]
+    assert len(helpm.precip_data) == 365 * 2
+    assert list(helpm.precip_data.index.year.unique()) == [2001, 2002]
+    assert list(helpm.precip_data.columns.get_level_values('lat_dd')) == [
+        46.1, 45.9, 45.8]
+    assert list(helpm.precip_data.columns.get_level_values('lon_dd')) == [
+        -74, -74.4, -74.1]
 
-    assert len(helpm.solrad_data['data']) == 365 * 2
-    assert np.unique(helpm.solrad_data['years']).tolist() == [2001, 2002]
-    assert helpm.solrad_data['lat'].tolist() == [45.47]
-    assert helpm.solrad_data['lon'].tolist() == [-73.74]
+    assert len(helpm.solrad_data) == 365 * 2
+    assert list(helpm.solrad_data.index.year.unique()) == [2001, 2002]
+    assert list(helpm.solrad_data.columns.get_level_values('lat_dd')) == [
+        45.47]
+    assert list(helpm.solrad_data.columns.get_level_values('lon_dd')) == [
+        -73.74]
 
 
 @pytest.mark.parametrize('testvar', VARNAMES)
@@ -109,9 +113,9 @@ def test_read_weather_dates_nomatch(helpm, testvar):
     with pytest.raises(ValueError):
         helpm.load_weather_input_data()
 
-    assert (len(helpm.airtemp_data['data']) ==
-            len(helpm.precip_data['data']) ==
-            len(helpm.solrad_data['data']))
+    assert (len(helpm.airtemp_data) ==
+            len(helpm.precip_data) ==
+            len(helpm.solrad_data))
 
 
 @pytest.mark.parametrize('testvar', VARNAMES)

@@ -7,15 +7,16 @@
 # Licensed under the terms of the MIT License.
 # -----------------------------------------------------------------------------
 
+from __future__ import annotations
+
 # ---- Standard Library Imports
 import calendar
+import itertools
 import json
 import os
 import os.path as osp
 import csv
-from datetime import datetime
 import time
-import itertools
 
 # ---- Third Party imports
 import numpy as np
@@ -135,7 +136,7 @@ class HelpManager(object):
         respectively, :file:`precip_input_data.csv`,
         :file:`airtemp_input_data.csv`, and :file:`solrad_input_data.csv`.
         """
-        print('Reading input weather data from csv...')
+        print('Reading input weather data from csv...', end=' ')
         self.precip_data = load_weather_from_csv(
             osp.join(self.workdir, INPUT_PRECIP_FNAME))
         self.airtemp_data = load_weather_from_csv(
@@ -154,7 +155,7 @@ class HelpManager(object):
             if dataset is None:
                 continue
 
-            years = np.array(dataset['years'])
+            years = dataset.index.year
             name = datasets_name[id(dataset)]
             for year in years:
                 ndays = np.sum(years == year)
@@ -165,14 +166,14 @@ class HelpManager(object):
                         ).format(name, year, ndays))
 
         # Check that the datasets are synchroneous.
-        for data1, data2 in itertools.combinations(datasets, 2):
-            if data1 is None or data2 is None:
+        for dset1, dset2 in itertools.combinations(datasets, 2):
+            if dset1 is None or dset2 is None:
                 continue
 
-            x1 = np.array(data1['datestrings'])
-            x2 = np.array(data2['datestrings'])
-            name1 = datasets_name[id(data1)]
-            name2 = datasets_name[id(data2)]
+            x1 = dset1.index.values
+            x2 = dset2.index.values
+            name1 = datasets_name[id(dset1)]
+            name2 = datasets_name[id(dset2)]
 
             # Check that the length of the datasets matches.
             if len(x1) != len(x2):
@@ -273,22 +274,30 @@ class HelpManager(object):
 
             file_conn_tbl = {}
             index_conn_tbl = {}
+            data_lat = data.columns.get_level_values('lat_dd').values
+            data_lon = data.columns.get_level_values('lon_dd').values
             for i, cellname in enumerate(cellnames):
                 dist = calc_dist_from_coord(grid_lat[i], grid_lon[i],
-                                            data['lat'], data['lon'])
+                                            data_lat, data_lon)
                 argmin = int(np.argmin(dist))
 
-                lat, lon = data['lat'][argmin], data['lon'][argmin]
-                help_input_fname = osp.join(help_inputdir,
-                                            fformat.format(lat, lon, fext))
+                lat = data_lat[argmin]
+                lon = data_lon[argmin]
+                help_input_fname = osp.join(
+                    help_inputdir, fformat.format(lat, lon, fext))
                 if not osp.exists(help_input_fname):
                     city = '{} at {:3.1f} ; {:3.1f}'.format(var, lat, lon)
                     if var in ('precip', 'airtemp'):
-                        to_help_func(help_input_fname, data['years'],
-                                     data['data'][:, argmin], city)
+                        to_help_func(help_input_fname,
+                                     data.index.year.values,
+                                     data.values[:, argmin],
+                                     city)
                     elif var == 'solrad':
-                        to_help_func(help_input_fname, data['years'],
-                                     data['data'][:, argmin], city, lat)
+                        to_help_func(help_input_fname,
+                                     data.index.year.values,
+                                     data.values[:, argmin],
+                                     city,
+                                     lat)
 
                 file_conn_tbl[cellname] = help_input_fname
                 index_conn_tbl[cellname] = argmin
@@ -340,8 +349,8 @@ class HelpManager(object):
 
             unit_system = 2  # IP if 1 else SI
 
-            year_start = np.min(self.precip_data['years'])
-            year_end = np.max(self.precip_data['years'])
+            year_start = self.precip_data.index.year.min()
+            year_end = self.precip_data.index.year.max()
             simu_nyear = year_end - year_start + 1
 
             cellparams[cellname] = (fpath_d4, fpath_d7, fpath_d13, fpath_d11,
@@ -435,16 +444,16 @@ class HelpManager(object):
         cellnames = self.get_water_cellnames(cellnames)
         lat_dd, lon_dd = self.get_latlon_for_cellnames(cellnames)
 
-        year_start = np.min(self.precip_data['years'])
-        year_end = np.max(self.precip_data['years'])
+        year_start = self.precip_data.index.year.min()
+        year_end = self.precip_data.index.year.max()
         year_range = np.arange(year_start, year_end + 1).astype(int)
         nyr = len(year_range)
 
         output = {}
-        years = self.precip_data['years']
+        years = self.precip_data.index.year.values
         for i, cellname in enumerate(cellnames):
             precip_indx = self.connect_tables['precip'][cellname]
-            precip = self.precip_data['data'][:, precip_indx]
+            precip = self.precip_data.values[:, precip_indx]
             data = {}
             data['years'] = year_range
             data['rain'] = np.zeros(nyr)
@@ -537,60 +546,59 @@ def load_grid_from_csv(path_togrid):
     return grid
 
 
-def load_weather_from_csv(filename):
+def load_weather_from_csv(filename: str) -> pd.DataFrame:
     """
     Load daily precipitation, average air temperature, or global solar
-    radiation data from a correctly formatted PyHelp weather input files.
-    The latitudes, longitudes, dates, and weather data values are stored in
-    numpy arrays and returned as a dict with, respectively, the keys
-    'lat', 'lon', 'dates', and 'data'.
+    radiation data from a correctly formatted PyHELP weather input files.
+
+    The data are saved in a pandas dataframe where the index corresponds
+    to the dates and the columns to latitudes and longitudes of each
+    data series.
     """
     if not osp.exists(filename):
         return None
 
-    lat, lon, datestrings, data = [], [], [], []
     with open(filename, 'r') as csvfile:
         reader = list(csv.reader(csvfile, delimiter=','))
 
+    # Get the latitudes and longitudes and the number of lines that
+    # are located above the data block.
+    latitudes = None
+    longitudes = None
     for i, line in enumerate(reader):
         if not line or not line[0]:
             continue
 
         if line[0].lower().strip().startswith('lat'):
-            lat = np.array(line[1:]).astype('float')
+            latitudes = np.array(line[1:]).astype('float')
         elif line[0].lower().strip().startswith('lon'):
-            lon = np.array(line[1:]).astype('float')
-        elif all((len(lat), len(lon))):
-            date_data = np.array(reader[i:])
-            datestrings = date_data[:, 0]
-            data = date_data[:, 1:].astype('float')
+            longitudes = np.array(line[1:]).astype('float')
+        elif latitudes is not None and longitudes is not None:
             break
 
-    datetimes = [datetime.strptime(ds, "%d/%m/%Y") for ds in datestrings]
-    years = [dt.year for dt in datetimes]
+    dataf = pd.read_csv(
+        filename,
+        header=None,
+        index_col=[0],
+        skiprows=i,
+        skip_blank_lines=False,
+        parse_dates=True,
+        infer_datetime_format=True,
+        dayfirst=True)
+    dataf.index.name = 'date'
+    dataf.columns = pd.MultiIndex.from_tuples(
+        [(lat, lon) for lat, lon in zip(latitudes, longitudes)],
+        names=['lat_dd', 'lon_dd'])
 
-    if all((len(lat), len(lon), len(datestrings), len(data))):
-        return {'lat': lat, 'lon': lon, 'datestrings': datestrings,
-                'datetimes': datetimes, 'years': years, 'data': data}
-    else:
-        print("Failed to read data from {}.".format(osp.basename(filename)))
-        return None
+    return dataf
 
 
 if __name__ == '__main__':
     workdir = "C:/Users/User/pyhelp/example"
-    helpm = HelpManager(workdir, year_range=(2010, 2014))
-
-    cweed2_paths = osp.join(workdir, 'CWEEDS', '94792.WY2')
-    cweed3_paths = osp.join(
-        workdir, 'CWEEDS', 'CAN_QC_MONTREAL-INTL-A_7025251_CWEEDS2011_T_N.WY3')
-    helpm.generate_weather_inputs_from_CWEEDS(cweed2_paths, cweed3_paths)
+    helpm = HelpManager(workdir)
 
     helpm.build_help_input_files()
     path_hdf5 = osp.join(workdir, 'help_example.out')
     output_help = helpm.calc_help_cells(path_hdf5, tfsoil=-3)
     path_hdf5 = osp.join(workdir, 'surf_example.out')
     output_surf = helpm.calc_surf_water_cells(650, path_hdf5)
-
-    # precip_data = helpm.precip_data
-    # airtemp_data = helpm.airtemp_data
