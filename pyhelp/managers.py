@@ -121,10 +121,14 @@ class HelpManager(object):
         By default, the input grid data file must be saved in the working
         directory and named :file:`input_grid.csv`.
         """
-        print('Reading input data grid from csv...', end=' ')
+        print('Reading grid data from input csv file...')
         grid_fname = osp.join(self.workdir, INPUT_GRID_FNAME)
-        self.grid = load_grid_from_csv(grid_fname)
-        print('done')
+        if not osp.exists(grid_fname):
+            self.grid = None
+            print("Grid input csv file does not exist.")
+        else:
+            self.grid = load_grid_from_csv(grid_fname)
+            print('Grid data read successfully from input csv file.')
 
     def load_weather_input_data(self):
         """
@@ -136,7 +140,7 @@ class HelpManager(object):
         respectively, :file:`precip_input_data.csv`,
         :file:`airtemp_input_data.csv`, and :file:`solrad_input_data.csv`.
         """
-        print('Reading input weather data from csv...', end=' ')
+        print('Reading input weather data from csv...')
         self.precip_data = load_weather_from_csv(
             osp.join(self.workdir, INPUT_PRECIP_FNAME))
         self.airtemp_data = load_weather_from_csv(
@@ -527,8 +531,6 @@ def load_grid_from_csv(path_togrid):
     Load the csv that contains the infos required to evaluate regional
     groundwater recharge with HELP.
     """
-    if not osp.exists(path_togrid):
-        return None
     grid = pd.read_csv(path_togrid)
 
     fname = osp.basename(path_togrid)
