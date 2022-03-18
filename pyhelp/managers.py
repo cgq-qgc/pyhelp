@@ -374,8 +374,7 @@ class HelpManager(object):
 
         output_data = run_help_allcells(cellparams)
         output_data = self._post_process_output(output_data)
-        output_grid = self.grid.loc[output_data['cid']]
-        help_output = HelpOutput({'data': output_data, 'grid': output_grid})
+        help_output = HelpOutput(output_data)
         if path_to_hdf5:
             help_output.save_to_hdf5(path_to_hdf5)
 

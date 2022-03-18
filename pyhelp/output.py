@@ -26,15 +26,13 @@ class HelpOutput(object):
     with the :class:`~pyhelp.HelpManager` class.
     """
 
-    def __init__(self, path_or_dict: str | dict):
-        if isinstance(path_or_dict, dict):
-            self.data = path_or_dict['data']
-            self.grid = path_or_dict['grid']
-        elif isinstance(path_or_dict, str) and osp.exists(path_or_dict):
-            self.load_from_hdf5(path_or_dict)
+    def __init__(self, path_or_data: str | dict):
+        if isinstance(path_or_data, dict):
+            self.data = path_or_data
+        elif isinstance(path_or_data, str) and osp.exists(path_or_data):
+            self.load_from_hdf5(path_or_data)
         else:
             self.data = None
-            self.grid = None
 
     def load_from_hdf5(self, path_to_hdf5: str):
         """Read data and grid from an HDF5 file at the specified location."""
@@ -48,14 +46,6 @@ class HelpOutput(object):
                 if key == 'cid':
                     values = values.astype(str)
                 self.data[key] = values
-
-            # Load the grid.
-            self.grid = pd.DataFrame(
-                data=[],
-                columns=np.array(hdf5['grid']['__columns__']).astype(str),
-                index=np.array(hdf5['grid']['__index__']).astype(str))
-            for column in self.grid.columns:
-                self.grid.loc[:, key] = np.array(hdf5['grid'][column])
         finally:
             hdf5.close()
         print("Data and grid loaded successfully.")
@@ -78,37 +68,6 @@ class HelpOutput(object):
                         dtype=h5py.string_dtype())
                 else:
                     group.create_dataset(key, data=self.data[key])
-
-            # Save the grid.
-
-            # See http://docs.h5py.org/en/latest/strings.html as to
-            # why this is necessary to do this in order to save a list
-            # of strings in a dataset with h5py.
-
-            group = hdf5file.create_group('grid')
-            group.create_dataset(
-                '__columns__',
-                data=self.grid.columns.values,
-                dtype=h5py.string_dtype())
-            group.create_dataset(
-                '__index__',
-                data=self.grid.index.values,
-                dtype=h5py.string_dtype())
-            for column in self.grid.columns:
-                if column == 'cid':
-                    # See http://docs.h5py.org/en/latest/strings.html as to
-                    # why this is necessary to do this in order to save a list
-                    # of strings in a dataset with h5py.
-                    group.create_dataset(
-                        column,
-                        data=self.grid[column].values,
-                        dtype=h5py.string_dtype())
-                if column == 'cid':
-                    # The 'cid' is already stored in the index, we don't
-                    # want to store the same information in a column also.
-                    continue
-                group.create_dataset(
-                    column, data=self.grid[column].values)
         finally:
             hdf5file.close()
         print("Data saved successfully.")
@@ -119,10 +78,15 @@ class HelpOutput(object):
         of the water budget to a csv file.
         """
         print("Saving data to {}...".format(osp.basename(path_to_csv)))
-        df = self.grid[['lat_dd', 'lon_dd']].copy()
+        df = pd.DataFrame(index=self.data['cid'])
+        df['lat_dd'] = self.data['cid']
+        df['lon_dd'] = self.data['lon_dd']
+        df.index.name = 'cid'
+
         yearly_avg = self.calc_cells_yearly_avg()
         for key, value in yearly_avg.items():
             df[key] = value
+
         df.to_csv(path_to_csv, encoding='utf8')
         print("Data saved successfully.")
 
