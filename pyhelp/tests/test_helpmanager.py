@@ -117,7 +117,8 @@ def test_save_output_to_csv(output_dir, output_file):
     assert osp.exists(csvfilename)
 
     # Assert that the content of the csv is as expected.
-    df = pd.read_csv(csvfilename, index_col=0, dtype={'cid': 'str'})
+    df = pd.read_csv(csvfilename, dtype={'cid': 'str'})
+    df = df.set_index('cid', drop=True)
     assert list(df.columns) == [
         'lat_dd', 'lon_dd', 'precip', 'runoff', 'evapo', 'perco',
         'subrun1', 'subrun2', 'rechg']
