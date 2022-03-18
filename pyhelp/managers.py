@@ -532,16 +532,13 @@ def load_grid_from_csv(path_togrid):
     Load the csv that contains the infos required to evaluate regional
     groundwater recharge with HELP.
     """
-    grid = pd.read_csv(path_togrid)
+    grid = pd.read_csv(path_togrid, dtype={'cid': 'str'})
 
     fname = osp.basename(path_togrid)
-    req_keys = ['cid', 'lat_dd', 'lon_dd', 'run']
+    req_keys = ['cid', 'lat_dd', 'lon_dd', 'run', 'context']
     for key in req_keys:
         if key not in grid.keys():
-            raise KeyError("No attribute '%s' found in %s" % (key, fname))
-
-    # Make sure that cid is a str.
-    grid['cid'] = np.array(grid['cid']).astype(str)
+            raise KeyError("No attribute '{}' found in {}".format(key, fname))
 
     # Set 'cid' as the index of the dataframe.
     grid.set_index(['cid'], drop=False, inplace=True)
