@@ -79,9 +79,10 @@ class HelpOutput(object):
         """
         print("Saving data to {}...".format(osp.basename(path_to_csv)))
         df = pd.DataFrame(index=self.data['cid'])
-        df['lat_dd'] = self.data['cid']
-        df['lon_dd'] = self.data['lon_dd']
         df.index.name = 'cid'
+
+        df['lat_dd'] = self.data['lat_dd']
+        df['lon_dd'] = self.data['lon_dd']
 
         yearly_avg = self.calc_cells_yearly_avg()
         for key, value in yearly_avg.items():
