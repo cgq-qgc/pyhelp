@@ -413,6 +413,8 @@ class HelpManager(object):
         data['cid'] = cellnames
         data['years'] = years
         data['idx_nan'] = []
+        data['lat_dd'] = self.grid.loc[cellnames]['lat_dd'].values
+        data['lon_dd'] = self.grid.loc[cellnames]['lon_dd'].values
 
         for i, cellname in enumerate(cellnames):
             print("\rPost-processing cell %d of %d..." % (i+1, Np), end=' ')
