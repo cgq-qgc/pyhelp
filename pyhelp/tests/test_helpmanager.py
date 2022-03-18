@@ -16,6 +16,7 @@ import os.path as osp
 import numpy as np
 import pandas as pd
 import pytest
+from pandas.api.types import is_string_dtype
 
 
 # ---- Local library imports
@@ -53,6 +54,12 @@ def helpm():
 # =============================================================================
 # ---- Tests
 # =============================================================================
+def test_read_input_grid(helpm, output_file):
+    """Test that the input grid is read as expected."""
+    assert is_string_dtype(helpm.grid.index)
+    assert is_string_dtype(helpm.grid['cid'])
+
+
 def test_calc_help_cells(helpm, output_file):
     """Test that the HelpManager is able to run water budget calculation."""
     cellnames = helpm.cellnames[:100]
