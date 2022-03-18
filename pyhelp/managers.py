@@ -56,7 +56,7 @@ class HelpManager(object):
         self._workdir = None
         self.set_workdir(workdir)
 
-        self._setup_connect_tables()
+        self._load_connect_tables()
 
     @property
     def cellnames(self):
@@ -97,8 +97,8 @@ class HelpManager(object):
     def path_connect_tables(self):
         return osp.join(self.inputdir, FNAME_CONN_TABLES)
 
-    def _setup_connect_tables(self):
-        """Setup the connect tables dictionary."""
+    def _load_connect_tables(self):
+        """Load the connect tables from the json file."""
         if osp.exists(self.path_connect_tables):
             with open(self.path_connect_tables, 'r') as jsonfile:
                 self.connect_tables = json.load(jsonfile)
@@ -106,7 +106,7 @@ class HelpManager(object):
             self.connect_tables = {}
 
     def _save_connect_tables(self):
-        """Save the connect tables dictionary to a json text file."""
+        """Save the connect tables to a json text file."""
         with open(self.path_connect_tables, 'w', encoding='utf-8') as jsonfile:
             json.dump(self.connect_tables, jsonfile, indent=2,
                       separators=(",", ": "), ensure_ascii=False)
