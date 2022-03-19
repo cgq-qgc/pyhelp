@@ -14,7 +14,9 @@ import os.path as osp
 
 # ---- Third party imports
 import numpy as np
+import pandas as pd
 import pytest
+from pandas.api.types import is_string_dtype
 
 
 # ---- Local library imports
@@ -52,6 +54,12 @@ def helpm():
 # =============================================================================
 # ---- Tests
 # =============================================================================
+def test_read_input_grid(helpm, output_file):
+    """Test that the input grid is read as expected."""
+    assert is_string_dtype(helpm.grid.index)
+    assert is_string_dtype(helpm.grid['cid'])
+
+
 def test_calc_help_cells(helpm, output_file):
     """Test that the HelpManager is able to run water budget calculation."""
     cellnames = helpm.cellnames[:100]
@@ -96,5 +104,44 @@ def test_plot_water_budget(output_dir, output_file):
     assert osp.exists(figfilename)
 
 
+def test_save_output_to_csv(output_dir, output_file):
+    """
+    Test that saving yarly results to csv is working as expected.
+    """
+    output = HelpOutput(output_file)
+
+    # Save yearly results to csv.
+    csvfilename = osp.join(output_dir, 'test_help_yearly_results.csv')
+    assert not osp.exists(csvfilename)
+    output.save_to_csv(csvfilename)
+    assert osp.exists(csvfilename)
+
+    # Assert that the content of the csv is as expected.
+    df = pd.read_csv(csvfilename, dtype={'cid': 'str'})
+    df = df.set_index('cid', drop=True)
+    assert list(df.columns) == [
+        'lat_dd', 'lon_dd', 'precip', 'runoff', 'evapo', 'perco',
+        'subrun1', 'subrun2', 'rechg']
+    assert df.index.name == 'cid'
+    assert len(df) == 98
+
+    assert df.index[0] == output.data['cid'][0]
+    assert df.iloc[0]['lat_dd'] == output.data['lat_dd'][0]
+    assert df.iloc[0]['lon_dd'] == output.data['lon_dd'][0]
+
+    expected_results = {
+        'precip': 1055.86,
+        'perco': 251.59,
+        'evapo': 548.58,
+        'rechg': 130.19,
+        'runoff': 212.26,
+        'subrun1': 46.27,
+        'subrun2': 113.02}
+    for key in list(expected_results.keys()):
+        result = df[key].sum() / len(df)
+        expected_result = expected_results[key]
+        assert abs(result - expected_result) < 1, key
+
+
 if __name__ == '__main__':
-    pytest.main(['-x', os.path.basename(__file__), '-v', '-rw'])
+    pytest.main(['-x', __file__, '-v', '-rw'])

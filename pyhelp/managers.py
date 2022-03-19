@@ -374,8 +374,7 @@ class HelpManager(object):
 
         output_data = run_help_allcells(cellparams)
         output_data = self._post_process_output(output_data)
-        output_grid = self.grid.loc[output_data['cid']]
-        help_output = HelpOutput({'data': output_data, 'grid': output_grid})
+        help_output = HelpOutput(output_data)
         if path_to_hdf5:
             help_output.save_to_hdf5(path_to_hdf5)
 
@@ -413,6 +412,8 @@ class HelpManager(object):
         data['cid'] = cellnames
         data['years'] = years
         data['idx_nan'] = []
+        data['lat_dd'] = self.grid.loc[cellnames]['lat_dd'].values
+        data['lon_dd'] = self.grid.loc[cellnames]['lon_dd'].values
 
         for i, cellname in enumerate(cellnames):
             print("\rPost-processing cell %d of %d..." % (i+1, Np), end=' ')
@@ -531,16 +532,13 @@ def load_grid_from_csv(path_togrid):
     Load the csv that contains the infos required to evaluate regional
     groundwater recharge with HELP.
     """
-    grid = pd.read_csv(path_togrid)
+    grid = pd.read_csv(path_togrid, dtype={'cid': 'str'})
 
     fname = osp.basename(path_togrid)
-    req_keys = ['cid', 'lat_dd', 'lon_dd', 'run']
+    req_keys = ['cid', 'lat_dd', 'lon_dd', 'run', 'context']
     for key in req_keys:
         if key not in grid.keys():
-            raise KeyError("No attribute '%s' found in %s" % (key, fname))
-
-    # Make sure that cid is a str.
-    grid['cid'] = np.array(grid['cid']).astype(str)
+            raise KeyError("No attribute '{}' found in {}".format(key, fname))
 
     # Set 'cid' as the index of the dataframe.
     grid.set_index(['cid'], drop=False, inplace=True)
