@@ -395,10 +395,12 @@ class HelpManager(object):
         Return a dict that contains a 3D numpy array with the monthly values
         for precip, runoff, evapo, perco, subrun1, subrun2, and rechg. The
         dict also contains lists for the cid (cell id) and years corresponding
-        to the i and j indexes of the 3D numpy arrays. A list with the
-        i indexes where data is nan is also saved in the dict. Nan values
-        are obtained when HELP is not able to do water budget calculations due
-        to lack of data or when there is an error in the input data.
+        to the i and j indexes of the 3D numpy arrays.
+
+        A list with the indexes of the cells where data is nan is also saved
+        in the dict. Nan values are obtained when HELP is not able to do water
+        budget calculations due to lack of data or when there is an error in
+        the input data.
         """
         cellnames = list(output.keys())
         context = self.grid['context'][cellnames].tolist()
