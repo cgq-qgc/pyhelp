@@ -23,25 +23,28 @@ if __name__ == '__main__':
     # Note that you can access the weather input data through
     # the 'precip_data', 'airtemp_data', and 'solrad_data'  attributes.
 
-    # Generates the input files required by the HELP model for each cell
-    # of the grid.
-    helpm.build_help_input_files()
+    # Generates the input files required by the HELP model
+    # for each cell of the grid.
+    helpm.build_help_input_files(sf_edepth=0.15)
 
-    # It is possible to run HELP only for a subset of the study area
-    # grid cells. To do this, we need to pass a list of cell ids as
-    # an argument to the calc_help_cells method.
-    # For example, we can run here the results for the first 100 cells
-    # of the grid.
-    cellnames = helpm.cellnames[:100]
+    # We want to run HELP only for the cells that are located within
+    # a jauged subsection of the Rivière du Nord watershed.
 
-    # If we pass a filename in argument to the calc_help_cells method, the
-    # monthly output data will be automatically saved to disk as an HDF5 file.
-    filepath = osp.join(workdir, 'help_example.out')
-    output = helpm.calc_help_cells(filepath, cellnames, tfsoil=-3)
+    # The field "Bassin" was added to the grid input data to identify the
+    # cells that are located within this jauged subsection of the watershed.
+    cellnames = helpm.grid.index[helpm.grid['Bassin'] == 1]
 
-    # Export and save the data to an ESRI shapefile.
-    filepath = osp.join(workdir, 'help_example_yearly.csv')
-    output.save_to_csv(filepath)
+    # Run HELP simulation for all the cells in cellnames.
+
+    # Note that the monthly output data will be automatically saved to
+    # the HDF5 file define in filepath.
+    output = helpm.calc_help_cells(
+        path_to_hdf5=osp.join(workdir, 'help_example.out'),
+        cellnames=cellnames,
+        tfsoil=-3)
+
+    # Export and save annual averages of HELP output values to a csv file.
+    output.save_to_csv(osp.join(workdir, 'help_example_yearly.csv'))
 
     # Plot some results.
     output.plot_area_monthly_avg()
@@ -49,6 +52,6 @@ if __name__ == '__main__':
     output.plot_area_yearly_series()
 
     # Calculate the yearly water budget for surface water cells.
-    evp_surf = 650
-    filepath = osp.join(workdir, 'surf_example.out')
-    output_surf = helpm.calc_surf_water_cells(evp_surf, filepath)
+    output_surf = helpm.calc_surf_water_cells(
+        evp_surf=650,
+        path_outfile=osp.join(workdir, 'surf_example.out'))
