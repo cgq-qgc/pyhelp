@@ -5,8 +5,9 @@ for a section of the Rivière du Nord watershed in the Laurentians, Quebec, Can.
 """
 
 import os.path as osp
+import pandas as pd
 from pyhelp.managers import HelpManager
-
+import pyhelp.bilan as HelpBilan
 
 if __name__ == '__main__':
     # For an explanation of why (on Windows) the if __name__ == '__main__'
@@ -38,20 +39,34 @@ if __name__ == '__main__':
 
     # Note that the monthly output data will be automatically saved to
     # the HDF5 file define in filepath.
-    output = helpm.calc_help_cells(
+    output_help = helpm.calc_help_cells(
         path_to_hdf5=osp.join(workdir, 'help_example.out'),
         cellnames=cellnames,
         tfsoil=-3)
 
     # Export and save annual averages of HELP output values to a csv file.
-    output.save_to_csv(osp.join(workdir, 'help_example_yearly.csv'))
+    output_help.save_to_csv(osp.join(workdir, 'help_example_yearly.csv'))
 
     # Plot some results.
-    output.plot_area_monthly_avg()
-    output.plot_area_yearly_avg()
-    output.plot_area_yearly_series()
+    output_help.plot_area_monthly_avg()
+    output_help.plot_area_yearly_avg()
+    output_help.plot_area_yearly_series()
 
     # Calculate the yearly water budget for surface water cells.
     output_surf = helpm.calc_surf_water_cells(
         evp_surf=650,
         path_outfile=osp.join(workdir, 'surf_example.out'))
+
+    # Read observed yearly total and base streamflow (in mm/year).
+    obs_qflow = pd.read_csv(
+        osp.join(workdir, 'obs_yearly_river_flow.csv'),
+        index_col=0)
+
+    # Calcul simulated early total and base streamflow (in mm/year).
+    sim_qflow = HelpBilan.calc_yearly_streamflow(output_help, output_surf)
+
+    # Plot results.
+    HelpBilan.plot_sim_vs_obs_yearly_streamflow(
+        sim_qflow, obs_qflow, fig_title="PyHELP Example")
+    HelpBilan.plot_streamflow_scatter(
+        sim_qflow, obs_qflow, fig_title="PyHELP Example")
