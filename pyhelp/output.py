@@ -191,7 +191,7 @@ class HelpOutput(object):
         ax.set_ylabel('Composantes du bilan hydrologique\n(mm/mois)',
                       fontsize=16, labelpad=10)
         ax.set_xlabel('Mois', fontsize=16, labelpad=10)
-        ax.axis(ymin=-5, ymax=140)
+        ax.axis(ymin=-5)
         ax.grid(axis='both', color=[0.35, 0.35, 0.35], ls='-', lw=0.5)
         ax.set_xticks(months)
         ax.set_xticklabels(['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul',
