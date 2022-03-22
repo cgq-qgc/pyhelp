@@ -12,6 +12,7 @@ import os
 import os.path as osp
 from pathlib import Path
 import datetime
+import re
 
 # ---- Third Party imports
 import numpy as np
@@ -164,7 +165,8 @@ class GridExtractor(object):
         # simply load the grid lat and lon from the first netcdf file
         # found 'gridpath'.
         for file in os.listdir(self.gridpath):
-            if file.endswith('.nc'):
+            pattern = self.filename_pattern.format(year='(.*)')
+            if re.match(pattern, file):
                 break
         else:
             raise ValueError(f"There is no netcdf file in {self.gridpath}.")
