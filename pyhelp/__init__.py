@@ -9,11 +9,11 @@
 
 import os
 
-version_info = (0, 2, 1)
+version_info = (0, 2, 2)
 __version__ = '.'.join(map(str, version_info))
 __appname__ = 'PyHELP'
 __namever__ = __appname__ + " " + __version__
-__date__ = '15/03/2022'
+__date__ = '22/03/2022'
 __project_url__ = "https://github.com/cgq-qgc/pyhelp"
 __releases_url__ = __project_url__ + "/releases"
 __releases_api__ = "https://api.github.com/repos/cgq-qgc/pyhelp/releases"
