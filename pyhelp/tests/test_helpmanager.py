@@ -67,9 +67,7 @@ def test_calc_help_cells(helpm, output_file):
     helpm.calc_help_cells(output_file, cellnames, tfsoil=-3)
     assert osp.exists(output_file)
 
-
-def test_validate_results(output_file):
-    """Test that the water budget results are as expected. """
+    # Assert that the results are as expected.
     output = HelpOutput(output_file)
     area_yrly_avg = output.calc_area_yearly_avg()
     expected_results = {'precip': 11614.46,
@@ -154,7 +152,7 @@ def test_calc_cells_yearly_avg(output_file):
 
 def test_save_output_to_csv(output_dir, output_file):
     """
-    Test that saving yarly results to csv is working as expected.
+    Test that saving yearly results to csv is working as expected.
     """
     output = HelpOutput(output_file)
 
