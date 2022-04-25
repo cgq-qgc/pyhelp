@@ -19,6 +19,9 @@ import numpy as np
 import h5py
 from scipy.stats import linregress
 
+VARNAMES = ['precip', 'runoff', 'evapo', 'perco',
+            'subrun1', 'subrun2', 'rechg']
+
 
 class HelpOutput(object):
     """
