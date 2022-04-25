@@ -128,15 +128,26 @@ class HelpOutput(object):
         keys = list(monthly_avg.keys())
         return {key: np.sum(monthly_avg[key], axis=1) for key in keys}
 
-    def calc_cells_yearly_avg(self,
-                              year_min: int = -np.inf,
+    def calc_cells_yearly_avg(self, year_min: int = -np.inf,
                               year_max: int = np.inf) -> dict:
         """
         Calcul the water budget average yearly values for each cell.
 
-        Return a dictionary that contains a numpy array for each
-        component of the water budget with average values calculated for
-        each cell for which data are available.
+        Parameters
+        ----------
+        year_min : int, optional
+            Minimum year of the period over which the average annual values
+            are calculated . The default is -np.inf.
+        year_max : int, optional
+            Maximum year of the period over which the average annual values
+            are calculated . The default is np.inf.
+
+        Returns
+        -------
+        dict
+           A dictionary that contains, for each component of the water budget,
+           a numpy array of the average yearly values calculated for each cell
+           of the grid.
         """
         years_mask = (
             (self.data['years'] >= year_min) &
