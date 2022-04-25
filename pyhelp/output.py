@@ -75,10 +75,12 @@ class HelpOutput(object):
             hdf5file.close()
         print("Data saved successfully.")
 
-    def save_to_csv(self, path_to_csv):
+    def save_to_csv(self, path_to_csv: str,
+                    year_min: int = -np.inf,
+                    year_max: int = np.inf) -> None:
         """
-        Save the grid data and cell yearly average values for each component
-        of the water budget to a csv file.
+        Save in a csv file the annual average values of the components of the
+        water budget calculated for each cell of the grid.
         """
         print("Saving data to {}...".format(osp.basename(path_to_csv)))
         df = pd.DataFrame(index=self.data['cid'])
@@ -87,7 +89,7 @@ class HelpOutput(object):
         df['lat_dd'] = self.data['lat_dd']
         df['lon_dd'] = self.data['lon_dd']
 
-        yearly_avg = self.calc_cells_yearly_avg()
+        yearly_avg = self.calc_cells_yearly_avg(year_min, year_max)
         for key, value in yearly_avg.items():
             df[key] = value
 
