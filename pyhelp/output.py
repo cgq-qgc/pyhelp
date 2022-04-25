@@ -126,20 +126,25 @@ class HelpOutput(object):
         keys = list(monthly_avg.keys())
         return {key: np.sum(monthly_avg[key], axis=1) for key in keys}
 
-    def calc_cells_yearly_avg(self):
+    def calc_cells_yearly_avg(self,
+                              year_min: int = -np.inf,
+                              year_max: int = np.inf) -> dict:
         """
-        Plot the yearly values of the water budget in mm/year for the whole
-        study area.
-        Calcul water budget average yearly values for each cell.
+        Calcul the water budget average yearly values for each cell.
 
         Return a dictionary that contains a numpy array for each
         component of the water budget with average values calculated for
         each cell for which data are available.
         """
-        keys = ['precip', 'runoff', 'evapo', 'perco',
-                'subrun1', 'subrun2', 'rechg']
-        return {key: np.mean(np.sum(self.data[key], axis=2), axis=1)
-                for key in keys}
+        years_mask = (
+            (self.data['years'] >= year_min) &
+            (self.data['years'] <= year_max))
+
+        yearly_avg = {}
+        for varname in VARNAMES:
+            vardata = self.data[varname][:, years_mask, :]
+            yearly_avg[varname] = np.mean(np.sum(vardata, axis=2), axis=1)
+        return yearly_avg
 
     # ---- Plots
     def _create_figure(self, fsize=None, margins=None):
