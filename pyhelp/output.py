@@ -180,9 +180,9 @@ class HelpOutput(object):
         # Setup figure size.
         if fsize is not None:
             fwidth, fheight = fsize
+            fig.set_size_inches(*fsize)
         else:
             fwidth, fheight = fig.get_size_inches()
-        fig.set_size_inches(*fsize)
 
         # Setup axe margins.
         if margins is not None:
@@ -190,9 +190,9 @@ class HelpOutput(object):
             top_margin = margins[1]/fheight
             right_margin = margins[2]/fwidth
             bot_margin = margins[3]/fheight
-        ax.set_position([left_margin, bot_margin,
-                         1 - left_margin - right_margin,
-                         1 - top_margin - bot_margin])
+            ax.set_position([left_margin, bot_margin,
+                             1 - left_margin - right_margin,
+                             1 - top_margin - bot_margin])
 
         return fig, ax
 
@@ -202,8 +202,6 @@ class HelpOutput(object):
         """
         Plot the monthly average values of the water budget in mm/month
         for the whole study area.
-        fig, ax = self._create_figure(
-            fsize=(9, 6.5), margins=(1.5, 1, 0.25, 0.7))
 
         Parameters
         ----------
