@@ -20,8 +20,14 @@ import numpy as np
 import h5py
 from scipy.stats import linregress
 
-VARNAMES = ['precip', 'runoff', 'evapo', 'perco',
-            'subrun1', 'subrun2', 'rechg']
+
+VARNAMES = ['precip', 'rechg', 'runoff', 'evapo', 'subrun1', 'subrun2']
+LABELS = ["Précipitations totales",
+          "Recharge au roc",
+          "Ruissellement de surface",
+          "Évapotranspiration",
+          "Ruissellement hypodermique superficiel",
+          "Ruissellement hypodermique profond"]
 
 
 class HelpOutput(object):
@@ -242,14 +248,7 @@ class HelpOutput(object):
         fig, ax = self._create_figure(fsize=(9, 6.5))
 
         months = list(range(1, 13))
-        varnames = ['precip', 'rechg', 'runoff', 'evapo', 'subrun1', 'subrun2']
-        labels = ["Précipitations totales",
-                  "Recharge au roc",
-                  "Ruissellement de surface",
-                  "Évapotranspiration",
-                  "Ruissellement hypodermique superficiel",
-                  "Ruissellement hypodermique profond"]
-        for varname, label in zip(varnames, labels):
+        for varname, label in zip(VARNAMES, LABELS):
             ax.plot(months, np.mean(avg_monthly[varname], axis=0),
                     marker='o', mec='white', clip_on=False, lw=2,
                     label=label)
