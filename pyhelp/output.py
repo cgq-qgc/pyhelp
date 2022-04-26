@@ -281,56 +281,32 @@ class HelpOutput(object):
         Plot the average yearly values of the water budget in mm/year
         for the whole study area.
         """
-        fig, ax = self._create_figure(
-            fsize=(8, 6.5), margins=(1.5, 0.5, 0.25, 0.25))
+        fig, ax = self._create_figure(fsize=(8, 6.5))
 
         area_yearly_avg = self.calc_area_yearly_avg()
-        avg_yearly_precip = np.mean(area_yearly_avg['precip'])
-        avg_yearly_rechg = np.mean(area_yearly_avg['rechg'])
-        avg_yearly_runoff = np.mean(area_yearly_avg['runoff'])
-        avg_yearly_evapo = np.mean(area_yearly_avg['evapo'])
-        avg_yearly_subrun1 = np.mean(area_yearly_avg['subrun1'])
-        avg_yearly_subrun2 = np.mean(area_yearly_avg['subrun2'])
-
-        l1 = ax.bar(1, avg_yearly_precip, 0.85, align='center')
-        l2 = ax.bar(2, avg_yearly_rechg, 0.85, align='center')
-        l3 = ax.bar(3, avg_yearly_runoff, 0.85, align='center')
-        l4 = ax.bar(4, avg_yearly_evapo, 0.85, align='center')
-        l5 = ax.bar(5, avg_yearly_subrun1, 0.85, align='center')
-        l6 = ax.bar(6, avg_yearly_subrun2, 0.85, align='center')
+        x = 0
+        for varname, label in zip(VARNAMES, LABELS):
+            x += 1
+            var_avg_yearly = area_yearly_avg[varname].mean()
+            ax.bar(x, var_avg_yearly, 0.85, align='center',
+                   label=label)
+            ax.text(x, var_avg_yearly + 10, "%d\nmm/an" % var_avg_yearly,
+                    ha='center', va='bottom')
 
         ax.axis(ymin=0, ymax=1200, xmin=0, xmax=7)
         ax.grid(axis='y', color=[0.35, 0.35, 0.35], ls='-', lw=0.5)
         ax.set_axisbelow(True)
 
-        ax.text(1, avg_yearly_precip + 10, "%d\nmm/an" % avg_yearly_precip,
-                ha='center', va='bottom')
-        ax.text(2, avg_yearly_rechg + 10, "%d\nmm/an" % avg_yearly_rechg,
-                ha='center', va='bottom')
-        ax.text(3, avg_yearly_runoff + 10, "%d\nmm/an" % avg_yearly_runoff,
-                ha='center', va='bottom')
-        ax.text(4, avg_yearly_evapo + 10, "%d\nmm/an" % avg_yearly_evapo,
-                ha='center', va='bottom')
-        ax.text(5, avg_yearly_subrun1 + 10, "%d\nmm/an" % avg_yearly_subrun1,
-                ha='center', va='bottom')
-        ax.text(6, avg_yearly_subrun2 + 10, "%d\nmm/an" % avg_yearly_subrun2,
-                ha='center', va='bottom')
-
         ax.tick_params(axis='y', direction='out', labelsize=12)
         ax.tick_params(axis='x', direction='out', length=0)
-        ax.set_ylabel('Composantes du bilan hydrologique\n(mm/an)',
-                      fontsize=16, labelpad=10)
+        ax.set_ylabel('Moyennes annuelles (mm/an)', fontsize=16, labelpad=10)
         ax.set_xticklabels([])
 
-        lines = [l1, l2, l3, l4, l5, l6]
-        labels = ["Précipitations totales", "Recharge au roc",
-                  "Ruissellement de surface", "Évapotranspiration",
-                  "Ruissellement hypodermique superficiel",
-                  "Ruissellement hypodermique profond"]
-        legend = ax.legend(lines, labels, numpoints=1, fontsize=12,
-                           borderaxespad=0, loc='upper right', borderpad=0.5,
-                           bbox_to_anchor=(1, 1), ncol=1)
-        legend.draw_frame(False)
+        ax.legend(
+            numpoints=1, fontsize=12, borderaxespad=0, loc='upper right',
+            borderpad=0.5, bbox_to_anchor=(1, 1), ncol=1, frameon=False)
+
+        fig.tight_layout()
 
         if figname is not None:
             fig.savefig(figname)
