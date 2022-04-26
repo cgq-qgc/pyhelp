@@ -251,14 +251,14 @@ class HelpOutput(object):
         months = list(range(1, 13))
         for varname, label in zip(VARNAMES, LABELS):
             ax.plot(months, np.mean(avg_monthly[varname], axis=0),
-                    marker=None, mec='white', clip_on=False, lw=2,
+                    marker='o', mec='white', clip_on=False, lw=2,
                     label=label)
 
         ax.set_ylabel('Moyennes mensuelles (mm/mois)',
                       fontsize=16, labelpad=10)
         ax.set_xlabel('Mois', fontsize=16, labelpad=10)
         ax.axis(ymin=-5)
-        ax.grid(axis='both', color=[0.35, 0.35, 0.35], ls='-', lw=0.5)
+        ax.grid(axis='y', color=[0.35, 0.35, 0.35], ls='-', lw=0.5)
         ax.set_xticks(months)
 
         # http://bdl.oqlf.gouv.qc.ca/bdl/gabarit_bdl.asp?id=3619
