@@ -13,6 +13,7 @@ from __future__ import annotations
 import os.path as osp
 
 # ---- Third party imports
+from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
@@ -201,10 +202,27 @@ class HelpOutput(object):
         """
         Plot the monthly average values of the water budget in mm/month
         for the whole study area.
-        """
         fig, ax = self._create_figure(
             fsize=(9, 6.5), margins=(1.5, 1, 0.25, 0.7))
 
+        Parameters
+        ----------
+        figname : str, optional
+            The abolute path of the file where to save the figure to disk.
+            Note that the format of the file is inferred from the extension of
+            "figname".
+        year_from : int, optional
+            Year from which the average monthly values are calculated.
+            The default is -np.inf.
+        year_to : int, optional
+            Year to which the average monthly values are calculated.
+            The default is np.inf.
+
+        Returns
+        -------
+        Figure
+            The matplotlib figure instance created by this method.
+        """
         avg_monthly = self.calc_area_monthly_avg()
         months = range(1, 13)
         l1, = ax.plot(months, np.mean(avg_monthly['precip'], axis=0),
