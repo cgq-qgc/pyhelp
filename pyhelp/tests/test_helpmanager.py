@@ -110,7 +110,7 @@ def test_calc_cells_yearly_avg(output_file):
     output = HelpOutput(output_file)
 
     # Test calc_cells_yearly_avg without providing any value for the
-    # year_min ad year_max argument.
+    # year_from and year_to argument.
     yearly_avg = output.calc_cells_yearly_avg()
     expected_results = {
         'precip': 1055.8597373343132,
@@ -124,8 +124,8 @@ def test_calc_cells_yearly_avg(output_file):
         result = np.sum(yearly_avg[varname]) / len(yearly_avg[varname])
         assert abs(result - expected_results[varname]) < 1, varname
 
-    # Test calc_cells_yearly_avg with non null year_min and year_max argument.
-    yearly_avg = output.calc_cells_yearly_avg(year_min=2003, year_max=2009)
+    # Test calc_cells_yearly_avg with non null year_from and year_to argument.
+    yearly_avg = output.calc_cells_yearly_avg(year_from=2003, year_to=2009)
     expected_results = {
         'precip': 1086.8448950125246,
         'perco': 259.85654385728577,
@@ -138,8 +138,8 @@ def test_calc_cells_yearly_avg(output_file):
         result = np.sum(yearly_avg[varname]) / len(yearly_avg[varname])
         assert abs(result - expected_results[varname]) < 1, varname
 
-    # Test calc_cells_yearly_avg with year_min == year_max.
-    yearly_avg = output.calc_cells_yearly_avg(year_min=2003, year_max=2003)
+    # Test calc_cells_yearly_avg with year_from == year_to.
+    yearly_avg = output.calc_cells_yearly_avg(year_from=2003, year_to=2003)
     expected_results = {
         'precip': 1144.4142919267927,
         'perco': 324.15252048559057,
