@@ -29,6 +29,7 @@ LABELS = ["Précipitations totales",
           "Évapotranspiration",
           "Ruissellement hypodermique superficiel",
           "Ruissellement hypodermique profond"]
+COLORS = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b']
 
 
 class HelpOutput(object):
@@ -249,14 +250,14 @@ class HelpOutput(object):
         fig, ax = self._create_figure(fsize=(9, 6.5))
 
         months = list(range(1, 13))
-        for varname, label in zip(VARNAMES, LABELS):
+        for varname, label, color in zip(VARNAMES, LABELS, COLORS):
             vardataf = avg_monthly[varname]
             yearmask = (
                 (vardataf.index >= year_from) &
                 (vardataf.index <= year_to))
             ax.plot(months, vardataf.loc[yearmask, :].mean(axis=0),
                     marker='o', mec='white', clip_on=False, lw=2,
-                    label=label)
+                    label=label, color=color)
 
         ax.set_ylabel('Moyennes mensuelles (mm/mois)',
                       fontsize=16, labelpad=10)
@@ -314,7 +315,7 @@ class HelpOutput(object):
         area_yearly_avg = self.calc_area_yearly_avg()
         x = 0
         text_handles = []
-        for varname, label in zip(VARNAMES, LABELS):
+        for varname, label, color in zip(VARNAMES, LABELS, COLORS):
             x += 1
 
             vardataf = area_yearly_avg[varname]
@@ -324,7 +325,7 @@ class HelpOutput(object):
             var_avg_yearly = vardataf.loc[yearmask].mean()
 
             ax.bar(x, var_avg_yearly, 0.85, align='center',
-                   label=label)
+                   label=label, color=color)
             text_handles.append(
                 ax.text(x, var_avg_yearly, "%d\nmm/an" % var_avg_yearly,
                         ha='center', va='bottom',
