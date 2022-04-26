@@ -282,7 +282,7 @@ class HelpOutput(object):
         Plot the average yearly values of the water budget in mm/year
         for the whole study area.
         """
-        fig, ax = self._create_figure(fsize=(8, 6.5))
+        fig, ax = self._create_figure(fsize=(8.5, 5))
 
         text_offset = transforms.ScaledTranslation(
             0, 3/72, fig.dpi_scale_trans)
@@ -321,18 +321,14 @@ class HelpOutput(object):
         ax.set_xticklabels([])
 
         ax.legend(
-            numpoints=1, fontsize=12, borderaxespad=0, loc='upper right',
-            borderpad=0.5, bbox_to_anchor=(1, 1), ncol=1, frameon=False)
+            numpoints=1, fontsize=12, frameon=False, borderaxespad=0,
+            loc='lower left', borderpad=0.5, bbox_to_anchor=(0, 1, 1, 1),
+            ncol=2)
 
         fig.tight_layout()
 
         if figname is not None:
             fig.savefig(figname)
-
-        # Add a graph title.
-        # offset = transforms.ScaledTranslation(0/72, 12/72, fig.dpi_scale_trans)
-        # ax.text(0.5, 1, figname_sufix, fontsize=16, ha='center', va='bottom',
-                # transform=ax.transAxes+offset)
 
     def plot_area_yearly_series(self, figname=None):
         """
