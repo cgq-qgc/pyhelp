@@ -23,13 +23,18 @@ from scipy.stats import linregress
 
 
 VARNAMES = ['precip', 'rechg', 'runoff', 'evapo', 'subrun1', 'subrun2']
-LABELS = ["Précipitations totales",
-          "Recharge au roc",
-          "Ruissellement de surface",
-          "Évapotranspiration",
-          "Ruissellement hypodermique superficiel",
-          "Ruissellement hypodermique profond"]
-COLORS = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b']
+LABELS = {'precip': "Précipitations totales",
+          'rechg': "Recharge au roc",
+          'runoff': "Ruissellement de surface",
+          'evapo': "Évapotranspiration",
+          'subrun1': "Ruissellement hypodermique superficiel",
+          'subrun2': "Ruissellement hypodermique profond"}
+COLORS = {'precip': '#1f77b4',
+          'rechg': '#ff7f0e',
+          'runoff': '#2ca02c',
+          'evapo': '#d62728',
+          'subrun1': '#9467bd',
+          'subrun2': '#8c564b'}
 
 
 class HelpOutput(object):
@@ -250,14 +255,14 @@ class HelpOutput(object):
         fig, ax = self._create_figure(fsize=(9, 6.5))
 
         months = list(range(1, 13))
-        for varname, label, color in zip(VARNAMES, LABELS, COLORS):
+        for varname in VARNAMES:
             vardataf = avg_monthly[varname]
             yearmask = (
                 (vardataf.index >= year_from) &
                 (vardataf.index <= year_to))
             ax.plot(months, vardataf.loc[yearmask, :].mean(axis=0),
                     marker='o', mec='white', clip_on=False, lw=2,
-                    label=label, color=color)
+                    label=LABELS[varname], color=COLORS[varname])
 
         ax.set_ylabel('Moyennes mensuelles (mm/mois)',
                       fontsize=16, labelpad=10)
@@ -315,7 +320,7 @@ class HelpOutput(object):
         area_yearly_avg = self.calc_area_yearly_avg()
         x = 0
         text_handles = []
-        for varname, label, color in zip(VARNAMES, LABELS, COLORS):
+        for varname in VARNAMES:
             x += 1
 
             vardataf = area_yearly_avg[varname]
@@ -325,7 +330,7 @@ class HelpOutput(object):
             var_avg_yearly = vardataf.loc[yearmask].mean()
 
             ax.bar(x, var_avg_yearly, 0.85, align='center',
-                   label=label, color=color)
+                   label=LABELS[varname], color=COLORS[varname])
             text_handles.append(
                 ax.text(x, var_avg_yearly, "%d\nmm/an" % var_avg_yearly,
                         ha='center', va='bottom',
@@ -393,19 +398,20 @@ class HelpOutput(object):
         yearly_avg = self.calc_area_yearly_avg()
         mask_years = (years >= year_from) & (years <= year_to)
 
-        for varname, label, color in zip(VARNAMES, LABELS, COLORS):
+        for varname in VARNAMES:
             masked_data = yearly_avg[varname].loc[mask_years]
             masked_years = masked_data.index.values.astype('int')
 
             ax.plot(masked_years, masked_data, marker='o', mec='white',
-                    clip_on=False, lw=2, color=color, label=label)
+                    clip_on=False, lw=2, color=COLORS[varname],
+                    label=LABELS[varname])
 
             slope, intercept, r_val, p_val, std_err = linregress(
                 masked_years, masked_data.values)
 
             ax.plot(masked_years, masked_years * slope + intercept,
                     marker=None, mec='white', clip_on=False, lw=1,
-                    dashes=[5, 3], color=color)
+                    dashes=[5, 3], color=COLORS[varname])
 
         ax.tick_params(axis='both', direction='out', labelsize=12)
         ax.set_ylabel('Composantes annuelles\ndu bilan hydrologique (mm/an)',
