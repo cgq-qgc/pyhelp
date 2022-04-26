@@ -251,7 +251,7 @@ class HelpOutput(object):
         months = list(range(1, 13))
         for varname, label in zip(VARNAMES, LABELS):
             ax.plot(months, np.mean(avg_monthly[varname], axis=0),
-                    marker='o', mec='white', clip_on=False, lw=2,
+                    marker=None, mec='white', clip_on=False, lw=2,
                     label=label)
 
         ax.set_ylabel('Moyennes mensuelles (mm/mois)',
