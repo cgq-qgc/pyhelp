@@ -14,6 +14,7 @@ import os.path as osp
 
 # ---- Third party imports
 from matplotlib.figure import Figure
+from matplotlib import transforms
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
@@ -283,15 +284,23 @@ class HelpOutput(object):
         """
         fig, ax = self._create_figure(fsize=(8, 6.5))
 
+        text_offset = transforms.ScaledTranslation(
+            0, 3/72, fig.dpi_scale_trans)
+
         area_yearly_avg = self.calc_area_yearly_avg()
         x = 0
+        text_handles = []
         for varname, label in zip(VARNAMES, LABELS):
             x += 1
             var_avg_yearly = area_yearly_avg[varname].mean()
             ax.bar(x, var_avg_yearly, 0.85, align='center',
                    label=label)
-            ax.text(x, var_avg_yearly + 10, "%d\nmm/an" % var_avg_yearly,
-                    ha='center', va='bottom')
+            text_handles.append(
+                ax.text(x, var_avg_yearly, "%d\nmm/an" % var_avg_yearly,
+                        ha='center', va='bottom',
+                        transform=ax.transData + text_offset))
+        fig.canvas.draw()
+
 
         ax.axis(ymin=0, ymax=1200, xmin=0, xmax=7)
         ax.grid(axis='y', color=[0.35, 0.35, 0.35], ls='-', lw=0.5)
