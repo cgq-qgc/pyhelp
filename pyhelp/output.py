@@ -282,7 +282,7 @@ class HelpOutput(object):
         Plot the average yearly values of the water budget in mm/year
         for the whole study area.
         """
-        fig, ax = self._create_figure(fsize=(8.5, 5))
+        fig, ax = self._create_figure(fsize=(9, 5))
 
         text_offset = transforms.ScaledTranslation(
             0, 3/72, fig.dpi_scale_trans)
@@ -308,8 +308,6 @@ class HelpOutput(object):
             bbox = bbox.transformed(ax.transData.inverted())
             ymax = max(ymax, bbox.y1)
         ymax = np.ceil(ymax * 1.025)
-        print(ymax)
-        
         ax.axis(ymin=0, ymax=ymax, xmin=0.25, xmax=6.75)
 
         ax.grid(axis='y', color=[0.35, 0.35, 0.35], ls='-', lw=0.5)
