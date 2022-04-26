@@ -195,7 +195,9 @@ class HelpOutput(object):
 
         return fig, ax
 
-    def plot_area_monthly_avg(self, figname=None):
+    def plot_area_monthly_avg(self, figname: str = None,
+                              year_from: int = -np.inf,
+                              year_to: int = np.inf) -> Figure:
         """
         Plot the monthly average values of the water budget in mm/month
         for the whole study area.
@@ -240,6 +242,8 @@ class HelpOutput(object):
 
         if figname is not None:
             fig.savefig(figname)
+
+        return fig
 
     def plot_area_yearly_avg(self, figname=None):
         """
