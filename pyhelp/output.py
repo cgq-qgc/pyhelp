@@ -19,6 +19,9 @@ import numpy as np
 import h5py
 from scipy.stats import linregress
 
+VARNAMES = ['precip', 'runoff', 'evapo', 'perco',
+            'subrun1', 'subrun2', 'rechg']
+
 
 class HelpOutput(object):
     """
@@ -72,10 +75,21 @@ class HelpOutput(object):
             hdf5file.close()
         print("Data saved successfully.")
 
-    def save_to_csv(self, path_to_csv):
+    def save_to_csv(self, path_to_csv: str,
+                    year_from: int = -np.inf,
+                    year_to: int = np.inf) -> None:
         """
-        Save the grid data and cell yearly average values for each component
-        of the water budget to a csv file.
+        Save in a csv file the annual average values of the components of the
+        water budget calculated for each cell of the grid.
+
+        Parameters
+        ----------
+        year_from : int, optional
+            Year from which the average annual values are calculated.
+            The default is -np.inf.
+        year_to : int, optional
+            Year to which the average annual values are calculated.
+            The default is np.inf.
         """
         print("Saving data to {}...".format(osp.basename(path_to_csv)))
         df = pd.DataFrame(index=self.data['cid'])
@@ -84,7 +98,7 @@ class HelpOutput(object):
         df['lat_dd'] = self.data['lat_dd']
         df['lon_dd'] = self.data['lon_dd']
 
-        yearly_avg = self.calc_cells_yearly_avg()
+        yearly_avg = self.calc_cells_yearly_avg(year_from, year_to)
         for key, value in yearly_avg.items():
             df[key] = value
 
@@ -123,20 +137,36 @@ class HelpOutput(object):
         keys = list(monthly_avg.keys())
         return {key: np.sum(monthly_avg[key], axis=1) for key in keys}
 
-    def calc_cells_yearly_avg(self):
+    def calc_cells_yearly_avg(self, year_from: int = -np.inf,
+                              year_to: int = np.inf) -> dict:
         """
-        Plot the yearly values of the water budget in mm/year for the whole
-        study area.
-        Calcul water budget average yearly values for each cell.
+        Calcul the water budget average yearly values for each cell.
 
-        Return a dictionary that contains a numpy array for each
-        component of the water budget with average values calculated for
-        each cell for which data are available.
+        Parameters
+        ----------
+        year_from : int, optional
+            Year from which the average annual values are calculated.
+            The default is -np.inf.
+        year_to : int, optional
+            Year to which the average annual values are calculated.
+            The default is np.inf.
+
+        Returns
+        -------
+        dict
+           A dictionary that contains, for each component of the water budget,
+           a numpy array of the average yearly values calculated for each cell
+           of the grid.
         """
-        keys = ['precip', 'runoff', 'evapo', 'perco',
-                'subrun1', 'subrun2', 'rechg']
-        return {key: np.mean(np.sum(self.data[key], axis=2), axis=1)
-                for key in keys}
+        years_mask = (
+            (self.data['years'] >= year_from) &
+            (self.data['years'] <= year_to))
+
+        yearly_avg = {}
+        for varname in VARNAMES:
+            vardata = self.data[varname][:, years_mask, :]
+            yearly_avg[varname] = np.mean(np.sum(vardata, axis=2), axis=1)
+        return yearly_avg
 
     # ---- Plots
     def _create_figure(self, fsize=None, margins=None):

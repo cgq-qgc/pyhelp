@@ -67,9 +67,7 @@ def test_calc_help_cells(helpm, output_file):
     helpm.calc_help_cells(output_file, cellnames, tfsoil=-3)
     assert osp.exists(output_file)
 
-
-def test_validate_results(output_file):
-    """Test that the water budget results are as expected. """
+    # Assert that the results are as expected.
     output = HelpOutput(output_file)
     area_yrly_avg = output.calc_area_yearly_avg()
     expected_results = {'precip': 11614.46,
@@ -104,9 +102,57 @@ def test_plot_water_budget(output_dir, output_file):
     assert osp.exists(figfilename)
 
 
+def test_calc_cells_yearly_avg(output_file):
+    """
+    Test that the method to calculate cells yearly average values is
+    working as expected.
+    """
+    output = HelpOutput(output_file)
+
+    # Test calc_cells_yearly_avg without providing any value for the
+    # year_from and year_to argument.
+    yearly_avg = output.calc_cells_yearly_avg()
+    expected_results = {
+        'precip': 1055.8597373343132,
+        'perco': 251.5843470406275,
+        'evapo': 548.5954285729573,
+        'rechg': 130.18263914385366,
+        'runoff': 212.26214164981408,
+        'subrun1': 46.26946108344004,
+        'subrun2': 113.02721698440918}
+    for varname in list(expected_results.keys()):
+        result = np.sum(yearly_avg[varname]) / len(yearly_avg[varname])
+        assert abs(result - expected_results[varname]) < 1, varname
+
+    # Test calc_cells_yearly_avg with non null year_from and year_to argument.
+    yearly_avg = output.calc_cells_yearly_avg(year_from=2003, year_to=2009)
+    expected_results = {
+        'precip': 1086.8448950125246,
+        'perco': 259.85654385728577,
+        'evapo': 550.11140519815,
+        'rechg': 136.12068516893297,
+        'runoff': 226.9635476845988,
+        'subrun1': 47.97935577404126,
+        'subrun2': 121.66539490800443}
+    for varname in list(expected_results.keys()):
+        result = np.sum(yearly_avg[varname]) / len(yearly_avg[varname])
+        assert abs(result - expected_results[varname]) < 1, varname
+
+    # Test calc_cells_yearly_avg with year_from == year_to.
+    yearly_avg = output.calc_cells_yearly_avg(year_from=2003, year_to=2003)
+    expected_results = {
+        'precip': 1144.4142919267927,
+        'perco': 324.15252048559057,
+        'evapo': 492.4243657442988,
+        'rechg': 148.72946963740077,
+        'runoff': 164.32582637467374,
+        'subrun1': 56.33706154407843,
+        'subrun2': 140.96849990912418}
+
+
 def test_save_output_to_csv(output_dir, output_file):
     """
-    Test that saving yarly results to csv is working as expected.
+    Test that saving yearly results to csv is working as expected.
     """
     output = HelpOutput(output_file)
 
