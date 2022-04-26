@@ -301,8 +301,17 @@ class HelpOutput(object):
                         transform=ax.transData + text_offset))
         fig.canvas.draw()
 
+        # Setup axis limits.
+        ymax = 0
+        for handle in text_handles:
+            bbox = handle.get_window_extent(fig.canvas.get_renderer())
+            bbox = bbox.transformed(ax.transData.inverted())
+            ymax = max(ymax, bbox.y1)
+        ymax = np.ceil(ymax * 1.025)
+        print(ymax)
+        
+        ax.axis(ymin=0, ymax=ymax, xmin=0.25, xmax=6.75)
 
-        ax.axis(ymin=0, ymax=1200, xmin=0, xmax=7)
         ax.grid(axis='y', color=[0.35, 0.35, 0.35], ls='-', lw=0.5)
         ax.set_axisbelow(True)
 
