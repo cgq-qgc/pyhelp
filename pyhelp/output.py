@@ -22,7 +22,8 @@ import h5py
 from scipy.stats import linregress
 
 
-VARNAMES = ['precip', 'rechg', 'runoff', 'evapo', 'subrun1', 'subrun2']
+VARNAMES = ['precip', 'rechg', 'runoff', 'evapo',
+            'subrun1', 'subrun2', 'perco']
 LABELS = {'precip': "Précipitations totales",
           'rechg': "Recharge au roc",
           'runoff': "Ruissellement de surface",
@@ -255,7 +256,7 @@ class HelpOutput(object):
         fig, ax = self._create_figure(fsize=(9, 6.5))
 
         months = list(range(1, 13))
-        for varname in VARNAMES:
+        for varname in VARNAMES[:-1]:
             vardataf = avg_monthly[varname]
             yearmask = (
                 (vardataf.index >= year_from) &
@@ -320,7 +321,7 @@ class HelpOutput(object):
         area_yearly_avg = self.calc_area_yearly_avg()
         x = 0
         text_handles = []
-        for varname in VARNAMES:
+        for varname in VARNAMES[:-1]:
             x += 1
 
             vardataf = area_yearly_avg[varname]
@@ -398,7 +399,7 @@ class HelpOutput(object):
         yearly_avg = self.calc_area_yearly_avg()
         mask_years = (years >= year_from) & (years <= year_to)
 
-        for varname in VARNAMES:
+        for varname in VARNAMES[:-1]:
             masked_data = yearly_avg[varname].loc[mask_years]
             masked_years = masked_data.index.values.astype('int')
 
