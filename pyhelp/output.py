@@ -250,7 +250,11 @@ class HelpOutput(object):
 
         months = list(range(1, 13))
         for varname, label in zip(VARNAMES, LABELS):
-            ax.plot(months, np.mean(avg_monthly[varname], axis=0),
+            vardataf = avg_monthly[varname]
+            yearmask = (
+                (vardataf.index >= year_from) &
+                (vardataf.index <= year_to))
+            ax.plot(months, vardataf.loc[yearmask, :].mean(axis=0),
                     marker='o', mec='white', clip_on=False, lw=2,
                     label=label)
 
