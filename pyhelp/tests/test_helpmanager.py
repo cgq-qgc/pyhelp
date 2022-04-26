@@ -22,7 +22,7 @@ from pandas.api.types import is_string_dtype
 # ---- Local library imports
 from pyhelp import __rootdir__
 from pyhelp.managers import HelpManager
-from pyhelp.output import HelpOutput
+from pyhelp.output import HelpOutput, VARNAMES
 
 EXAMPLE_FOLDER = osp.join(osp.dirname(__rootdir__), 'example')
 INPUT_FILES = {
@@ -165,9 +165,7 @@ def test_save_output_to_csv(output_dir, output_file):
     # Assert that the content of the csv is as expected.
     df = pd.read_csv(csvfilename, dtype={'cid': 'str'})
     df = df.set_index('cid', drop=True)
-    assert list(df.columns) == [
-        'lat_dd', 'lon_dd', 'precip', 'runoff', 'evapo', 'perco',
-        'subrun1', 'subrun2', 'rechg']
+    assert list(df.columns) == ['lat_dd', 'lon_dd'] + VARNAMES
     assert df.index.name == 'cid'
     assert len(df) == 98
 
