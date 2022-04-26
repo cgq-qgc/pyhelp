@@ -93,13 +93,38 @@ def test_plot_water_budget(output_dir, output_file):
     output.plot_area_monthly_avg(figfilename)
     assert osp.exists(figfilename)
 
-    figfilename = osp.join(output_dir, 'area_yearly_avg.pdf')
-    output.plot_area_yearly_avg(figfilename)
+    figfilename = osp.join(output_dir, 'area_yearly_series.pdf')
+    fig = output.plot_area_yearly_series(figfilename)
+    assert fig is not None
     assert osp.exists(figfilename)
 
-    figfilename = osp.join(output_dir, 'area_yearly_series.pdf')
-    output.plot_area_yearly_series(figfilename)
+
+def test_plot_area_yearly_avg(output_dir, output_file):
+    """
+    Test that plotting the yearly averages is working expected.
+    """
+    output = HelpOutput(output_file)
+
+    figfilename = osp.join(output_dir, 'area_yearly_avg.pdf')
+    fig = output.plot_area_yearly_avg(
+        figfilename, year_from=2003, year_to=2009)
+
+    assert fig is not None
     assert osp.exists(figfilename)
+
+    children = fig.axes[0].get_children()
+    assert (children[0].get_height() - 1086.8448950125246) < 0.1   # precip
+    assert children[1].get_text() == '1087\nmm/an'
+    assert (children[2].get_height() - 136.12068516893297) < 0.1   # rechg
+    assert children[3].get_text() == '136\nmm/an'
+    assert (children[4].get_height() - 226.9635476845988) < 0.1    # runoff
+    assert children[5].get_text() == '227\nmm/an'
+    assert (children[6].get_height() - 550.11140519815) < 0.1      # evapo
+    assert children[7].get_text() == '550\nmm/an'
+    assert (children[8].get_height() == 47.97935577404126) < 0.1   # subrun1
+    assert children[9].get_text() == '48\nmm/an'
+    assert (children[10].get_height() - 121.66539490800443) < 0.1  # subrun2
+    assert children[11].get_text() == '122\nmm/an'
 
 
 def test_calc_cells_yearly_avg(output_file):
@@ -148,6 +173,9 @@ def test_calc_cells_yearly_avg(output_file):
         'runoff': 164.32582637467374,
         'subrun1': 56.33706154407843,
         'subrun2': 140.96849990912418}
+    for varname in list(expected_results.keys()):
+        result = np.sum(yearly_avg[varname]) / len(yearly_avg[varname])
+        assert abs(result - expected_results[varname]) < 1, varname
 
 
 def test_save_output_to_csv(output_dir, output_file):
