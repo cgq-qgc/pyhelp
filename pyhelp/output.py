@@ -109,21 +109,33 @@ class HelpOutput(object):
     # ---- Calcul
     def calc_area_monthly_avg(self):
         """
-        Calcul the monthly values of the water budget in mm/month for the
+        Calcul the water budget average monthly values in mm/month for the
         whole study area.
 
-        Return a dictionary that contains a 2D numpy array for each
-        component of the water budget with average values calculated over
-        the study area for each month of every year for which data is
-        available.
+        Returns
+        -------
+        dict
+            A dictionary that contains a pandas dataframe for each
+            component of the water budget with monthly average values
+            calculated over the whole study area for each month (columns) and
+            every year (index) for which data is available.
         """
         Np = len(self.data['cid']) - len(self.data['idx_nan'])
-        keys = ['precip', 'runoff', 'evapo', 'perco',
-                'subrun1', 'subrun2', 'rechg']
-        if self.data is None:
-            return {key: np.zeros((1, 12)) for key in keys}
-        else:
-            return {key: np.nansum(self.data[key], axis=0)/Np for key in keys}
+
+        monthly_avg = {}
+        for varname in VARNAMES:
+            if self.data is None:
+                df = pd.DataFrame(
+                    columns=list(range(1, 13)))
+            else:
+                df = pd.DataFrame(
+                    data=np.nansum(self.data[varname], axis=0) / Np,
+                    index=self.data['years'],
+                    columns=list(range(1, 13)))
+            df.columns.name = 'month'
+            df.index.name = 'year'
+            monthly_avg[varname] = df
+        return monthly_avg
 
     def calc_area_yearly_avg(self):
         """
