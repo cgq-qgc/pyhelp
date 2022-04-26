@@ -333,7 +333,7 @@ class HelpOutput(object):
             ax.bar(x, var_avg_yearly, 0.85, align='center',
                    label=LABELS[varname], color=COLORS[varname])
             text_handles.append(
-                ax.text(x, var_avg_yearly, "%d\nmm/an" % var_avg_yearly,
+                ax.text(x, var_avg_yearly, "%d\nmm/an" % round(var_avg_yearly),
                         ha='center', va='bottom',
                         transform=ax.transData + text_offset))
         fig.canvas.draw()
