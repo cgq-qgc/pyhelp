@@ -76,11 +76,20 @@ class HelpOutput(object):
         print("Data saved successfully.")
 
     def save_to_csv(self, path_to_csv: str,
-                    year_min: int = -np.inf,
-                    year_max: int = np.inf) -> None:
+                    year_from: int = -np.inf,
+                    year_to: int = np.inf) -> None:
         """
         Save in a csv file the annual average values of the components of the
         water budget calculated for each cell of the grid.
+
+        Parameters
+        ----------
+        year_from : int, optional
+            Year from which the average annual values are calculated.
+            The default is -np.inf.
+        year_to : int, optional
+            Year to which the average annual values are calculated.
+            The default is np.inf.
         """
         print("Saving data to {}...".format(osp.basename(path_to_csv)))
         df = pd.DataFrame(index=self.data['cid'])
@@ -89,7 +98,7 @@ class HelpOutput(object):
         df['lat_dd'] = self.data['lat_dd']
         df['lon_dd'] = self.data['lon_dd']
 
-        yearly_avg = self.calc_cells_yearly_avg(year_min, year_max)
+        yearly_avg = self.calc_cells_yearly_avg(year_from, year_to)
         for key, value in yearly_avg.items():
             df[key] = value
 
@@ -128,19 +137,19 @@ class HelpOutput(object):
         keys = list(monthly_avg.keys())
         return {key: np.sum(monthly_avg[key], axis=1) for key in keys}
 
-    def calc_cells_yearly_avg(self, year_min: int = -np.inf,
-                              year_max: int = np.inf) -> dict:
+    def calc_cells_yearly_avg(self, year_from: int = -np.inf,
+                              year_to: int = np.inf) -> dict:
         """
         Calcul the water budget average yearly values for each cell.
 
         Parameters
         ----------
-        year_min : int, optional
-            Minimum year of the period over which the average annual values
-            are calculated . The default is -np.inf.
-        year_max : int, optional
-            Maximum year of the period over which the average annual values
-            are calculated . The default is np.inf.
+        year_from : int, optional
+            Year from which the average annual values are calculated.
+            The default is -np.inf.
+        year_to : int, optional
+            Year to which the average annual values are calculated.
+            The default is np.inf.
 
         Returns
         -------
@@ -150,8 +159,8 @@ class HelpOutput(object):
            of the grid.
         """
         years_mask = (
-            (self.data['years'] >= year_min) &
-            (self.data['years'] <= year_max))
+            (self.data['years'] >= year_from) &
+            (self.data['years'] <= year_to))
 
         yearly_avg = {}
         for varname in VARNAMES:
