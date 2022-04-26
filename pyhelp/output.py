@@ -139,16 +139,20 @@ class HelpOutput(object):
 
     def calc_area_yearly_avg(self):
         """
-        Calcul the average yearly values of the water budget in mm/year
-        for the whole study area.
+        Calcul the water budget average yearly values in mm/year for the
+        whole study area.
 
-        Return a dictionary that contains a numpy array for each
-        component of the water budget with average values calculated over
-        the study area for every year for which data is available.
+        Returns
+        -------
+        dict
+            A dictionary that contains pandas dataframe for each
+            component of the water budget with with yearly average values
+            calculated over the whole study area for each year (index) for
+            which data is available.
         """
         monthly_avg = self.calc_area_monthly_avg()
-        keys = list(monthly_avg.keys())
-        return {key: np.sum(monthly_avg[key], axis=1) for key in keys}
+        return {varname: monthly_avg[varname].sum(axis=1) for
+                varname in VARNAMES}
 
     def calc_cells_yearly_avg(self, year_from: int = -np.inf,
                               year_to: int = np.inf) -> dict:
