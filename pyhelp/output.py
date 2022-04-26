@@ -238,7 +238,7 @@ class HelpOutput(object):
         l6, = ax.plot(months, np.mean(avg_monthly['subrun2'], axis=0),
                       marker='o', mec='white', clip_on=False, lw=2)
 
-        ax.set_ylabel('Composantes du bilan hydrologique\n(mm/mois)',
+        ax.set_ylabel('Moyennes mensuelles (mm/mois)',
                       fontsize=16, labelpad=10)
         ax.set_xlabel('Mois', fontsize=16, labelpad=10)
         ax.axis(ymin=-5)
