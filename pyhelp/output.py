@@ -224,19 +224,21 @@ class HelpOutput(object):
             The matplotlib figure instance created by this method.
         """
         avg_monthly = self.calc_area_monthly_avg()
-        months = range(1, 13)
-        l1, = ax.plot(months, np.mean(avg_monthly['precip'], axis=0),
-                      marker='o', mec='white', clip_on=False, lw=2)
-        l2, = ax.plot(months, np.mean(avg_monthly['rechg'], axis=0),
-                      marker='o', mec='white', clip_on=False, lw=2)
-        l3, = ax.plot(months, np.mean(avg_monthly['runoff'], axis=0),
-                      marker='o', mec='white', clip_on=False, lw=2)
-        l4, = ax.plot(months, np.mean(avg_monthly['evapo'], axis=0),
-                      marker='o', mec='white', clip_on=False, lw=2)
-        l5, = ax.plot(months, np.mean(avg_monthly['subrun1'], axis=0),
-                      marker='o', mec='white', clip_on=False, lw=2)
-        l6, = ax.plot(months, np.mean(avg_monthly['subrun2'], axis=0),
-                      marker='o', mec='white', clip_on=False, lw=2)
+
+        fig, ax = self._create_figure(fsize=(9, 6.5))
+
+        months = list(range(1, 13))
+        varnames = ['precip', 'rechg', 'runoff', 'evapo', 'subrun1', 'subrun2']
+        labels = ["Précipitations totales",
+                  "Recharge au roc",
+                  "Ruissellement de surface",
+                  "Évapotranspiration",
+                  "Ruissellement hypodermique superficiel",
+                  "Ruissellement hypodermique profond"]
+        for varname, label in zip(varnames, labels):
+            ax.plot(months, np.mean(avg_monthly[varname], axis=0),
+                    marker='o', mec='white', clip_on=False, lw=2,
+                    label=label)
 
         ax.set_ylabel('Moyennes mensuelles (mm/mois)',
                       fontsize=16, labelpad=10)
@@ -244,19 +246,17 @@ class HelpOutput(object):
         ax.axis(ymin=-5)
         ax.grid(axis='both', color=[0.35, 0.35, 0.35], ls='-', lw=0.5)
         ax.set_xticks(months)
+
+        # http://bdl.oqlf.gouv.qc.ca/bdl/gabarit_bdl.asp?id=3619
         ax.set_xticklabels(['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul',
                             'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'])
         ax.tick_params(axis='both', direction='out', labelsize=12)
 
-        lines = [l1, l2, l3, l4, l5, l6]
-        labels = ["Précipitations totales", "Recharge au roc",
-                  "Ruissellement de surface", "Évapotranspiration",
-                  "Ruissellement hypodermique superficiel",
-                  "Ruissellement hypodermique profond"]
-        legend = ax.legend(lines, labels, numpoints=1, fontsize=12,
-                           borderaxespad=0, loc='lower left', borderpad=0.5,
-                           bbox_to_anchor=(0, 1), ncol=2)
-        legend.draw_frame(False)
+        ax.legend(
+            numpoints=1, fontsize=12, frameon=False, borderaxespad=0,
+            loc='lower left', borderpad=0.5, bbox_to_anchor=(0, 1), ncol=2)
+
+        fig.tight_layout()
 
         if figname is not None:
             fig.savefig(figname)
