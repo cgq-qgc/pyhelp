@@ -81,22 +81,52 @@ def test_calc_help_cells(helpm, output_file):
         assert abs(np.sum(area_yrly_avg[key]) - expected_results[key]) < 1, key
 
 
-def test_plot_water_budget(output_dir, output_file):
+def test_plot_area_monthly_avg(output_dir, output_file):
     """
     Test that the water budget plots are created and saved as expected.
-
-    Regression test for Issue #29.
     """
     output = HelpOutput(output_file)
 
     figfilename = osp.join(output_dir, 'area_monthly_avg.pdf')
-    output.plot_area_monthly_avg(figfilename)
-    assert osp.exists(figfilename)
+    fig = output.plot_area_monthly_avg(
+        figfilename, year_from=2003, year_to=2009)
 
-    figfilename = osp.join(output_dir, 'area_yearly_series.pdf')
-    fig = output.plot_area_yearly_series(figfilename)
     assert fig is not None
     assert osp.exists(figfilename)
+
+    children = fig.axes[0].get_children()
+    assert (children[0].get_ydata().sum() - 1086.8448950125246) < 0.01  # precip
+    assert (children[1].get_ydata().sum() - 136.12068516893297) < 0.01  # rechg
+    assert (children[2].get_ydata().sum() - 226.9635476845988) < 0.01   # runoff
+    assert (children[3].get_ydata().sum() - 550.11140519815) < 0.01     # evapo
+    assert (children[4].get_ydata().sum() - 47.97935577404126) < 0.01   # subrun1
+    assert (children[5].get_ydata().sum() - 121.66539490800443) < 0.01  # subrun2
+
+
+def test_plot_area_yearly_series(output_dir, output_file):
+    """
+    Test that plotting the yearly values is working expected.
+    """
+    output = HelpOutput(output_file)
+
+    figfilename = osp.join(output_dir, 'area_yearly_series.pdf')
+    fig = output.plot_area_yearly_series(
+        figfilename, year_from=2003, year_to=2009)
+
+    assert fig is not None
+    assert osp.exists(figfilename)
+
+    expected_xdata = [2003, 2004, 2005, 2006, 2007, 2008, 2009]
+
+    children = fig.axes[0].get_children()
+    for i in range(12):
+        assert list(children[i].get_xdata()) == expected_xdata
+    assert (children[0].get_ydata().mean() - 1086.8448950125246) < 0.01   # precip
+    assert (children[2].get_ydata().mean() - 136.12068516893297) < 0.01   # rechg
+    assert (children[4].get_ydata().mean() - 226.9635476845988) < 0.01    # runoff
+    assert (children[6].get_ydata().mean() - 550.11140519815) < 0.01      # evapo
+    assert (children[8].get_ydata().mean() - 47.97935577404126) < 0.01    # subrun1
+    assert (children[10].get_ydata().mean() - 121.66539490800443) < 0.01  # subrun2
 
 
 def test_plot_area_yearly_avg(output_dir, output_file):
@@ -113,17 +143,17 @@ def test_plot_area_yearly_avg(output_dir, output_file):
     assert osp.exists(figfilename)
 
     children = fig.axes[0].get_children()
-    assert (children[0].get_height() - 1086.8448950125246) < 0.1   # precip
+    assert (children[0].get_height() - 1086.8448950125246) < 0.01   # precip
     assert children[1].get_text() == '1087\nmm/an'
-    assert (children[2].get_height() - 136.12068516893297) < 0.1   # rechg
+    assert (children[2].get_height() - 136.12068516893297) < 0.01   # rechg
     assert children[3].get_text() == '136\nmm/an'
-    assert (children[4].get_height() - 226.9635476845988) < 0.1    # runoff
+    assert (children[4].get_height() - 226.9635476845988) < 0.01    # runoff
     assert children[5].get_text() == '227\nmm/an'
-    assert (children[6].get_height() - 550.11140519815) < 0.1      # evapo
+    assert (children[6].get_height() - 550.11140519815) < 0.01      # evapo
     assert children[7].get_text() == '550\nmm/an'
-    assert (children[8].get_height() == 47.97935577404126) < 0.1   # subrun1
+    assert (children[8].get_height() - 47.97935577404126) < 0.01    # subrun1
     assert children[9].get_text() == '48\nmm/an'
-    assert (children[10].get_height() - 121.66539490800443) < 0.1  # subrun2
+    assert (children[10].get_height() - 121.66539490800443) < 0.01  # subrun2
     assert children[11].get_text() == '122\nmm/an'
 
 
