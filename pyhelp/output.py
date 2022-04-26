@@ -281,10 +281,30 @@ class HelpOutput(object):
 
         return fig
 
-    def plot_area_yearly_avg(self, figname=None):
+    def plot_area_yearly_avg(self, figname: str = None,
+                             year_from: int = -np.inf,
+                             year_to: int = np.inf) -> Figure:
         """
-        Plot the average yearly values of the water budget in mm/year
+        Plot the yearly average values of the water budget in mm/year
         for the whole study area.
+
+        Parameters
+        ----------
+        figname : str, optional
+            The abolute path of the file where to save the figure to disk.
+            Note that the format of the file is inferred from the extension of
+            "figname".
+        year_from : int, optional
+            Year from which the average yearly values are calculated.
+            The default is -np.inf.
+        year_to : int, optional
+            Year to which the average yearly values are calculated.
+            The default is np.inf.
+
+        Returns
+        -------
+        Figure
+            The matplotlib figure instance created by this method.
         """
         fig, ax = self._create_figure(fsize=(9, 5))
 
@@ -296,7 +316,13 @@ class HelpOutput(object):
         text_handles = []
         for varname, label in zip(VARNAMES, LABELS):
             x += 1
-            var_avg_yearly = area_yearly_avg[varname].mean()
+
+            vardataf = area_yearly_avg[varname]
+            yearmask = (
+                (vardataf.index >= year_from) &
+                (vardataf.index <= year_to))
+            var_avg_yearly = vardataf.loc[yearmask].mean()
+
             ax.bar(x, var_avg_yearly, 0.85, align='center',
                    label=label)
             text_handles.append(
@@ -331,6 +357,8 @@ class HelpOutput(object):
 
         if figname is not None:
             fig.savefig(figname)
+
+        return fig
 
     def plot_area_yearly_series(self, figname=None):
         """
