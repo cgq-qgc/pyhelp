@@ -361,85 +361,68 @@ class HelpOutput(object):
 
         return fig
 
-    def plot_area_yearly_series(self, figname=None):
+    def plot_area_yearly_series(self, figname: str = None,
+                                year_from: int = -np.inf,
+                                year_to: int = np.inf) -> Figure:
         """
-        Plot the yearly values of the water budget in mm/year for the whole
-        study area.
+        Plot the yearly values of the water budget in mm/year calculated
+        over the whole study area.
+
+        Parameters
+        ----------
+        figname : str, optional
+            The abolute path of the file where to save the figure to disk.
+            Note that the format of the file is inferred from the extension of
+            "figname".
+        year_from : int, optional
+            Minimum year of the period over which the annual values
+            are plotted. The default is -np.inf.
+        year_to : int, optional
+            Maximum year of the period over which the annual values
+            are calculated. The default is np.inf.
+
+        Returns
+        -------
+        Figure
+            The matplotlib figure instance created by this method.
         """
         fig, ax = self._create_figure(
             fsize=(9, 6.5), margins=(1.5, 1, 0.25, 0.7))
 
         years = self.data['years']
         yearly_avg = self.calc_area_yearly_avg()
+        mask_years = (years >= year_from) & (years <= year_to)
 
-        # Precipitation
-        precip = yearly_avg['precip']
-        l1, = ax.plot(years, precip, marker='o', mec='white',
-                      clip_on=False, lw=2, color='#1f77b4')
-        slope, intercept, r_val, p_val, std_err = linregress(years, precip)
-        ax.plot(years, years * slope + intercept, marker=None, mec='white',
-                clip_on=False, lw=1, dashes=[5, 3], color='#1f77b4')
+        for varname, label, color in zip(VARNAMES, LABELS, COLORS):
+            masked_data = yearly_avg[varname].loc[mask_years]
+            masked_years = masked_data.index.values.astype('int')
 
-        # Recharge
-        rechg = yearly_avg['rechg']
-        l2, = ax.plot(years, rechg, marker='o', mec='white', clip_on=False,
-                      lw=2, color='#ff7f0e')
-        slope, intercept, r_val, p_val, std_err = linregress(years, rechg)
-        ax.plot(years, years * slope + intercept, marker=None, mec='white',
-                clip_on=False, lw=1, dashes=[5, 3], color='#ff7f0e')
+            ax.plot(masked_years, masked_data, marker='o', mec='white',
+                    clip_on=False, lw=2, color=color, label=label)
 
-        # Runoff
-        runoff = yearly_avg['runoff']
-        l3, = ax.plot(years, runoff, marker='o', mec='white', clip_on=False,
-                      lw=2, color='#2ca02c')
-        slope, intercept, r_val, p_val, std_err = linregress(years, runoff)
-        ax.plot(years, years * slope + intercept, marker=None, mec='white',
-                clip_on=False, lw=1, dashes=[5, 3], color='#2ca02c')
+            slope, intercept, r_val, p_val, std_err = linregress(
+                masked_years, masked_data.values)
 
-        # Evapotranspiration
-        evapo = yearly_avg['evapo']
-        l4, = ax.plot(years, evapo, marker='o', mec='white', clip_on=False,
-                      lw=2, color='#d62728')
-        slope, intercept, r_val, p_val, std_err = linregress(years, evapo)
-        ax.plot(years, years * slope + intercept, marker=None, mec='white',
-                clip_on=False, lw=1, dashes=[5, 3], color='#d62728')
-
-        # Superficial subsurface runoff
-        subrun1 = yearly_avg['subrun1']
-        l5, = ax.plot(years, subrun1, marker='o', mec='white',
-                      clip_on=False, lw=2, color='#9467bd')
-        slope, intercept, r_val, p_val, std_err = linregress(years, subrun1)
-        ax.plot(years, years * slope + intercept, marker=None, mec='white',
-                clip_on=False, lw=1, dashes=[5, 3], color='#9467bd')
-
-        # Superficial subsurface runoff
-        subrun2 = yearly_avg['subrun2']
-        l6, = ax.plot(years, subrun2, marker='o', mec='white',
-                      clip_on=False, lw=2, color='#8c564b')
-        slope, intercept, r_val, p_val, std_err = linregress(years, subrun2)
-        ax.plot(years, years * slope + intercept, marker=None, mec='white',
-                clip_on=False, lw=1, dashes=[5, 3], color='#8c564b')
+            ax.plot(masked_years, masked_years * slope + intercept,
+                    marker=None, mec='white', clip_on=False, lw=1,
+                    dashes=[5, 3], color=color)
 
         ax.tick_params(axis='both', direction='out', labelsize=12)
-        ax.set_ylabel('Composantes du bilan hydrologique\n(mm/an)',
+        ax.set_ylabel('Composantes annuelles\ndu bilan hydrologique (mm/an)',
                       fontsize=16, labelpad=10)
         ax.set_xlabel('Années', fontsize=16, labelpad=10)
-        ax.axis(ymin=0, ymax=1600)
+        ax.axis(ymin=0)
+        ax.xaxis.get_major_locator().set_params(integer=True)
         ax.grid(axis='y', color=[0.35, 0.35, 0.35], ls='-', lw=0.5)
 
-        lines = [l1, l2, l3, l4, l5, l6]
-        labels = ["Précipitations totales", "Recharge au roc",
-                  "Ruissellement de surface", "Évapotranspiration",
-                  "Ruissellement hypodermique superficiel",
-                  "Ruissellement hypodermique profond"]
-
-        legend = ax.legend(lines, labels, numpoints=1, fontsize=12,
-                           borderaxespad=0, loc='lower left', borderpad=0.5,
-                           bbox_to_anchor=(0, 1), ncol=2)
-        legend.draw_frame(False)
+        ax.legend(numpoints=1, fontsize=12, frameon=False,
+                  borderaxespad=0, loc='lower left', borderpad=0.5,
+                  bbox_to_anchor=(0, 1), ncol=2)
 
         if figname is not None:
             fig.savefig(figname)
+
+        return fig
 
 
 if __name__ == "__main__":
