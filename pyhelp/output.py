@@ -93,11 +93,11 @@ class HelpOutput(object):
         Parameters
         ----------
         year_from : int, optional
-            Year from which the average annual values are calculated.
-            The default is -np.inf.
+            Minimum year of the period over which the average annual values
+            are calculated. The default is -np.inf.
         year_to : int, optional
-            Year to which the average annual values are calculated.
-            The default is np.inf.
+            Maximum year of the period over which the average annual values
+            are calculated. The default is np.inf.
         """
         print("Saving data to {}...".format(osp.basename(path_to_csv)))
         df = pd.DataFrame(index=self.data['cid'])
@@ -169,11 +169,11 @@ class HelpOutput(object):
         Parameters
         ----------
         year_from : int, optional
-            Year from which the average annual values are calculated.
-            The default is -np.inf.
+            Minimum year of the period over which the average annual values
+            are calculated. The default is -np.inf.
         year_to : int, optional
-            Year to which the average annual values are calculated.
-            The default is np.inf.
+            Maximum year of the period over which the average annual values
+            are calculated. The default is np.inf.
 
         Returns
         -------
@@ -233,11 +233,11 @@ class HelpOutput(object):
             Note that the format of the file is inferred from the extension of
             "figname".
         year_from : int, optional
-            Year from which the average monthly values are calculated.
-            The default is -np.inf.
+            Minimum year of the period over which the average monthly values
+            are calculated. The default is -np.inf.
         year_to : int, optional
-            Year to which the average monthly values are calculated.
-            The default is np.inf.
+            Maximum year of the period over which the average monthly values
+            are calculated. The default is np.inf.
 
         Returns
         -------
@@ -295,11 +295,11 @@ class HelpOutput(object):
             Note that the format of the file is inferred from the extension of
             "figname".
         year_from : int, optional
-            Year from which the average yearly values are calculated.
-            The default is -np.inf.
+            Minimum year of the period over which the average annual values
+            are calculated. The default is -np.inf.
         year_to : int, optional
-            Year to which the average yearly values are calculated.
-            The default is np.inf.
+            Maximum year of the period over which the average annual values
+            are calculated. The default is np.inf.
 
         Returns
         -------
