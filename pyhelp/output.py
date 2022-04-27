@@ -262,7 +262,7 @@ class HelpOutput(object):
                 (vardataf.index >= year_from) &
                 (vardataf.index <= year_to))
             ax.plot(months, vardataf.loc[yearmask, :].mean(axis=0),
-                    marker='o', mec='white', clip_on=False, lw=2,
+                    marker='o', ms=5, mec='white', clip_on=False, lw=2,
                     label=LABELS[varname], color=COLORS[varname])
 
         ax.set_ylabel('Moyennes mensuelles (mm/mois)',
@@ -403,7 +403,7 @@ class HelpOutput(object):
             masked_data = yearly_avg[varname].loc[mask_years]
             masked_years = masked_data.index.values.astype('int')
 
-            ax.plot(masked_years, masked_data, marker='o', mec='white',
+            ax.plot(masked_years, masked_data, marker='o', mec='white', ms=5,
                     clip_on=False, lw=2, color=COLORS[varname],
                     label=LABELS[varname])
 
