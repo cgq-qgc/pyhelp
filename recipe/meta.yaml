@@ -13,6 +13,8 @@ requirements:
     - numpy
     - m2w64-toolchain
     - libpython
+    - setuptools=58
+    - liblief=0.10
   run:
     - python
     - numpy
