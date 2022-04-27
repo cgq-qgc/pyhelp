@@ -24,7 +24,7 @@ skip_commits:
     - '**/*.jpg'
 
 image:
-  - Previous Visual Studio 2019
+  - Visual Studio 2019
 
 environment:
   global:
