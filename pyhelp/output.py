@@ -345,7 +345,7 @@ class HelpOutput(object):
             bbox = handle.get_window_extent(fig.canvas.get_renderer())
             bbox = bbox.transformed(ax.transData.inverted())
             ymax = max(ymax, bbox.y1)
-        ymax = np.ceil(ymax * 1.025)
+        ymax = np.ceil(ymax * 1.05)
         ax.axis(ymin=0, ymax=ymax, xmin=0.25, xmax=6.75)
 
         ax.grid(axis='y', color=[0.35, 0.35, 0.35], ls='-', lw=0.5)
