@@ -265,8 +265,9 @@ class HelpOutput(object):
                     marker='o', ms=5, mec='white', clip_on=False, lw=2,
                     label=LABELS[varname], color=COLORS[varname])
 
-        ax.set_ylabel('Moyennes mensuelles (mm/mois)',
-                      fontsize=16, labelpad=10)
+        ax.set_ylabel(
+            'Composantes mensuelles moyennes\ndu bilan hydrologique (mm/mois)',
+            fontsize=16, labelpad=10)
         ax.set_xlabel('Mois', fontsize=16, labelpad=10)
         ax.axis(ymin=-5)
         ax.grid(axis='y', color=[0.35, 0.35, 0.35], ls='-', lw=0.5)
@@ -352,7 +353,9 @@ class HelpOutput(object):
 
         ax.tick_params(axis='y', direction='out', labelsize=12)
         ax.tick_params(axis='x', direction='out', length=0)
-        ax.set_ylabel('Moyennes annuelles (mm/an)', fontsize=16, labelpad=10)
+        ax.set_ylabel(
+            'Composantes annuelles moyennes\ndu bilan hydrologique (mm/an)',
+            fontsize=16, labelpad=10)
         ax.set_xticklabels([])
 
         ax.legend(
