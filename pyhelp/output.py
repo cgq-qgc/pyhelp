@@ -255,20 +255,19 @@ class HelpOutput(object):
 
         fig, ax = self._create_figure(fsize=(9, 6.5))
 
+        mask_years = (
+            (self.data['years'] >= year_from) &
+            (self.data['years'] <= year_to))
         months = list(range(1, 13))
         for varname in VARNAMES[:-1]:
             vardataf = avg_monthly[varname]
-            yearmask = (
-                (vardataf.index >= year_from) &
-                (vardataf.index <= year_to))
-            ax.plot(months, vardataf.loc[yearmask, :].mean(axis=0),
+            ax.plot(months, vardataf.loc[mask_years, :].mean(axis=0),
                     marker='o', ms=5, mec='white', clip_on=False, lw=2,
                     label=LABELS[varname], color=COLORS[varname])
 
         ax.set_ylabel(
             'Composantes mensuelles moyennes\ndu bilan hydrologique (mm/mois)',
             fontsize=16, labelpad=10)
-        ax.set_xlabel('Mois', fontsize=16, labelpad=10)
         ax.axis(ymin=-5)
         ax.grid(axis='y', color=[0.35, 0.35, 0.35], ls='-', lw=0.5)
         ax.set_xticks(months)
@@ -282,8 +281,19 @@ class HelpOutput(object):
             numpoints=1, fontsize=12, frameon=False, borderaxespad=0,
             loc='lower left', borderpad=0.5, bbox_to_anchor=(0, 1), ncol=2)
 
+        # Setup xlabel.
+        masked_years = self.data['years'][mask_years]
+        year_min = masked_years.min()
+        year_max = masked_years.max()
+        if year_min == year_max:
+            text = f"{year_min:0.0f}"
+        else:
+            text = f"{year_min:0.0f} - {year_max:0.0f}"
+        ax.set_xlabel(text, fontsize=16, labelpad=10)
+
         fig.tight_layout()
 
+        # Save figure to file.
         if figname is not None:
             fig.savefig(figname)
 
@@ -320,16 +330,17 @@ class HelpOutput(object):
             0, 3/72, fig.dpi_scale_trans)
 
         area_yearly_avg = self.calc_area_yearly_avg()
+        mask_years = (
+            (self.data['years'] >= year_from) &
+            (self.data['years'] <= year_to))
+
         x = 0
         text_handles = []
         for varname in VARNAMES[:-1]:
             x += 1
 
             vardataf = area_yearly_avg[varname]
-            yearmask = (
-                (vardataf.index >= year_from) &
-                (vardataf.index <= year_to))
-            var_avg_yearly = vardataf.loc[yearmask].mean()
+            var_avg_yearly = vardataf.loc[mask_years].mean()
 
             ax.bar(x, var_avg_yearly, 0.85, align='center',
                    label=LABELS[varname], color=COLORS[varname])
@@ -357,6 +368,16 @@ class HelpOutput(object):
             'Composantes annuelles moyennes\ndu bilan hydrologique (mm/an)',
             fontsize=16, labelpad=10)
         ax.set_xticklabels([])
+
+        # Setup xlabel.
+        masked_years = self.data['years'][mask_years]
+        year_min = masked_years.min()
+        year_max = masked_years.max()
+        if year_min == year_max:
+            text = f"{year_min:0.0f}"
+        else:
+            text = f"{year_min:0.0f} - {year_max:0.0f}"
+        ax.set_xlabel(text, fontsize=16, labelpad=10)
 
         ax.legend(
             numpoints=1, fontsize=12, frameon=False, borderaxespad=0,
