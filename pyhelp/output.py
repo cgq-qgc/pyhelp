@@ -281,15 +281,23 @@ class HelpOutput(object):
             numpoints=1, fontsize=12, frameon=False, borderaxespad=0,
             loc='lower left', borderpad=0.5, bbox_to_anchor=(0, 1), ncol=2)
 
-        # Setup xlabel.
+        # Add note about year considered for the hydrologic budget.
         masked_years = self.data['years'][mask_years]
         year_min = masked_years.min()
         year_max = masked_years.max()
         if year_min == year_max:
-            text = f"{year_min:0.0f}"
+            text = f"Année considérée pour le bilan : {year_min:0.0f}"
         else:
-            text = f"{year_min:0.0f} - {year_max:0.0f}"
-        ax.set_xlabel(text, fontsize=16, labelpad=10)
+            text = "Années considérées pour le bilan : "
+            text += f"{year_min:0.0f} - {year_max:0.0f}"
+
+        fig.canvas.draw()
+        bbox_bottom, _ = ax.xaxis.get_ticklabel_extents(
+            fig.canvas.get_renderer())
+        y0 = ax.transAxes.inverted().transform(bbox_bottom)[0][1]
+        offset = transforms.ScaledTranslation(0, -12/72, fig.dpi_scale_trans)
+        ax.text(0, y0, text, transform=ax.transAxes + offset,
+                va='top', ha='left')
 
         fig.tight_layout()
 
@@ -369,20 +377,28 @@ class HelpOutput(object):
             fontsize=16, labelpad=10)
         ax.set_xticklabels([])
 
-        # Setup xlabel.
-        masked_years = self.data['years'][mask_years]
-        year_min = masked_years.min()
-        year_max = masked_years.max()
-        if year_min == year_max:
-            text = f"{year_min:0.0f}"
-        else:
-            text = f"{year_min:0.0f} - {year_max:0.0f}"
-        ax.set_xlabel(text, fontsize=16, labelpad=10)
-
         ax.legend(
             numpoints=1, fontsize=12, frameon=False, borderaxespad=0,
             loc='lower left', borderpad=0.5, bbox_to_anchor=(0, 1, 1, 1),
             ncol=2)
+
+        # Add note about year considered for the hydrologic budget.
+        masked_years = self.data['years'][mask_years]
+        year_min = masked_years.min()
+        year_max = masked_years.max()
+        if year_min == year_max:
+            text = f"Année considérée pour le bilan : {year_min:0.0f}"
+        else:
+            text = "Années considérées pour le bilan : "
+            text += f"{year_min:0.0f} - {year_max:0.0f}"
+
+        fig.canvas.draw()
+        bbox_bottom, _ = ax.xaxis.get_ticklabel_extents(
+            fig.canvas.get_renderer())
+        y0 = ax.transAxes.inverted().transform(bbox_bottom)[0][1]
+        offset = transforms.ScaledTranslation(0, -6/72, fig.dpi_scale_trans)
+        ax.text(0, y0, text, transform=ax.transAxes + offset,
+                va='top', ha='left')
 
         fig.tight_layout()
 
