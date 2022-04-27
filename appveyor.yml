@@ -80,7 +80,7 @@ test_script:
 after_test:
   - IF ["%APPVEYOR_PULL_REQUEST_NUMBER%"]==[""] (%PYTHON%/python.exe setup.py sdist bdist_wheel)
   - 7z a -tzip dist/example_pyhelp_%PYHELP_VERSION%.zip example/*.csv example/help_example.py example/CWEEDS/*
-  - conda-build recipe --no-test --output-folder dist --python %PYTHON_VERSION%
+  - IF ["%APPVEYOR_PULL_REQUEST_NUMBER%"]==[""] (conda-build recipe --no-test --output-folder dist --python %PYTHON_VERSION%)
 
 artifacts:
   - path: 'dist/*.whl'
