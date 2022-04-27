@@ -38,6 +38,10 @@ Then, PyHELP can be installed, along with all its dependencies, by executing the
 
 `conda install -c cgq-qgc pyhelp`
 
+When a new released version of PyHELP is made available on the [Anaconda cgq-qgc channel](https://anaconda.org/cgq-qgc/pyhelp), PyHELP can be updated by executing the following command in a terminal:
+
+`conda update -c cgq-qgc pyhelp`
+
 [![Anaconda-Server Badge](https://anaconda.org/cgq-qgc/pyhelp/badges/installer/pypi.svg)](https://pypi.org/project/pyhelp/)
 
 It is also possible to install PyHELP with [pip](https://pypi.org/project/pip/), but be aware that pip installations are for advanced users.
