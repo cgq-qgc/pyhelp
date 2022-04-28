@@ -1,6 +1,7 @@
 [run]
 omit = 
     */tests/*
+    */scripts/*
 data_file = .coverage
 
 [report]
