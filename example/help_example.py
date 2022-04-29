@@ -53,8 +53,10 @@ if __name__ == '__main__':
         path_to_hdf5=workdir + 'help_example.out',
         cellnames=cellnames,
         tfsoil=-3,
-        sf_edepth=0.15,
-        sf_ulai=1)
+        sf_edepth=0.15,  # Scaling factor Evaporative Zone Depth
+        sf_ulai=1,       # Maximum Leaf Area Index
+        sf_cn=1.15       # Scaling factor Curve Number
+        )
 
     # Export and save annual averages of HELP output values to a csv file.
     output_help.save_to_csv(osp.join(workdir, 'help_example_yearly.csv'))
