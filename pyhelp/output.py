@@ -429,7 +429,8 @@ class HelpOutput(object):
 
     def plot_area_yearly_series(self, figname: str = None,
                                 year_from: int = -np.inf,
-                                year_to: int = np.inf) -> Figure:
+                                year_to: int = np.inf,
+                                fig_title: str = None) -> Figure:
         """
         Plot the yearly values of the water budget in mm/year calculated
         over the whole study area.
@@ -446,6 +447,8 @@ class HelpOutput(object):
         year_to : int, optional
             Maximum year of the period over which the annual values
             are calculated. The default is np.inf.
+        fig_title : str, optional
+            A title to add at the top of the figure.
 
         Returns
         -------
@@ -485,6 +488,15 @@ class HelpOutput(object):
         ax.legend(numpoints=1, fontsize=12, frameon=False,
                   borderaxespad=0, loc='lower left', borderpad=0.5,
                   bbox_to_anchor=(0, 1), ncol=2)
+
+        # Add the figure title if provided in argument.
+        if fig_title is not None:
+            fig.suptitle(fig_title, fontsize=16)
+
+        # We call tight_layout two times to make sure the layout is
+        # adjusted correctly.
+        fig.tight_layout()
+        fig.tight_layout()
 
         if figname is not None:
             fig.savefig(figname)
