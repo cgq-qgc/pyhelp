@@ -84,7 +84,8 @@ def test_calc_help_cells(helpm, output_file):
         assert abs(np.sum(area_yrly_avg[key]) - expected_results[key]) < 1, key
 
 
-def test_plot_area_monthly_avg(output_dir, output_file):
+@pytest.mark.parametrize('fig_title', [None, 'Exemple figure title'])
+def test_plot_area_monthly_avg(output_dir, output_file, fig_title):
     """
     Test that the water budget plots are created and saved as expected.
     """
@@ -92,7 +93,7 @@ def test_plot_area_monthly_avg(output_dir, output_file):
 
     figfilename = osp.join(output_dir, 'area_monthly_avg.pdf')
     fig = output.plot_area_monthly_avg(
-        figfilename, year_from=2003, year_to=2009)
+        figfilename, year_from=2003, year_to=2009, fig_title=fig_title)
 
     assert fig is not None
     assert osp.exists(figfilename)
@@ -105,8 +106,14 @@ def test_plot_area_monthly_avg(output_dir, output_file):
     assert (children[4].get_ydata().sum() - 47.97935577404126) < 0.01   # subrun1
     assert (children[5].get_ydata().sum() - 121.66539490800443) < 0.01  # subrun2
 
+    if fig_title is None:
+        assert fig._suptitle is None
+    else:
+        assert fig._suptitle.get_text() == fig_title
 
-def test_plot_area_yearly_series(output_dir, output_file):
+
+@pytest.mark.parametrize('fig_title', [None, 'Exemple figure title'])
+def test_plot_area_yearly_series(output_dir, output_file, fig_title):
     """
     Test that plotting the yearly values is working expected.
     """
@@ -114,7 +121,7 @@ def test_plot_area_yearly_series(output_dir, output_file):
 
     figfilename = osp.join(output_dir, 'area_yearly_series.pdf')
     fig = output.plot_area_yearly_series(
-        figfilename, year_from=2003, year_to=2009)
+        figfilename, year_from=2003, year_to=2009, fig_title=fig_title)
 
     assert fig is not None
     assert osp.exists(figfilename)
@@ -131,8 +138,14 @@ def test_plot_area_yearly_series(output_dir, output_file):
     assert (children[8].get_ydata().mean() - 47.97935577404126) < 0.01    # subrun1
     assert (children[10].get_ydata().mean() - 121.66539490800443) < 0.01  # subrun2
 
+    if fig_title is None:
+        assert fig._suptitle is None
+    else:
+        assert fig._suptitle.get_text() == fig_title
 
-def test_plot_area_yearly_avg(output_dir, output_file):
+
+@pytest.mark.parametrize('fig_title', [None, 'Exemple figure title'])
+def test_plot_area_yearly_avg(output_dir, output_file, fig_title):
     """
     Test that plotting the yearly averages is working expected.
     """
@@ -140,7 +153,7 @@ def test_plot_area_yearly_avg(output_dir, output_file):
 
     figfilename = osp.join(output_dir, 'area_yearly_avg.pdf')
     fig = output.plot_area_yearly_avg(
-        figfilename, year_from=2003, year_to=2009)
+        figfilename, year_from=2003, year_to=2009, fig_title=fig_title)
 
     assert fig is not None
     assert osp.exists(figfilename)
@@ -158,6 +171,11 @@ def test_plot_area_yearly_avg(output_dir, output_file):
     assert children[9].get_text() == '48\nmm/an'
     assert (children[10].get_height() - 121.66539490800443) < 0.01  # subrun2
     assert children[11].get_text() == '122\nmm/an'
+
+    if fig_title is None:
+        assert fig._suptitle is None
+    else:
+        assert fig._suptitle.get_text() == fig_title
 
 
 def test_calc_cells_yearly_avg(output_file):
