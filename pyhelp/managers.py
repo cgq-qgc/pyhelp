@@ -132,22 +132,24 @@ class HelpManager(object):
                       separators=(",", ": "), ensure_ascii=False)
 
     # ---- Grid and Input
-    def load_input_grid(self):
+    def load_input_grid(self, path_to_grid: str):
         """
         Load input grid data.
 
-        Load the grid containing the geomatic data, surface conditions, and
-        soil and design data for each cell of the grid dividing the study area.
-        By default, the input grid data file must be saved in the working
-        directory and named :file:`input_grid.csv`.
+        Parameters
+        ----------
+        path_to_grid : str
+            The path to the csv file that contains the geomatic data, surface
+            conditions, and soil and design data for each cell of the grid
+            dividing the study area.
         """
-        print('Reading grid data from input csv file...')
-        grid_fname = osp.join(self.workdir, INPUT_GRID_FNAME)
-        if not osp.exists(grid_fname):
+        self.grid_filename = osp.abspath(path_to_grid)
+        print(f'Reading grid data from {path_to_grid}...')
+        if not osp.exists(path_to_grid):
             self.grid = None
             print("Grid input csv file does not exist.")
         else:
-            self.grid = load_grid_from_csv(grid_fname)
+            self.grid = load_grid_from_csv(path_to_grid)
             print('Grid data read successfully from input csv file.')
 
     def load_weather_input_data(self):
