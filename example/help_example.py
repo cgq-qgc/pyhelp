@@ -36,14 +36,16 @@ if __name__ == '__main__':
     # 'precip_data', 'airtemp_data', and 'solrad_data' attributes
     # of the HelpManager.
 
+    # =========================================================================
+    # Run HELP simulation for all the cells in cellnames.
+    # =========================================================================
+
     # We want to run HELP only for the cells that are located within
     # a jauged subsection of the Rivière du Nord watershed.
 
     # The field "Bassin" was added to the grid input data to identify the
     # cells that are located within this jauged subsection of the watershed.
     cellnames = helpm.grid.index[helpm.grid['Bassin'] == 1]
-
-    # Run HELP simulation for all the cells in cellnames.
 
     # Note that the monthly output data will be automatically saved to
     # the HDF5 file define in filepath.
@@ -61,6 +63,10 @@ if __name__ == '__main__':
     output_help.plot_area_monthly_avg(fig_title="PyHELP Example")
     output_help.plot_area_yearly_avg(fig_title="PyHELP Example")
     output_help.plot_area_yearly_series(fig_title="PyHELP Example")
+
+    # =========================================================================
+    # Compare with river total and base streamflow
+    # =========================================================================
 
     # Calculate the yearly water budget for surface water cells.
     output_surf = helpm.calc_surf_water_cells(
