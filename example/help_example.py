@@ -36,9 +36,9 @@ if __name__ == '__main__':
     # 'precip_data', 'airtemp_data', and 'solrad_data' attributes
     # of the HelpManager.
 
-    # Generates the input files required by the HELP model
-    # for each cell of the grid.
-    helpm.build_help_input_files(sf_edepth=0.15)
+    # =========================================================================
+    # Run HELP simulation for all the cells in cellnames.
+    # =========================================================================
 
     # We want to run HELP only for the cells that are located within
     # a jauged subsection of the Rivière du Nord watershed.
@@ -47,14 +47,14 @@ if __name__ == '__main__':
     # cells that are located within this jauged subsection of the watershed.
     cellnames = helpm.grid.index[helpm.grid['Bassin'] == 1]
 
-    # Run HELP simulation for all the cells in cellnames.
-
     # Note that the monthly output data will be automatically saved to
     # the HDF5 file define in filepath.
     output_help = helpm.calc_help_cells(
-        path_to_hdf5=osp.join(workdir, 'help_example.out'),
+        path_to_hdf5=workdir + 'help_example.out',
         cellnames=cellnames,
-        tfsoil=-3)
+        tfsoil=-3,
+        sf_edepth=0.15,
+        sf_ulai=1)
 
     # Export and save annual averages of HELP output values to a csv file.
     output_help.save_to_csv(osp.join(workdir, 'help_example_yearly.csv'))
@@ -63,6 +63,10 @@ if __name__ == '__main__':
     output_help.plot_area_monthly_avg(fig_title="PyHELP Example")
     output_help.plot_area_yearly_avg(fig_title="PyHELP Example")
     output_help.plot_area_yearly_series(fig_title="PyHELP Example")
+
+    # =========================================================================
+    # Compare with river total and base streamflow
+    # =========================================================================
 
     # Calculate the yearly water budget for surface water cells.
     output_surf = helpm.calc_surf_water_cells(

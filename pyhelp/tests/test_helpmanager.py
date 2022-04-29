@@ -66,9 +66,18 @@ def test_read_input_grid(helpm, output_file):
 def test_calc_help_cells(helpm, output_file):
     """Test that the HelpManager is able to run water budget calculation."""
     cellnames = helpm.cellnames[:100]
-    helpm.build_help_input_files()
+
     helpm.calc_help_cells(output_file, cellnames, tfsoil=-3)
     assert osp.exists(output_file)
+
+    inputdir = osp.join(helpm.inputdir, 'd10d11_input_files')
+    assert len(os.listdir(inputdir)) == 98 * 2
+    inputdir = osp.join(helpm.inputdir, 'D4_input_files')
+    assert len(os.listdir(inputdir)) == 2
+    inputdir = osp.join(helpm.inputdir, 'D7_input_files')
+    assert len(os.listdir(inputdir)) == 2
+    inputdir = osp.join(helpm.inputdir, 'D13_input_files')
+    assert len(os.listdir(inputdir)) == 1
 
     # Assert that the results are as expected.
     output = HelpOutput(output_file)
