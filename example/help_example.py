@@ -72,6 +72,7 @@ if __name__ == '__main__':
 
     # Calculate the yearly water budget for surface water cells.
     output_surf = helpm.calc_surf_water_cells(
+        cellnames=cellnames,
         evp_surf=650,
         path_outfile=osp.join(workdir, 'surf_example.out'))
 
