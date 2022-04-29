@@ -60,9 +60,9 @@ if __name__ == '__main__':
     output_help.save_to_csv(osp.join(workdir, 'help_example_yearly.csv'))
 
     # Plot some results.
-    output_help.plot_area_monthly_avg()
-    output_help.plot_area_yearly_avg()
-    output_help.plot_area_yearly_series()
+    output_help.plot_area_monthly_avg(fig_title="PyHELP Example")
+    output_help.plot_area_yearly_avg(fig_title="PyHELP Example")
+    output_help.plot_area_yearly_series(fig_title="PyHELP Example")
 
     # Calculate the yearly water budget for surface water cells.
     output_surf = helpm.calc_surf_water_cells(
