@@ -11,13 +11,11 @@
 import os
 import os.path as osp
 
-
 # ---- Third party imports
 import numpy as np
 import pandas as pd
 import pytest
 from pandas.api.types import is_string_dtype
-
 
 # ---- Local library imports
 from pyhelp import __rootdir__
@@ -46,8 +44,13 @@ def output_file(output_dir):
 
 
 @pytest.fixture
-def helpm():
-    manager = HelpManager(EXAMPLE_FOLDER)
+def helpm(output_dir):
+    manager = HelpManager(
+        workdir=output_dir,
+        path_to_grid=INPUT_FILES['grid'],
+        path_to_precip=INPUT_FILES['precip'],
+        path_to_airtemp=INPUT_FILES['airtemp'],
+        path_to_solrad=INPUT_FILES['solrad'])
     return manager
 
 
