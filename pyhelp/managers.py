@@ -33,10 +33,6 @@ from pyhelp.output import HelpOutput
 
 
 FNAME_CONN_TABLES = 'connect_table.json'
-INPUT_PRECIP_FNAME = 'precip_input_data.csv'
-INPUT_AIRTEMP_FNAME = 'airtemp_input_data.csv'
-INPUT_SOLRAD_FNAME = 'solrad_input_data.csv'
-INPUT_GRID_FNAME = 'input_grid.csv'
 
 
 class HelpManager(object):
@@ -73,8 +69,10 @@ class HelpManager(object):
         self.airtemp_data = None
         self.solrad_data = None
 
-        self._workdir = None
         self.set_workdir(workdir)
+        self.load_input_grid(path_to_grid)
+        self.load_weather_input_data(
+            path_to_precip, path_to_airtemp, path_to_solrad)
 
         self._load_connect_tables()
 
@@ -103,14 +101,10 @@ class HelpManager(object):
 
     def set_workdir(self, dirname):
         """Set the working directory of the manager."""
-        if self.workdir is not None and osp.samefile(self.workdir, dirname):
-            return
+        self._workdir = dirname
         if not osp.exists(dirname):
             os.makedirs(dirname)
         os.chdir(dirname)
-        self._workdir = dirname
-        self.load_input_grid()
-        self.load_weather_input_data()
 
     # ---- Connect tables
     @property
