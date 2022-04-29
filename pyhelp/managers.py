@@ -231,13 +231,18 @@ class HelpManager(object):
         delete_folder_recursively(self.inputdir)
         print('done')
 
-    def build_help_input_files(self, sf_edepth: float = 1, sf_ulai: float = 1):
+    def build_help_input_files(self, cellnames: list = None,
+                               sf_edepth: float = 1, sf_ulai: float = 1):
         """
         Clear all cached HELP input data files and generate new ones from the
         weather and grid input data files.
 
         Parameters
         ----------
+        cellnames : list, optional
+            The list of cell ids for which D10 and D11 HELP input files
+            are to be generated. If None, D10 and D11 HELP input files are
+            generated for each cell of the grid with a "run" value of 1.
         sf_edepth : float, optional
             Global scale factor for the Evaporative Zone Depth (applied to
             the whole grid). The default is 1.
@@ -246,9 +251,10 @@ class HelpManager(object):
             the whole grid). The default is 1.
         """
         self.clear_cache()
-        self._generate_d10d11_input_files(sf_edepth=sf_edepth,
-                                          sf_ulai=sf_ulai)
-        self._generate_d4d7d13_input_files()
+        self._generate_d10d11_input_files(
+            cellnames, sf_edepth=sf_edepth, sf_ulai=sf_ulai)
+        self._generate_d4d7d13_input_files(
+            cellnames)
 
     def _generate_d10d11_input_files(self, cellnames: list = None,
                                      sf_edepth: float = 1, sf_ulai: float = 1):
