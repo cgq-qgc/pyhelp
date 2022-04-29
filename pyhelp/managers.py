@@ -238,10 +238,10 @@ class HelpManager(object):
 
         Parameters
         ----------
-        sf_edepth : TYPE, optional
+        sf_edepth : float, optional
             Global scale factor for the Evaporative Zone Depth (applied to
             the whole grid). The default is 1.
-        sf_ulai : TYPE, optional
+        sf_ulai : float, optional
             Global scale factor for the Maximum Leaf Area Index (applied to
             the whole grid). The default is 1.
         """
@@ -266,10 +266,10 @@ class HelpManager(object):
             The list of cell ids for which D10 and D11 HELP input files
             are to be generated. If None, D10 and D11 HELP input files are
             generated for each cell of the grid with a "run" value of 1.
-        sf_edepth : TYPE, optional
+        sf_edepth : float, optional
             Global scale factor for the Evaporative Zone Depth (applied to
             the whole grid). The default is 1.
-        sf_ulai : TYPE, optional
+        sf_ulai : float, optional
             Global scale factor for the Maximum Leaf Area Index (applied to
             the whole grid). The default is 1.
         """
