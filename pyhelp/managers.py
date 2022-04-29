@@ -152,23 +152,35 @@ class HelpManager(object):
             self.grid = load_grid_from_csv(path_to_grid)
             print('Grid data read successfully from input csv file.')
 
-    def load_weather_input_data(self):
+    def load_weather_input_data(self, path_to_precip: str,
+                                path_to_airtemp: str,
+                                path_to_solrad: str):
         """
         Load input weather data.
 
-        Load the daily precipitation, average air temperature, and
-        global solar radiation from the input weather data files. By default,
-        those files must be saved in the working directory and named,
-        respectively, :file:`precip_input_data.csv`,
-        :file:`airtemp_input_data.csv`, and :file:`solrad_input_data.csv`.
+        Parameters
+        ----------
+        path_to_precip : str
+            The path to the csv file that contains the input data for the
+            daily total precipitation.
+        path_to_airtemp : str
+            The path to the csv file that contains the input data for the
+            daily average air temperature
+        path_to_solrad : str
+            The path to the csv file that contains the input data for the
+            daily global solar radiation.
         """
-        print('Reading input weather data from csv...')
-        self.precip_data = load_weather_from_csv(
-            osp.join(self.workdir, INPUT_PRECIP_FNAME))
-        self.airtemp_data = load_weather_from_csv(
-            osp.join(self.workdir, INPUT_AIRTEMP_FNAME))
-        self.solrad_data = load_weather_from_csv(
-            osp.join(self.workdir, INPUT_SOLRAD_FNAME))
+        print(f'Reading input precip data from {path_to_precip}...')
+        self.precip_data = load_weather_from_csv(path_to_precip)
+        self.precip_filename = path_to_precip
+
+        print(f'Reading input airtemp data from {path_to_airtemp}...')
+        self.airtemp_data = load_weather_from_csv(path_to_airtemp)
+        self.airtemp_filename = path_to_airtemp
+
+        print(f'Reading input solrad data from {path_to_solrad}...')
+        self.solrad_data = load_weather_from_csv(path_to_solrad)
+        self.solrad_filename = path_to_solrad
 
         datasets = [self.precip_data, self.airtemp_data, self.solrad_data]
         datasets_name = {
