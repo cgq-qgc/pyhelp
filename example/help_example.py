@@ -2,6 +2,8 @@
 """
 This example shows how to use PyHELP to calculate the monthly water balance
 for a section of the Rivière du Nord watershed in the Laurentians, Quebec, Can.
+
+Updated for PyHELP version 0.3.1
 """
 
 import os.path as osp
@@ -15,14 +17,24 @@ if __name__ == '__main__':
     #    https://docs.python.org/3.6/library/
     #    multiprocessing.html#programming-guidelines
 
-    # Define the directory where the weather and grid input files are saved.
-    workdir = osp.dirname(__file__)
+    # Define the working directory.
+    workdir = "D:/Projets/pyhelp/example/"
 
-    # Instantiate the HelpManager.
-    helpm = HelpManager(workdir)
+    # Instantiate the HelpManager and provide the paths to the grid and
+    # weather input data files so that they are loaded automatically.
+    helpm = HelpManager(
+        workdir,
+        path_to_grid=workdir + 'input_grid.csv',
+        path_to_precip=workdir + 'precip_input_data.csv',
+        path_to_airtemp=workdir + 'airtemp_input_data.csv',
+        path_to_solrad=workdir + 'solrad_input_data.csv')
 
-    # Note that you can access the weather input data through
-    # the 'precip_data', 'airtemp_data', and 'solrad_data'  attributes.
+    # Note that you can access the grid input data through
+    # the 'grid' attribute of the HelpManager.
+
+    # Note that you can access the weather input data through the
+    # 'precip_data', 'airtemp_data', and 'solrad_data' attributes
+    # of the HelpManager.
 
     # Generates the input files required by the HELP model
     # for each cell of the grid.
