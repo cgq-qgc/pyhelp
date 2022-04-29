@@ -44,9 +44,29 @@ class HelpManager(object):
     The :class:`~pyhelp.HelpManager` is a class whose main purpose
     is to evaluate the component of the hydrologic water budget at the
     regional scale with the HELP model.
+
+    Parameters
+    ----------
+    workdir : str
+        The path to the working directory.
+    path_to_grid : str
+        The path to the csv file that contains the geomatic data, surface
+        conditions, and soil and design data for each cell of the grid
+        dividing the study area. The default is None.
+    path_to_precip : str
+        The path to the csv file that contains the input data for the
+        daily total precipitation.
+    path_to_airtemp : str
+        The path to the csv file that contains the input data for the
+        daily average air temperature
+    path_to_solrad : str
+        The path to the csv file that contains the input data for the
+        daily global solar radiation.
     """
 
-    def __init__(self, workdir):
+    def __init__(self, workdir: str, path_to_grid: str,
+                 path_to_precip: str, path_to_airtemp: str,
+                 path_to_solrad: str):
         super().__init__()
         self.grid = None
         self.precip_data = None
