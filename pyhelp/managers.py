@@ -33,10 +33,6 @@ from pyhelp.output import HelpOutput
 
 
 FNAME_CONN_TABLES = 'connect_table.json'
-INPUT_PRECIP_FNAME = 'precip_input_data.csv'
-INPUT_AIRTEMP_FNAME = 'airtemp_input_data.csv'
-INPUT_SOLRAD_FNAME = 'solrad_input_data.csv'
-INPUT_GRID_FNAME = 'input_grid.csv'
 
 
 class HelpManager(object):
@@ -44,17 +40,39 @@ class HelpManager(object):
     The :class:`~pyhelp.HelpManager` is a class whose main purpose
     is to evaluate the component of the hydrologic water budget at the
     regional scale with the HELP model.
+
+    Parameters
+    ----------
+    workdir : str
+        The path to the working directory.
+    path_to_grid : str
+        The path to the csv file that contains the geomatic data, surface
+        conditions, and soil and design data for each cell of the grid
+        dividing the study area. The default is None.
+    path_to_precip : str
+        The path to the csv file that contains the input data for the
+        daily total precipitation.
+    path_to_airtemp : str
+        The path to the csv file that contains the input data for the
+        daily average air temperature
+    path_to_solrad : str
+        The path to the csv file that contains the input data for the
+        daily global solar radiation.
     """
 
-    def __init__(self, workdir):
+    def __init__(self, workdir: str, path_to_grid: str,
+                 path_to_precip: str, path_to_airtemp: str,
+                 path_to_solrad: str):
         super().__init__()
         self.grid = None
         self.precip_data = None
         self.airtemp_data = None
         self.solrad_data = None
 
-        self._workdir = None
         self.set_workdir(workdir)
+        self.load_input_grid(path_to_grid)
+        self.load_weather_input_data(
+            path_to_precip, path_to_airtemp, path_to_solrad)
 
         self._load_connect_tables()
 
@@ -83,14 +101,10 @@ class HelpManager(object):
 
     def set_workdir(self, dirname):
         """Set the working directory of the manager."""
-        if self.workdir is not None and osp.samefile(self.workdir, dirname):
-            return
+        self._workdir = dirname
         if not osp.exists(dirname):
             os.makedirs(dirname)
         os.chdir(dirname)
-        self._workdir = dirname
-        self.load_input_grid()
-        self.load_weather_input_data()
 
     # ---- Connect tables
     @property
@@ -112,41 +126,55 @@ class HelpManager(object):
                       separators=(",", ": "), ensure_ascii=False)
 
     # ---- Grid and Input
-    def load_input_grid(self):
+    def load_input_grid(self, path_to_grid: str):
         """
         Load input grid data.
 
-        Load the grid containing the geomatic data, surface conditions, and
-        soil and design data for each cell of the grid dividing the study area.
-        By default, the input grid data file must be saved in the working
-        directory and named :file:`input_grid.csv`.
+        Parameters
+        ----------
+        path_to_grid : str
+            The path to the csv file that contains the geomatic data, surface
+            conditions, and soil and design data for each cell of the grid
+            dividing the study area.
         """
-        print('Reading grid data from input csv file...')
-        grid_fname = osp.join(self.workdir, INPUT_GRID_FNAME)
-        if not osp.exists(grid_fname):
+        self.grid_filename = osp.abspath(path_to_grid)
+        print(f'Reading grid data from {path_to_grid}...')
+        if not osp.exists(path_to_grid):
             self.grid = None
             print("Grid input csv file does not exist.")
         else:
-            self.grid = load_grid_from_csv(grid_fname)
+            self.grid = load_grid_from_csv(path_to_grid)
             print('Grid data read successfully from input csv file.')
 
-    def load_weather_input_data(self):
+    def load_weather_input_data(self, path_to_precip: str,
+                                path_to_airtemp: str,
+                                path_to_solrad: str):
         """
         Load input weather data.
 
-        Load the daily precipitation, average air temperature, and
-        global solar radiation from the input weather data files. By default,
-        those files must be saved in the working directory and named,
-        respectively, :file:`precip_input_data.csv`,
-        :file:`airtemp_input_data.csv`, and :file:`solrad_input_data.csv`.
+        Parameters
+        ----------
+        path_to_precip : str
+            The path to the csv file that contains the input data for the
+            daily total precipitation.
+        path_to_airtemp : str
+            The path to the csv file that contains the input data for the
+            daily average air temperature
+        path_to_solrad : str
+            The path to the csv file that contains the input data for the
+            daily global solar radiation.
         """
-        print('Reading input weather data from csv...')
-        self.precip_data = load_weather_from_csv(
-            osp.join(self.workdir, INPUT_PRECIP_FNAME))
-        self.airtemp_data = load_weather_from_csv(
-            osp.join(self.workdir, INPUT_AIRTEMP_FNAME))
-        self.solrad_data = load_weather_from_csv(
-            osp.join(self.workdir, INPUT_SOLRAD_FNAME))
+        print(f'Reading input precip data from {path_to_precip}...')
+        self.precip_data = load_weather_from_csv(path_to_precip)
+        self.precip_filename = path_to_precip
+
+        print(f'Reading input airtemp data from {path_to_airtemp}...')
+        self.airtemp_data = load_weather_from_csv(path_to_airtemp)
+        self.airtemp_filename = path_to_airtemp
+
+        print(f'Reading input solrad data from {path_to_solrad}...')
+        self.solrad_data = load_weather_from_csv(path_to_solrad)
+        self.solrad_filename = path_to_solrad
 
         datasets = [self.precip_data, self.airtemp_data, self.solrad_data]
         datasets_name = {
@@ -557,9 +585,6 @@ def load_weather_from_csv(filename: str) -> pd.DataFrame:
     to the dates and the columns to latitudes and longitudes of each
     data series.
     """
-    if not osp.exists(filename):
-        return None
-
     with open(filename, 'r') as csvfile:
         reader = list(csv.reader(csvfile, delimiter=','))
 
