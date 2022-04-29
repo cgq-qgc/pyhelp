@@ -585,9 +585,6 @@ def load_weather_from_csv(filename: str) -> pd.DataFrame:
     to the dates and the columns to latitudes and longitudes of each
     data series.
     """
-    if not osp.exists(filename):
-        return None
-
     with open(filename, 'r') as csvfile:
         reader = list(csv.reader(csvfile, delimiter=','))
 
