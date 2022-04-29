@@ -231,18 +231,27 @@ class HelpManager(object):
         delete_folder_recursively(self.inputdir)
         print('done')
 
-    def build_help_input_files(self, sf_edepth=1, sf_ulai=1):
+    def build_help_input_files(self, sf_edepth: float = 1, sf_ulai: float = 1):
         """
         Clear all cached HELP input data files and generate new ones from the
         weather and grid input data files.
+
+        Parameters
+        ----------
+        sf_edepth : float, optional
+            Global scale factor for the Evaporative Zone Depth (applied to
+            the whole grid). The default is 1.
+        sf_ulai : float, optional
+            Global scale factor for the Maximum Leaf Area Index (applied to
+            the whole grid). The default is 1.
         """
         self.clear_cache()
         self._generate_d10d11_input_files(sf_edepth=sf_edepth,
                                           sf_ulai=sf_ulai)
         self._generate_d4d7d13_input_files()
 
-    def _generate_d10d11_input_files(self, cellnames=None, sf_edepth=1,
-                                     sf_ulai=1):
+    def _generate_d10d11_input_files(self, cellnames: list = None,
+                                     sf_edepth: float = 1, sf_ulai: float = 1):
         """
         Prepare the D10 and D11 input datafiles for each cell.
 
@@ -250,7 +259,27 @@ class HelpManager(object):
         D11 : Surface condition (Evapotranspiration)
 
         See https://github.com/cgq-qgc/pyhelp/wiki/HELP-input-files-format-description
+
+        Parameters
+        ----------
+        cellnames : list, optional
+            The list of cell ids for which D10 and D11 HELP input files
+            are to be generated. If None, D10 and D11 HELP input files are
+            generated for each cell of the grid with a "run" value of 1.
+        sf_edepth : float, optional
+            Global scale factor for the Evaporative Zone Depth (applied to
+            the whole grid). The default is 1.
+        sf_ulai : float, optional
+            Global scale factor for the Maximum Leaf Area Index (applied to
+            the whole grid). The default is 1.
         """
+        if sf_edepth < 0 or sf_edepth > 1:
+            raise ValueError(
+                "sf_edepth value cannot be lower than 0 or greater than 1")
+        if sf_ulai < 0 or sf_ulai > 1:
+            raise ValueError(
+                "sf_ulai value cannot be lower than 0 or greater than 1")
+
         d10d11_inputdir = osp.join(self.inputdir, 'd10d11_input_files')
         if not osp.exists(d10d11_inputdir):
             os.makedirs(d10d11_inputdir)
@@ -259,9 +288,13 @@ class HelpManager(object):
         # don't need the D10 or D11 input files for those that aren't.
         cellnames = self.get_run_cellnames(cellnames)
 
+        # Apply scaling factors to the grid.
+        grid = self.grid.copy()
+        grid['EZD'] = grid['EZD'] * sf_edepth
+        grid['LAI'] = grid['LAI'] * sf_ulai
+
         # Format the data from the input grid.
-        d10data, d11data = format_d10d11_inputs(
-            self.grid, cellnames, sf_edepth, sf_ulai)
+        d10data, d11data = format_d10d11_inputs(grid, cellnames)
 
         # Write the D10 and D11 input files.
         d10_conn_tbl, d11_conn_tbl = write_d10d11_allcells(
@@ -281,6 +314,13 @@ class HelpManager(object):
         D4: Total precipitation.
         D7: Mean air temperature.
         D13: Solar radiation.
+
+        Parameters
+        ----------
+        cellnames : list, optional
+            The list of cell ids for which D10 and D11 HELP input files
+            are to be generated. If None, D10 and D11 HELP input files are
+            generated for each cell of the grid with a "run" value of 1.
         """
         if self.grid is None:
             return
