@@ -271,7 +271,8 @@ class HelpManager(object):
         cellnames : list, optional
             The list of cell ids for which D10 and D11 HELP input files
             are to be generated. If None, D10 and D11 HELP input files are
-            generated for each cell of the grid with a "run" value of 1.
+            generated for each cell of the grid associated to a "run"
+            value of 1.
         sf_edepth : float, optional
             Global scale factor for the Evaporative Zone Depth (applied to
             the whole grid). The default is 1.
@@ -324,14 +325,14 @@ class HelpManager(object):
         Parameters
         ----------
         cellnames : list, optional
-            The list of cell ids for which D10 and D11 HELP input files
-            are to be generated. If None, D10 and D11 HELP input files are
-            generated for each cell of the grid with a "run" value of 1.
+            The list of cell ids for which D4, D7, and D13 HELP input files
+            are to be generated. If None, the input files are generated for
+            each cell of the grid associated to a "run" value of 1.
         """
-        if self.grid is None:
-            return
+        # Only keep the cells that are going to be run in HELP because we
+        # don't need the D4, D7, and D13 input files for those that aren't.
+        cellnames = self.get_run_cellnames(cellnames)
 
-        cellnames = self.cellnames if cellnames is None else cellnames
         grid_lat, grid_lon = self.get_latlon_for_cellnames(cellnames)
 
         fformat = '{:3.1f}_{:3.1f}.{}'
@@ -389,15 +390,32 @@ class HelpManager(object):
         self._save_connect_tables()
         print('done')
 
-    def calc_help_cells(self, path_to_hdf5=None, cellnames=None, tfsoil=0):
+    def calc_help_cells(self, path_to_hdf5=None, cellnames=None, tfsoil=0,
+                        sf_edepth: float = 1, sf_ulai: float = 1,
+                        build_help_input_files: bool = True) -> HelpOutput:
         """
         Calcul the water budget for all eligible cells with HELP.
 
         Run HELP to compute the monthly water budget for the cells listed in
-        _cellnames_. Return a dict containing the resulting monthly values as
+        "cellnames". Return a dict containing the resulting monthly values as
         numpy arrays. If a file name is provided in _path_outfile_, the results
         are also saved to disk in a HDF5 file.
+
+        Parameters
+        ----------
+        sf_edepth : float, optional
+            Global scale factor for the Evaporative Zone Depth (applied to
+            the whole grid). The default is 1.
+        sf_ulai : float, optional
+            Global scale factor for the Maximum Leaf Area Index (applied to
+            the whole grid). The default is 1.
+        build_help_input_files: bool
+            A flag to indicate whether to generate the basic HELP input
+            files before running the simulation.
         """
+        if build_help_input_files:
+            self.build_help_input_files(cellnames, sf_edepth, sf_ulai)
+
         # Convert from Celcius to Farenheight
         tfsoil = (tfsoil * 1.8) + 32
 
