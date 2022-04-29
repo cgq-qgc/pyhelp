@@ -24,7 +24,7 @@ MINTHICK = 10
 
 # ---- Evapotranspiration and Soil and Design data (D10 and D11)
 
-def _format_d11_singlecell(row, sf_edepth, sf_ulai):
+def _format_d11_singlecell(row):
     """
     Format the D11 input data for a single cell (one row in the excel file).
     """
@@ -41,8 +41,8 @@ def _format_d11_singlecell(row, sf_edepth, sf_ulai):
     ulat = float(row['lat_dd'])
     ipl = int(row['growth_start'])
     ihv = int(row['growth_end'])
-    ulai = float(row['LAI']) * sf_ulai
-    edepth = float(row['EZD']) * sf_edepth
+    ulai = float(row['LAI'])
+    edepth = float(row['EZD'])
     edepth = min(max(edepth, MINEDEPTH), MAXEDEPTH)
     wind = float(row['wind'])
     hum1 = float(row['hum1'])
@@ -172,7 +172,7 @@ def _format_d10_singlecell(row):
     return d10dat
 
 
-def format_d10d11_inputs(grid, cellnames, sf_edepth=1, sf_ulai=1):
+def format_d10d11_inputs(grid, cellnames):
     """
     Format the evapotranspiration (D11) and soil and design data (D10) in a
     format that is compatible with HELP.
@@ -186,7 +186,7 @@ def format_d10d11_inputs(grid, cellnames, sf_edepth=1, sf_ulai=1):
               (i+1, N, (i+1)/N*100), end=' ')
 
         row = grid.loc[cid]
-        d11dat[cid] = _format_d11_singlecell(row, sf_edepth, sf_ulai)
+        d11dat[cid] = _format_d11_singlecell(row)
         d10dat[cid] = _format_d10_singlecell(row)
 
     print("\rFormatting D10 and D11 data for cell %d of %d (%0.1f%%)" %
