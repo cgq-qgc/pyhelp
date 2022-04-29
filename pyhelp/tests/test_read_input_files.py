@@ -28,31 +28,28 @@ VARNAMES = ['precip', 'airtemp', 'solrad']
 # ---- Fixtures
 # =============================================================================
 @pytest.fixture
-def helpm(tmp_path):
-    manager = HelpManager(tmp_path)
-
-    assert manager.precip_data is None
-    assert manager.airtemp_data is None
-    assert manager.solrad_data is None
-    assert manager.grid is None
-
-    return manager
+def workdir(tmp_path):
+    return tmp_path
 
 
 # =============================================================================
 # ---- Tests
 # =============================================================================
-def test_read_input(helpm):
+def test_read_input(workdir):
     """
     Test that the input files are read as expected by the HelpManager.
     """
-    # Copy input weather data in the temp folder.
-    for var in VARNAMES:
-        shutil.copyfile(
-            osp.join(DATAFOLDER, f'{var}_input_data_2001-2002.csv'),
-            osp.join(helpm.workdir, f'{var}_input_data.csv'))
-
-    helpm.load_weather_input_data()
+    helpm = HelpManager(
+        workdir,
+        path_to_grid=osp.join(
+            DATAFOLDER, 'input_grid.csv'),
+        path_to_precip=osp.join(
+            DATAFOLDER, 'precip_input_data_2001-2002.csv'),
+        path_to_airtemp=osp.join(
+            DATAFOLDER, 'airtemp_input_data_2001-2002.csv'),
+        path_to_solrad=osp.join(
+            DATAFOLDER, 'solrad_input_data_2001-2002.csv')
+        )
 
     assert len(helpm.airtemp_data) == 365 * 2
     assert list(helpm.airtemp_data.index.year.unique()) == [2001, 2002]
@@ -77,65 +74,63 @@ def test_read_input(helpm):
 
 
 @pytest.mark.parametrize('testvar', VARNAMES)
-def test_read_weather_len_nomatch(helpm, testvar):
+def test_read_weather_len_nomatch(testvar, workdir):
     """
     Test that the HelpManager throws an error if the len of the weather
     data do not match.
     """
+    kwargs = {'workdir': workdir,
+              'path_to_grid': osp.join(DATAFOLDER, 'input_grid.csv')}
     for var in VARNAMES:
         if var == testvar:
-            shutil.copyfile(
-                osp.join(DATAFOLDER, f'{var}_input_data_2001.csv'),
-                osp.join(helpm.workdir, f'{var}_input_data.csv'))
+            kwargs[f'path_to_{var}'] = osp.join(
+                DATAFOLDER, f'{var}_input_data_2001.csv')
         else:
-            shutil.copyfile(
-                osp.join(DATAFOLDER, f'{var}_input_data_2001-2002.csv'),
-                osp.join(helpm.workdir, f'{var}_input_data.csv'))
+            kwargs[f'path_to_{var}'] = osp.join(
+                DATAFOLDER, f'{var}_input_data_2001-2002.csv')
+
     with pytest.raises(ValueError):
-        helpm.load_weather_input_data()
+        HelpManager(**kwargs)
 
 
 @pytest.mark.parametrize('testvar', VARNAMES)
-def test_read_weather_dates_nomatch(helpm, testvar):
+def test_read_weather_dates_nomatch(testvar, workdir):
     """
     Test that the HelpManager throws an error if the len of the weather
     data do not match.
     """
+    kwargs = {'workdir': workdir,
+              'path_to_grid': osp.join(DATAFOLDER, 'input_grid.csv')}
     for var in VARNAMES:
         if var == testvar:
-            shutil.copyfile(
-                osp.join(DATAFOLDER, f'{var}_input_data_2002-2003.csv'),
-                osp.join(helpm.workdir, f'{var}_input_data.csv'))
+            kwargs[f'path_to_{var}'] = osp.join(
+                DATAFOLDER, f'{var}_input_data_2002-2003.csv')
         else:
-            shutil.copyfile(
-                osp.join(DATAFOLDER, f'{var}_input_data_2001-2002.csv'),
-                osp.join(helpm.workdir, f'{var}_input_data.csv'))
-    with pytest.raises(ValueError):
-        helpm.load_weather_input_data()
+            kwargs[f'path_to_{var}'] = osp.join(
+                DATAFOLDER, f'{var}_input_data_2001-2002.csv')
 
-    assert (len(helpm.airtemp_data) ==
-            len(helpm.precip_data) ==
-            len(helpm.solrad_data))
+    with pytest.raises(ValueError):
+        HelpManager(**kwargs)
 
 
 @pytest.mark.parametrize('testvar', VARNAMES)
-def test_read_weather_incomplete(helpm, testvar):
+def test_read_weather_incomplete(testvar, workdir):
     """
     Test that the HelpManager throws an error if the weather are not complete
     for one or more years in the dataset.
     """
+    kwargs = {'workdir': workdir,
+              'path_to_grid': osp.join(DATAFOLDER, 'input_grid.csv')}
     for var in ['precip', 'airtemp', 'solrad']:
         if var == testvar:
-            shutil.copyfile(
-                osp.join(DATAFOLDER, f'{var}_input_data_incomplete.csv'),
-                osp.join(helpm.workdir, f'{var}_input_data.csv'))
+            filename = f'{var}_input_data_incomplete.csv'
         else:
-            shutil.copyfile(
-                osp.join(DATAFOLDER, f'{var}_input_data_2001-2002.csv'),
-                osp.join(helpm.workdir, f'{var}_input_data.csv'))
+            filename = f'{var}_input_data_2001-2002.csv'
+        kwargs[f'path_to_{var}'] = osp.join(DATAFOLDER, filename)
+
     with pytest.raises(ValueError):
-        helpm.load_weather_input_data()
+        HelpManager(**kwargs)
 
 
 if __name__ == '__main__':
-    pytest.main(['-x', os.path.basename(__file__), '-v', '-rw'])
+    pytest.main(['-x', __file__, '-v', '-rw'])
