@@ -272,7 +272,7 @@ class HelpManager(object):
         """
         if sf_edepth < 0:
             raise ValueError("sf_edepth value cannot be lower than 0.")
-        if sf_ulai < 0 or sf_ulai > 1:
+        if sf_ulai < 0:
             raise ValueError("sf_ulai value cannot be lower than 0.")
         if sf_cn < 0:
             raise ValueError("sf_cn value cannot be lower than 0.")
