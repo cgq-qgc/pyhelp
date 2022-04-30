@@ -9,8 +9,8 @@ source:
 
 requirements:
   build:
-    - {{ compiler('m2w64_c') }}        # [win]
-    - {{ compiler('m2w64_fortran') }}  # [win]
+    - {{ compiler('m2w64_c') }}
+    - {{ compiler('m2w64_fortran') }}
   host:
     - python
     - numpy
