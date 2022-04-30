@@ -59,7 +59,7 @@ install:
   - conda config --set always_yes yes
   - conda update -q conda
   - conda config --set auto_update_conda no
-  - conda install pandas scipy h5py=3 matplotlib pip m2w64-toolchain conda-build=3.21.7 setuptools=58 liblief=0.10
+  - conda install pandas scipy h5py=3 matplotlib pip m2w64-toolchain conda-build setuptools=58 liblief=0.10
   - python -m pip install codecov pytest pytest-cov
 
   # Check that we have still the expected version and architecture for Python
