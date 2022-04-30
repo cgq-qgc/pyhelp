@@ -7,18 +7,12 @@ package:
 source:
   path: ..
 
-target_platform:
-  - win-64
-
 requirements:
-  build:
-    - {{ compiler('m2w64_c') }}  # [win64]
-    - {{ compiler('m2w64_fortran') }}  # [win64]
   host:
     - python
     - numpy
-    - m2w64-toolchain  # [win64]
-    - libpython  # [win64]
+    - m2w64-toolchain
+    - libpython
     - setuptools=58
     - liblief=0.10
   run:
