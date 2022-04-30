@@ -379,12 +379,13 @@ class HelpManager(object):
         Calcul the water budget for all eligible cells with HELP.
 
         Run HELP to compute the monthly water budget for the cells listed in
-        "cellnames". Return a dict containing the resulting monthly values as
-        numpy arrays. If a file name is provided in _path_outfile_, the results
+        "cellnames". If a file name is provided in _path_outfile_, the results
         are also saved to disk in a HDF5 file.
 
         Parameters
         ----------
+        path_to_hdf5: str, optional
+            File path where to save the results to disk in a HDF5 file.
         tfsoil: float, optional
             The average air temperature, in Celcius degrees,
             below which the soil is assumed to be freezing. The default is 0.
