@@ -385,6 +385,9 @@ class HelpManager(object):
 
         Parameters
         ----------
+        tfsoil: float, optional
+            The average air temperature, in Celcius degrees,
+            below which the soil is assumed to be freezing. The default is 0.
         sf_edepth : float, optional
             Global scale factor for the Evaporative Zone Depth (applied to
             the whole grid). The default is 1.
