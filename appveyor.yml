@@ -57,7 +57,6 @@ install:
 
   # Setup Conda.
   - conda config --set always_yes yes
-  - conda config --add channels conda-forge
   - conda update -q conda
   - conda config --set auto_update_conda no
   - conda install pandas scipy h5py=3 matplotlib pip m2w64-toolchain conda-build setuptools=58 liblief=0.10
