@@ -54,7 +54,8 @@ if __name__ == '__main__':
         cellnames=cellnames,
         tfsoil=-3,
         sf_edepth=0.15,
-        sf_ulai=1)
+        sf_ulai=1,
+        sf_cn=1.15)
 
     # Export and save annual averages of HELP output values to a csv file.
     output_help.save_to_csv(osp.join(workdir, 'help_example_yearly.csv'))
@@ -70,6 +71,7 @@ if __name__ == '__main__':
 
     # Calculate the yearly water budget for surface water cells.
     output_surf = helpm.calc_surf_water_cells(
+        cellnames=cellnames,
         evp_surf=650,
         path_outfile=osp.join(workdir, 'surf_example.out'))
 

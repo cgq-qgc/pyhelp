@@ -232,7 +232,8 @@ class HelpManager(object):
         print('done')
 
     def build_help_input_files(self, cellnames: list = None,
-                               sf_edepth: float = 1, sf_ulai: float = 1):
+                               sf_edepth: float = 1, sf_ulai: float = 1,
+                               sf_cn: float = 1):
         """
         Clear all cached HELP input data files and generate new ones from the
         weather and grid input data files.
@@ -249,15 +250,18 @@ class HelpManager(object):
         sf_ulai : float, optional
             Global scale factor for the Maximum Leaf Area Index (applied to
             the whole grid). The default is 1.
+        sf_cn : float, optional
+            Global scale factor for the Curve Number (applied to
+            the whole grid). The default is 1.
         """
         self.clear_cache()
         self._generate_d10d11_input_files(
-            cellnames, sf_edepth=sf_edepth, sf_ulai=sf_ulai)
+            cellnames, sf_edepth, sf_ulai, sf_cn)
         self._generate_d4d7d13_input_files(
             cellnames)
 
-    def _generate_d10d11_input_files(self, cellnames: list = None,
-                                     sf_edepth: float = 1, sf_ulai: float = 1):
+    def _generate_d10d11_input_files(self, cellnames, sf_edepth,
+                                     sf_ulai, sf_cn):
         """
         Prepare the D10 and D11 input datafiles for each cell.
 
@@ -265,27 +269,13 @@ class HelpManager(object):
         D11 : Surface condition (Evapotranspiration)
 
         See https://github.com/cgq-qgc/pyhelp/wiki/HELP-input-files-format-description
-
-        Parameters
-        ----------
-        cellnames : list, optional
-            The list of cell ids for which D10 and D11 HELP input files
-            are to be generated. If None, D10 and D11 HELP input files are
-            generated for each cell of the grid associated to a "run"
-            value of 1.
-        sf_edepth : float, optional
-            Global scale factor for the Evaporative Zone Depth (applied to
-            the whole grid). The default is 1.
-        sf_ulai : float, optional
-            Global scale factor for the Maximum Leaf Area Index (applied to
-            the whole grid). The default is 1.
         """
-        if sf_edepth < 0 or sf_edepth > 1:
-            raise ValueError(
-                "sf_edepth value cannot be lower than 0 or greater than 1")
-        if sf_ulai < 0 or sf_ulai > 1:
-            raise ValueError(
-                "sf_ulai value cannot be lower than 0 or greater than 1")
+        if sf_edepth < 0:
+            raise ValueError("sf_edepth value cannot be lower than 0.")
+        if sf_ulai < 0:
+            raise ValueError("sf_ulai value cannot be lower than 0.")
+        if sf_cn < 0:
+            raise ValueError("sf_cn value cannot be lower than 0.")
 
         d10d11_inputdir = osp.join(self.inputdir, 'd10d11_input_files')
         if not osp.exists(d10d11_inputdir):
@@ -299,6 +289,7 @@ class HelpManager(object):
         grid = self.grid.copy()
         grid['EZD'] = grid['EZD'] * sf_edepth
         grid['LAI'] = grid['LAI'] * sf_ulai
+        grid['CN'] = grid['CN'] * sf_cn
 
         # Format the data from the input grid.
         d10data, d11data = format_d10d11_inputs(grid, cellnames)
@@ -314,25 +305,15 @@ class HelpManager(object):
         self._save_connect_tables()
         print("done")
 
-    def _generate_d4d7d13_input_files(self, cellnames: list = None):
+    def _generate_d4d7d13_input_files(self, cellnames):
         """
         Generate the D4, D7, and D13 HELP input datafiles for each cell.
 
         D4: Total precipitation.
         D7: Mean air temperature.
         D13: Solar radiation.
-
-        Parameters
-        ----------
-        cellnames : list, optional
-            The list of cell ids for which D4, D7, and D13 HELP input files
-            are to be generated. If None, the input files are generated for
-            each cell of the grid associated to a "run" value of 1.
         """
-        # Only keep the cells that are going to be run in HELP because we
-        # don't need the D4, D7, and D13 input files for those that aren't.
-        cellnames = self.get_run_cellnames(cellnames)
-
+        cellnames = self.cellnames if cellnames is None else cellnames
         grid_lat, grid_lon = self.get_latlon_for_cellnames(cellnames)
 
         fformat = '{:3.1f}_{:3.1f}.{}'
@@ -392,29 +373,37 @@ class HelpManager(object):
 
     def calc_help_cells(self, path_to_hdf5=None, cellnames=None, tfsoil=0,
                         sf_edepth: float = 1, sf_ulai: float = 1,
+                        sf_cn: float = 1,
                         build_help_input_files: bool = True) -> HelpOutput:
         """
         Calcul the water budget for all eligible cells with HELP.
 
         Run HELP to compute the monthly water budget for the cells listed in
-        "cellnames". Return a dict containing the resulting monthly values as
-        numpy arrays. If a file name is provided in _path_outfile_, the results
+        "cellnames". If a file name is provided in _path_outfile_, the results
         are also saved to disk in a HDF5 file.
 
         Parameters
         ----------
+        path_to_hdf5: str, optional
+            File path where to save the results to disk in a HDF5 file.
+        tfsoil: float, optional
+            The average air temperature, in Celcius degrees,
+            below which the soil is assumed to be freezing. The default is 0.
         sf_edepth : float, optional
             Global scale factor for the Evaporative Zone Depth (applied to
             the whole grid). The default is 1.
         sf_ulai : float, optional
             Global scale factor for the Maximum Leaf Area Index (applied to
             the whole grid). The default is 1.
+        sf_cn : float, optional
+            Global scale factor for the Curve Number (applied to
+            the whole grid). The default is 1.
         build_help_input_files: bool
             A flag to indicate whether to generate the basic HELP input
             files before running the simulation.
         """
         if build_help_input_files:
-            self.build_help_input_files(cellnames, sf_edepth, sf_ulai)
+            self.build_help_input_files(cellnames, sf_edepth, sf_ulai, sf_cn)
 
         # Convert from Celcius to Farenheight
         tfsoil = (tfsoil * 1.8) + 32
