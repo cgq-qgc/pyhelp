@@ -9,13 +9,13 @@ source:
 
 requirements:
   build:
-    - {{ compiler('m2w64_c') }}
-    - {{ compiler('m2w64_fortran') }}
+    - {{ compiler('m2w64_c') }}  # [win]
+    - {{ compiler('m2w64_fortran') }}  # [win]
   host:
     - python
     - numpy
-    - m2w64-toolchain
-    - libpython
+    - m2w64-toolchain  # [win]
+    - libpython  # [win]
     - setuptools=58
     - liblief=0.10
   run:
