@@ -8,9 +8,6 @@ source:
   path: ..
 
 requirements:
-  build:
-    - {{ compiler('m2w64_c') }}
-    - {{ compiler('m2w64_fortran') }}
   host:
     - python
     - numpy
