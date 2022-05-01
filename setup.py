@@ -44,9 +44,9 @@ HELPEXT = Extension(name='pyhelp.HELP3O',
 
 INSTALL_REQUIRES = [
     'numpy',
-    'scipy'
-    'pandas'
-    'h5py>=3'
+    'scipy',
+    'pandas',
+    'h5py>=3',
     'matplotlib']
 
 setup(name='pyhelp',
