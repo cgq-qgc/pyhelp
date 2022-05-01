@@ -24,7 +24,7 @@ This workflow is based on the method originally developed by
 to assess spatially distributed groundwater recharge at the regional scale.
 
 Please consult the [documentation](http://pyhelp.readthedocs.io) for more
-details or contact us at [jean-sebastien.gosselin@ete.inrs.ca](mailto:jean-sebastien.gosselin@ete.inrs.ca).
+details.
 
 ## Install
 
