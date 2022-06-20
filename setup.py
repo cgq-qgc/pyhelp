@@ -8,6 +8,7 @@
 
 """Installation script """
 
+import csv
 import setuptools
 from numpy.distutils.core import Extension
 from numpy.distutils.core import setup
@@ -42,12 +43,9 @@ HELPEXT = Extension(name='pyhelp.HELP3O',
                                      "-static-libgcc"]
                     )
 
-INSTALL_REQUIRES = [
-    'numpy',
-    'scipy',
-    'pandas',
-    'h5py>=3',
-    'matplotlib']
+with open('requirements.txt', 'r') as csvfile:
+    INSTALL_REQUIRES = list(csv.reader(csvfile))
+INSTALL_REQUIRES = [item for sublist in INSTALL_REQUIRES for item in sublist]
 
 setup(name='pyhelp',
       version=__version__,
