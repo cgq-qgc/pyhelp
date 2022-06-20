@@ -65,10 +65,17 @@ def calc_yearly_streamflow(help_output, surf_output):
     return yearly_qflow
 
 
-def plot_sim_vs_obs_yearly_streamflow(sim_qflow, obs_qflow, fig_title):
+def plot_sim_vs_obs_yearly_streamflow(sim_qflow, obs_qflow, fig_title,
+                                      figname=None):
     """
     Plot simulated vs observed yearly total and base streamflow.
 
+    Parameters
+    ----------
+    figname : str, optional
+        The abolute path of the file where to save the figure to disk.
+        Note that the format of the file is inferred from the extension of
+        "figname".
     """
     fwidth, fheight = 9, 5.5
     fig, ax = plt.subplots()
@@ -117,11 +124,24 @@ def plot_sim_vs_obs_yearly_streamflow(sim_qflow, obs_qflow, fig_title):
     ax.text(0.5, 1, fig_title, fontsize=16, ha='center', va='bottom',
             transform=ax.transAxes+offset)
 
+    # Save figure to file.
+    if figname is not None:
+        fig.savefig(figname)
 
-def plot_streamflow_scatter(sim_qflow, obs_qflow, fig_title):
+    return fig
+
+
+def plot_streamflow_scatter(sim_qflow, obs_qflow, fig_title, figname=None):
     """
     Create a scatter plot comparing simulated total and base
     streamflow yearly values with observed values.
+
+    Parameters
+    ----------
+    figname : str, optional
+        The abolute path of the file where to save the figure to disk.
+        Note that the format of the file is inferred from the extension of
+        "figname".
     """
     # Join both dataframe in a single dataframe.
     yearly_qflow = sim_qflow.copy()
@@ -197,3 +217,9 @@ def plot_streamflow_scatter(sim_qflow, obs_qflow, fig_title):
                        borderaxespad=0, loc='lower right', borderpad=0.5,
                        bbox_to_anchor=(1, 0), ncol=1)
     legend.draw_frame(False)
+
+    # Save figure to file.
+    if figname is not None:
+        fig.savefig(figname)
+
+    return fig

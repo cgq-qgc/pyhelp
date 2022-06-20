@@ -2,9 +2,6 @@
 """
 Script permettant de faire le post-processing des données de la température
 moyenne journalière pour une simulation pyhelp donnée.
-
-Created on Wed May 18 14:43:58 2022
-@author: User
 """
 
 from pyhelp.managers import (
