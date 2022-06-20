@@ -26,28 +26,11 @@ to assess spatially distributed groundwater recharge at the regional scale.
 Please consult the [documentation](http://pyhelp.readthedocs.io) for more
 details.
 
-## Install
-
-Pip Wheels and Conda packages are both available for Python 3.7 and 3.8 on the Windows 64bits plateform. If you need to use PyHELP with a version of Python other than 3.7 or 3.8, or if you are working on Linux or macOS, you will have to build and install PyHELP from source. Please visit our [documentation](https://pyhelp.readthedocs.io/en/latest/installation.html) for more details.
-
-[![Anaconda-Server Badge](https://anaconda.org/cgq-qgc/pyhelp/badges/installer/conda.svg)](https://anaconda.org/cgq-qgc/pyhelp)
-
-The easiest method to install a released version of PyHELP on Windows is with [Conda](https://conda.io/docs/index.html). To do so, you will need first to download and install the [Anaconda distribution](https://www.anaconda.com/distribution/) on your computer. Anaconda comes with the most important Python scientific libraries (i.e. Numpy, Pandas, Matplotlib, IPython, etc), including all PyHELP dependencies, in a single, easy to use environment.
-
-Then, PyHELP can be installed, along with all its dependencies, by executing the following command in a terminal:
-
-`conda install -c cgq-qgc pyhelp`
-
-When a new released version of PyHELP is made available on the [Anaconda cgq-qgc channel](https://anaconda.org/cgq-qgc/pyhelp), PyHELP can be updated by executing the following command in a terminal:
-
-`conda update -c cgq-qgc pyhelp`
-
+## Installation
 [![Anaconda-Server Badge](https://anaconda.org/cgq-qgc/pyhelp/badges/installer/pypi.svg)](https://pypi.org/project/pyhelp/)
 
-It is also possible to install PyHELP with [pip](https://pypi.org/project/pip/), but be aware that pip installations are for advanced users.
+Pip Wheels are available for Python 3.7 to 3.9 on the Windows 64bits plateform. If you need to use PyHELP with a version of Python older than 3.7 or more recent than 3.9, or if you are working on Linux or macOS, you will have to build and install PyHELP from source.
 
-First, you will need to download and install either Python 3.7 or 3.8 on your computer.
-
-Then, you will be able to install PyHELP with pip, along with all its dependencies, by executing the following command in a terminal:
+To install PyHELP, along with all its dependencies, simply run the following command in a terminal:
 
 `python -m pip install pyhelp`
