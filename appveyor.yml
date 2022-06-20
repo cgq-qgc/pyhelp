@@ -82,7 +82,7 @@ test_script:
 
 after_test:
   - python setup.py sdist bdist_wheel
-  - 7z a -tzip dist/example_pyhelp_%PYHELP_VERSION%.zip example/*.csv example/help_example.py example/CWEEDS/*
+  - 7z a -tzip dist/example_pyhelp_%PYHELP_VERSION%.zip example/*.csv example/help_example.py
 
 artifacts:
   - path: 'dist/*.whl'
