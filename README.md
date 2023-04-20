@@ -27,7 +27,7 @@ Please consult the [documentation](http://pyhelp.readthedocs.io) for more
 details.
 
 ## Installation
-[![Anaconda-Server Badge](https://anaconda.org/cgq-qgc/pyhelp/badges/installer/pypi.svg)](https://pypi.org/project/pyhelp/)
+[![pypi version](https://img.shields.io/pypi/v/pyhelp.svg)](https://pypi.org/project/pyhelp/)
 
 Pip Wheels are available for Python 3.7 to 3.9 on the Windows 64bits plateform. If you need to use PyHELP with a version of Python older than 3.7 or more recent than 3.9, or if you are working on Linux or macOS, you will have to build and install PyHELP from source.
 
