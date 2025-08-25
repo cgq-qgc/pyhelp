@@ -1,5 +1,0 @@
-numpy
-scipy
-pandas
-h5py>=3
-matplotlib
