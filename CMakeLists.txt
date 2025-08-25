@@ -1,32 +1,21 @@
+
 cmake_minimum_required(VERSION 3.18)
-project(pyhelp LANGUAGES Fortran C)
+project(pyhelp LANGUAGES Fortran)
 
-find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
+find_package(Python COMPONENTS Interpreter REQUIRED)
+find_package(Python3 COMPONENTS Interpreter REQUIRED)
 
-# Build the extension as pyhelp.HELP3O using standard CMake
-set(SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/pyhelp/HELP3O.FOR)
-
-add_library(HELP3O MODULE ${SOURCES})
-
-# Get numpy include directory using Python
-execute_process(
-    COMMAND ${Python_EXECUTABLE} -c "import numpy; print(numpy.get_include())"
-    OUTPUT_VARIABLE NumPy_INCLUDE_DIR
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-)
-# Numpy include dirs
-include_directories(${NumPy_INCLUDE_DIR})
-
-# Linker flags and Python extension properties
-set_target_properties(HELP3O PROPERTIES
-    PREFIX ""
-    SUFFIX ".so"
-    OUTPUT_NAME "HELP3O"
-    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/pyhelp"
-    LINK_FLAGS "-static -static-libgfortran -static-libgcc"
+# Custom command to build HELP3O.so using f2py
+add_custom_command(
+    OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/pyhelp/HELP3O.so
+    COMMAND ${Python3_EXECUTABLE} -m numpy.f2py -c ${CMAKE_CURRENT_SOURCE_DIR}/pyhelp/HELP3O.FOR -m HELP3O
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/pyhelp
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/pyhelp/HELP3O.FOR
+    COMMENT "Building HELP3O.so with f2py"
 )
 
-target_link_libraries(HELP3O PRIVATE Python::Module)
+add_custom_target(build_help3o ALL
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/pyhelp/HELP3O.so
+)
 
-# Install to pyhelp package directory
-install(TARGETS HELP3O LIBRARY DESTINATION pyhelp)
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/pyhelp/HELP3O.so DESTINATION pyhelp)

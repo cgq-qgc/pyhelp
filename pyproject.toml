@@ -49,7 +49,7 @@ Croteau-Reference = "https://www.tandfonline.com/doi/abs/10.4296/cwrj3504451"
 where = ["pyhelp"]
 
 [tool.setuptools.package-data]
-pyhelp = ["*.pyd"]
+pyhelp = ["*.so", "*.pyd"]
 
 [tool.setuptools.dynamic]
 version = {attr = "pyhelp.__version__"}
