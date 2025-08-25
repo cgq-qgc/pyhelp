@@ -1,10 +1,5 @@
 [build-system]
-requires = [
-    "numpy",
-    "scikit-build-core>=0.7.0",
-    "setuptools",
-    "wheel"
-]
+requires = ["scikit-build-core", "numpy"]
 build-backend = "scikit_build_core.build"
 
 [project]
