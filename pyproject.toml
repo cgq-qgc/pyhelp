@@ -1,0 +1,60 @@
+[build-system]
+requires = [
+    "numpy",
+    "scikit-build-core>=0.7.0",
+    "setuptools",
+    "wheel"
+]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "pyhelp"
+description = "A Python library for the assessment of spatially distributed groundwater recharge and hydrological components with HELP."
+readme = {file = "README.md", content-type = "text/markdown"}
+license = {file = "LICENSE"}
+authors = [
+    {name = "Jean-Sébastien Gosselin", email = "jean-sebastien.gosselin@ete.inrs.ca"}
+]
+requires-python = ">=3.10"
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: Microsoft :: Windows",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Education",
+    "Topic :: Scientific/Engineering"
+]
+dynamic = ["version"]
+dependencies = [
+    "h5py >=3",
+    "matplotlib",
+    "numpy",
+    "pandas",
+    "scipy",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-cov",
+    "codecov",
+    "sphinx",
+    "wheel"
+]
+
+[project.urls]
+Homepage = "https://github.com/cgq-qgc/pyhelp"
+HELP-Model = "https://www.epa.gov/land-research/hydrologic-evaluation-landfill-performance-help-model"
+Croteau-Reference = "https://www.tandfonline.com/doi/abs/10.4296/cwrj3504451"
+
+[tool.setuptools.packages.find]
+where = ["pyhelp"]
+
+[tool.setuptools.package-data]
+pyhelp = ["*.pyd"]
+
+[tool.setuptools.dynamic]
+version = {attr = "pyhelp.__version__"}
