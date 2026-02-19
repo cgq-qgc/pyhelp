@@ -5,10 +5,7 @@ build-backend = "mesonpy"
 [project]
 name = "pyhelp"
 version = "0.5.0"
-description = (
-    "A Python library for the assessment of spatially distributed "
-    "groundwater recharge and hydrological components with HELP."
-    )
+description = "A Python library for the assessment of spatially distributed groundwater recharge and hydrological components with HELP."
 readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.9"
