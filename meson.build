@@ -1,9 +1,12 @@
-project('pyhelp', 'fortran',
+project('pyhelp', 'c',
   version: '0.5.0',
   default_options: ['warning_level=1']
   )
 
-py = import('python').find_installation(pure: false)
+add_languages('fortran')
+
+py_mod = import('python')
+py = py_mod.find_installation(pure: false)
 py_dep = py.dependency()
 
 incdir_numpy = run_command(py,
@@ -13,7 +16,7 @@ incdir_numpy = run_command(py,
 
 inc_np = include_directories(incdir_numpy)
 
-# Build extension
+# Build extension from Fortran.
 py.extension_module(
   'HELP3O',
   'pyhelp/HELP3O.FOR',
@@ -23,9 +26,9 @@ py.extension_module(
   subdir: 'pyhelp',
   fortran_args: ['-fdefault-real-8'],
   link_args: ['-static', '-static-libgfortran', '-static-libgcc']
-  )
+)
 
-# Install all Python files
+# Install all Python files.
 install_subdir('pyhelp',
   install_dir: py.get_install_dir(),
   exclude_files: ['*.FOR', '__pycache__', '*.pyc']
