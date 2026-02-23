@@ -35,7 +35,6 @@ py.extension_module(
   dependencies: py_dep,
   install: true,
   subdir: 'pyhelp',
-  fortran_args: ['-fdefault-real-8'],
   link_args: ['-static', '-static-libgfortran', '-static-libgcc', '-lquadmath']
 )
 
