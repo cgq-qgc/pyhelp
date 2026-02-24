@@ -72,6 +72,11 @@ def test_run_help_singlecell(rca_params):
     assert not osp.exists(rca_params[5])
     assert cellname == 'rca'
 
+    # Simulation results are in mm, but the expected values (from legacy HELP
+    # documentation/outputs) are in inches. We convert the results to compare
+    # against these imperial values. Note that 0.0393701 is the conversion
+    # factor from millimeters (mm) to inches.
+
     # Precipitations.
     precip = np.sum(results['precip'] * 0.0393701, axis=1)
     for i, expected_result in enumerate([48.53, 58.32, 56.71]):
@@ -107,4 +112,4 @@ def test_run_help_singlecell(rca_params):
 
 
 if __name__ == '__main__':
-    pytest.main(['-x', os.path.basename(__file__), '-v', '-rw'])
+    pytest.main(['-x', __file__, '-v', '-rw'])

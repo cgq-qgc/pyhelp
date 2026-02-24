@@ -89,8 +89,9 @@ def test_calc_help_cells(helpm, output_file):
                         'runoff': 2334.89,
                         'subrun1': 509.02,
                         'subrun2': 1243.24}
-    for key in list(expected_results.keys()):
-        assert abs(np.sum(area_yrly_avg[key]) - expected_results[key]) < 1, key
+    for name, value in expected_results.items():
+        result = np.sum(area_yrly_avg[name])
+        assert abs(result - value) < 1, f'{name}: {result} vs {value}'
 
 
 @pytest.mark.parametrize('fig_title', [None, 'Exemple figure title'])
@@ -108,12 +109,17 @@ def test_plot_area_monthly_avg(output_dir, output_file, fig_title):
     assert osp.exists(figfilename)
 
     children = fig.axes[0].get_children()
-    assert (children[0].get_ydata().sum() - 1086.8448950125246) < 0.01  # precip
-    assert (children[1].get_ydata().sum() - 136.12068516893297) < 0.01  # rechg
-    assert (children[2].get_ydata().sum() - 226.9635476845988) < 0.01   # runoff
-    assert (children[3].get_ydata().sum() - 550.11140519815) < 0.01     # evapo
-    assert (children[4].get_ydata().sum() - 47.97935577404126) < 0.01   # subrun1
-    assert (children[5].get_ydata().sum() - 121.66539490800443) < 0.01  # subrun2
+    expected_values = {
+        'precip': 1086.8448950125246,
+        'rechg': 136.12068516893297,
+        'runoff': 226.9635476845988,
+        'evapo': 550.11140519815,
+        'subrun1': 47.97935577404126,
+        'subrun2': 121.66539490800443
+        }
+    for i, (name, value) in enumerate(expected_values.items()):
+        result = children[i].get_ydata().sum()
+        assert abs(result - value) < 0.1, f'{name}: {result} vs {value}'
 
     if fig_title is None:
         assert fig._suptitle is None
@@ -140,12 +146,18 @@ def test_plot_area_yearly_series(output_dir, output_file, fig_title):
     children = fig.axes[0].get_children()
     for i in range(12):
         assert list(children[i].get_xdata()) == expected_xdata
-    assert (children[0].get_ydata().mean() - 1086.8448950125246) < 0.01   # precip
-    assert (children[2].get_ydata().mean() - 136.12068516893297) < 0.01   # rechg
-    assert (children[4].get_ydata().mean() - 226.9635476845988) < 0.01    # runoff
-    assert (children[6].get_ydata().mean() - 550.11140519815) < 0.01      # evapo
-    assert (children[8].get_ydata().mean() - 47.97935577404126) < 0.01    # subrun1
-    assert (children[10].get_ydata().mean() - 121.66539490800443) < 0.01  # subrun2
+
+    expected_values = {
+        'precip': 1086.8448950125246,
+        'rechg': 136.12068516893297,
+        'runoff': 226.9635476845988,
+        'evapo': 550.11140519815,
+        'subrun1': 47.97935577404126,
+        'subrun2': 121.66539490800443
+        }
+    for i, (name, value) in enumerate(expected_values.items()):
+        result = children[i * 2].get_ydata().mean()
+        assert abs(result - value) < 0.1, f'{name}: {result} vs {value}'
 
     if fig_title is None:
         assert fig._suptitle is None
@@ -168,18 +180,18 @@ def test_plot_area_yearly_avg(output_dir, output_file, fig_title):
     assert osp.exists(figfilename)
 
     children = fig.axes[0].get_children()
-    assert (children[0].get_height() - 1086.8448950125246) < 0.01   # precip
-    assert children[1].get_text() == '1087\nmm/an'
-    assert (children[2].get_height() - 136.12068516893297) < 0.01   # rechg
-    assert children[3].get_text() == '136\nmm/an'
-    assert (children[4].get_height() - 226.9635476845988) < 0.01    # runoff
-    assert children[5].get_text() == '227\nmm/an'
-    assert (children[6].get_height() - 550.11140519815) < 0.01      # evapo
-    assert children[7].get_text() == '550\nmm/an'
-    assert (children[8].get_height() - 47.97935577404126) < 0.01    # subrun1
-    assert children[9].get_text() == '48\nmm/an'
-    assert (children[10].get_height() - 121.66539490800443) < 0.01  # subrun2
-    assert children[11].get_text() == '122\nmm/an'
+    expected_values = {
+        'precip': 1086.8448950125246,
+        'rechg': 136.12068516893297,
+        'runoff': 226.9635476845988,
+        'evapo': 550.11140519815,
+        'subrun1': 47.97935577404126,
+        'subrun2': 121.66539490800443
+        }
+    for i, (name, value) in enumerate(expected_values.items()):
+        height = children[i * 2].get_height()
+        assert abs(height - value) < 0.1, f'{name}: {height} vs {value}'
+        assert children[i * 2 + 1].get_text() == f'{round(value)}\nmm/an'
 
     if fig_title is None:
         assert fig._suptitle is None
@@ -205,9 +217,9 @@ def test_calc_cells_yearly_avg(output_file):
         'runoff': 212.26214164981408,
         'subrun1': 46.26946108344004,
         'subrun2': 113.02721698440918}
-    for varname in list(expected_results.keys()):
-        result = np.sum(yearly_avg[varname]) / len(yearly_avg[varname])
-        assert abs(result - expected_results[varname]) < 1, varname
+    for name, value in expected_results.items():
+        result = np.mean(yearly_avg[name])
+        assert abs(result - value) < 1, f'{name}: {result} vs {value}'
 
     # Test calc_cells_yearly_avg with non null year_from and year_to argument.
     yearly_avg = output.calc_cells_yearly_avg(year_from=2003, year_to=2009)
@@ -219,9 +231,9 @@ def test_calc_cells_yearly_avg(output_file):
         'runoff': 226.9635476845988,
         'subrun1': 47.97935577404126,
         'subrun2': 121.66539490800443}
-    for varname in list(expected_results.keys()):
-        result = np.sum(yearly_avg[varname]) / len(yearly_avg[varname])
-        assert abs(result - expected_results[varname]) < 1, varname
+    for name, value in expected_results.items():
+        result = np.mean(yearly_avg[name])
+        assert abs(result - value) < 1, f'{name}: {result} vs {value}'
 
     # Test calc_cells_yearly_avg with year_from == year_to.
     yearly_avg = output.calc_cells_yearly_avg(year_from=2003, year_to=2003)
@@ -233,9 +245,9 @@ def test_calc_cells_yearly_avg(output_file):
         'runoff': 164.32582637467374,
         'subrun1': 56.33706154407843,
         'subrun2': 140.96849990912418}
-    for varname in list(expected_results.keys()):
-        result = np.sum(yearly_avg[varname]) / len(yearly_avg[varname])
-        assert abs(result - expected_results[varname]) < 1, varname
+    for name, value in expected_results.items():
+        result = np.mean(yearly_avg[name])
+        assert abs(result - value) < 1, f'{name}: {result} vs {value}'
 
 
 def test_save_output_to_csv(output_dir, output_file):

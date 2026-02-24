@@ -1,0 +1,36 @@
+[build-system]
+requires = ["meson-python", "numpy"]
+build-backend = "mesonpy"
+
+[project]
+name = "pyhelp"
+version = "0.5.0"
+description = "A Python library for the assessment of spatially distributed groundwater recharge and hydrological components with HELP."
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.9"
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: Microsoft :: Windows",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Education",
+    "Topic :: Scientific/Engineering",
+    ]
+
+dependencies = [
+    "numpy>=1.26",
+    "scipy>=1.9",
+    "pandas>=2,<3",
+    "h5py>=3",
+    "matplotlib>=3.6",
+    ]
+
+[project.urls]
+Homepage = "https://github.com/cgq-qgc/pyhelp"
+Repository = "https://github.com/cgq-qgc/pyhelp"
+
+[tool.meson-python.args]
