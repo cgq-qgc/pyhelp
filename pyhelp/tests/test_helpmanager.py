@@ -89,8 +89,9 @@ def test_calc_help_cells(helpm, output_file):
                         'runoff': 2334.89,
                         'subrun1': 509.02,
                         'subrun2': 1243.24}
-    for key in list(expected_results.keys()):
-        assert abs(np.sum(area_yrly_avg[key]) - expected_results[key]) < 1, key
+    for name, value in expected_results.items():
+        result = np.sum(area_yrly_avg[name])
+        assert abs(result - value) < 1, f'{name}: {result} vs {value}'
 
 
 @pytest.mark.parametrize('fig_title', [None, 'Exemple figure title'])
