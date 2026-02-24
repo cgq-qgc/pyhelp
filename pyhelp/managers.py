@@ -663,7 +663,6 @@ def load_weather_from_csv(filename: str) -> pd.DataFrame:
         skiprows=i,
         skip_blank_lines=False,
         parse_dates=True,
-        infer_datetime_format=True,
         dayfirst=True)
     dataf.index.name = 'date'
     dataf.columns = pd.MultiIndex.from_tuples(
