@@ -108,12 +108,17 @@ def test_plot_area_monthly_avg(output_dir, output_file, fig_title):
     assert osp.exists(figfilename)
 
     children = fig.axes[0].get_children()
-    assert (children[0].get_ydata().sum() - 1086.8448950125246) < 0.01  # precip
-    assert (children[1].get_ydata().sum() - 136.12068516893297) < 0.01  # rechg
-    assert (children[2].get_ydata().sum() - 226.9635476845988) < 0.01   # runoff
-    assert (children[3].get_ydata().sum() - 550.11140519815) < 0.01     # evapo
-    assert (children[4].get_ydata().sum() - 47.97935577404126) < 0.01   # subrun1
-    assert (children[5].get_ydata().sum() - 121.66539490800443) < 0.01  # subrun2
+    expected_values = {
+        'precip': 1086.8448950125246,
+        'rechg': 136.12068516893297,
+        'runoff': 226.9635476845988,
+        'evapo': 550.11140519815,
+        'subrun1': 47.97935577404126,
+        'subrun2': 121.66539490800443
+        }
+    for i, (varname, value) in enumerate(expected_values.items()):
+        result = children[i].get_ydata().sum()
+        assert abs(result - value) < 0.01, f'{varname}: {result} vs {value}'
 
     if fig_title is None:
         assert fig._suptitle is None
