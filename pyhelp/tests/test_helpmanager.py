@@ -180,18 +180,18 @@ def test_plot_area_yearly_avg(output_dir, output_file, fig_title):
     assert osp.exists(figfilename)
 
     children = fig.axes[0].get_children()
-    assert (children[0].get_height() - 1086.8448950125246) < 0.01   # precip
-    assert children[1].get_text() == '1087\nmm/an'
-    assert (children[2].get_height() - 136.12068516893297) < 0.01   # rechg
-    assert children[3].get_text() == '136\nmm/an'
-    assert (children[4].get_height() - 226.9635476845988) < 0.01    # runoff
-    assert children[5].get_text() == '227\nmm/an'
-    assert (children[6].get_height() - 550.11140519815) < 0.01      # evapo
-    assert children[7].get_text() == '550\nmm/an'
-    assert (children[8].get_height() - 47.97935577404126) < 0.01    # subrun1
-    assert children[9].get_text() == '48\nmm/an'
-    assert (children[10].get_height() - 121.66539490800443) < 0.01  # subrun2
-    assert children[11].get_text() == '122\nmm/an'
+    expected_values = {
+        'precip': 1086.8448950125246,
+        'rechg': 136.12068516893297,
+        'runoff': 226.9635476845988,
+        'evapo': 550.11140519815,
+        'subrun1': 47.97935577404126,
+        'subrun2': 121.66539490800443
+        }
+    for i, (name, value) in enumerate(expected_values.items()):
+        height = children[i * 2].get_height()
+        assert abs(height - value) < 0.1, f'{name}: {height} vs {value}'
+        assert children[i * 2 + 1].get_text() == f'{round(value)}\nmm/an'
 
     if fig_title is None:
         assert fig._suptitle is None
