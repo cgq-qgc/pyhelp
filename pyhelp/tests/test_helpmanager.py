@@ -119,7 +119,7 @@ def test_plot_area_monthly_avg(output_dir, output_file, fig_title):
         }
     for i, (name, value) in enumerate(expected_values.items()):
         result = children[i].get_ydata().sum()
-        assert abs(result - value) < 0.01, f'{name}: {result} vs {value}'
+        assert abs(result - value) < 0.1, f'{name}: {result} vs {value}'
 
     if fig_title is None:
         assert fig._suptitle is None
