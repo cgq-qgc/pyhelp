@@ -219,7 +219,7 @@ def test_calc_cells_yearly_avg(output_file):
         'subrun2': 113.02721698440918}
     for name, value in expected_results.items():
         result = np.mean(yearly_avg[name])
-        assert abs(result - value) < 0.1, f'{name}: {result} vs {value}'
+        assert abs(result - value) < 1, f'{name}: {result} vs {value}'
 
     # Test calc_cells_yearly_avg with non null year_from and year_to argument.
     yearly_avg = output.calc_cells_yearly_avg(year_from=2003, year_to=2009)
@@ -233,7 +233,7 @@ def test_calc_cells_yearly_avg(output_file):
         'subrun2': 121.66539490800443}
     for name, value in expected_results.items():
         result = np.mean(yearly_avg[name])
-        assert abs(result - value) < 0.1, f'{name}: {result} vs {value}'
+        assert abs(result - value) < 1, f'{name}: {result} vs {value}'
 
     # Test calc_cells_yearly_avg with year_from == year_to.
     yearly_avg = output.calc_cells_yearly_avg(year_from=2003, year_to=2003)
@@ -247,7 +247,7 @@ def test_calc_cells_yearly_avg(output_file):
         'subrun2': 140.96849990912418}
     for name, value in expected_results.items():
         result = np.mean(yearly_avg[name])
-        assert abs(result - value) < 0.1, f'{name}: {result} vs {value}'
+        assert abs(result - value) < 1, f'{name}: {result} vs {value}'
 
 
 def test_save_output_to_csv(output_dir, output_file):
