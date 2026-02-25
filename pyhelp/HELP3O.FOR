@@ -18,7 +18,7 @@ C
 
       SUBROUTINE run_simulation (fpath_precip, fpath_tasavg,
      1 fpath_solrad, fpath_evapo, fpath_soil, fpath_output,
-     2 IOD, IOM, IOA, IOS, IU8, LMYR, TFSOIL)
+     2 IOD, IOM, IOA, IOS, LMYR, TFSOIL)
 C
       PARAMETER (MXYR = 100)
       PARAMETER (MAXMO = 12)
@@ -33,9 +33,10 @@ C
       INTEGER, INTENT(IN) :: IOM
       INTEGER, INTENT(IN) :: IOA
       INTEGER, INTENT(IN) :: IOS
-      INTEGER, INTENT(IN) :: IU8
       INTEGER, INTENT(IN) :: LMYR
       REAL, INTENT(IN) :: TFSOIL
+
+	  INTEGER :: IU8
 
       DOUBLE PRECISION BALY, BALT, DRIN, SWULY, DUMMY1, DUMMY2
 C    1  QDRN1, QDRN2, QDRN3, QDRN4, QDRN5,
@@ -130,6 +131,12 @@ C
       DIMENSION  BALY(67), BALT(67), SWULL(20), HED1S(31), HED2S(31),
      1  HED3S(31), HED4S(31), HED5S(31), DRIN(68), SWULY(67)
       DATA ISTAR/'*', ' '/
+C
+C
+C     IU8 is internally set to 2, indicating that the SI (International System)
+C     units are used for inputs and outputs. Previously, IU8 allowed selection
+C     between SI (2) and IP (1), but now only SI units are supported.
+      IU8 = 2
 C
       WF(1) = 0.085
       WF(2) = 0.334
