@@ -37,7 +37,6 @@ def rca_params(rca_folder, tmp_path):
     yearly_out = 0
     summary_out = 0
     tfsoil = 32.0  # Must be in Fahrenheit
-    unit_system = 2  # IP if 1 else SI
     simu_nyear = 3
     return (osp.join(rca_folder, 'RCRA.D4'),
             osp.join(rca_folder, 'RCRA.D7'),
@@ -49,7 +48,6 @@ def rca_params(rca_folder, tmp_path):
             monthly_out,
             yearly_out,
             summary_out,
-            unit_system,
             simu_nyear,
             tfsoil)
 
@@ -69,7 +67,7 @@ def test_run_help_singlecell(rca_params):
     results are as expected.
     """
     cellname, results = run_help_singlecell(('rca', rca_params))
-    assert not osp.exists(rca_params[5])
+    assert not osp.exists(rca_params[5]), rca_params[5]
     assert cellname == 'rca'
 
     # Simulation results are in mm, but the expected values (from legacy HELP
