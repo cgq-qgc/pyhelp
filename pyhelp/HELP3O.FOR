@@ -965,19 +965,18 @@ C
         ELSE
           BAL = BAL - PRC1A
         END IF
-C
-C     CALLS SUBROUTINE OUTMO IF MONTHLY OUTPUT IS DESIRED.
-C
-        IF (IPRE .GE. 2 .AND. (IOM .EQ. 1 .OR. IOS .EQ. 1))
-     1    CALL OUTMO(IOM, IOS, IU8)
-C
-C     CALLS SUBROUTINE OUTYR TO PRINT ANNUAL TOTALS.
-C
-        IF (IPRE .GE. 2 .AND. (IOA .EQ. 1 .OR. IOS .EQ. 1))
-     1    CALL OUTYR(IOA, IOS, IU8)
-C
-C     INITIALIZES VARIABLES FOR THE NEXT YEAR.
-C
+
+        ! Calls subroutine OUTMO if monthly output is desired.
+        IF (IPRE >= 2 .AND. (IOM == 1 .OR. IOS == 1)) THEN
+          CALL OUTMO(IOM, IOS)
+        END IF
+
+        ! Calls subroutine OUTYR to print annual totals.
+        IF (IPRE >= 2 .AND. (IOA == 1 .OR. IOS == 1)) THEN
+          CALL OUTYR(IOA, IOS, IU8)
+        END IF
+
+        ! Initializes variables for the next year.
         OSWULE = PSWULE
         OLDSNO = SSNO
 C
