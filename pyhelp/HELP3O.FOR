@@ -132,10 +132,11 @@ C
      1  HED3S(31), HED4S(31), HED5S(31), DRIN(68), SWULY(67)
       DATA ISTAR/'*', ' '/
 C
-C
-C     IU8 is internally set to 2, indicating that the SI (International System)
-C     units are used for inputs and outputs. Previously, IU8 allowed selection
-C     between SI (2) and IP (1), but now only SI units are supported.
+C     IU8 is now internally set to 2, indicating that SI (International System)
+C     units are used for all inputs and outputs. Previously, IU8 allowed
+C     selection between SI (2) and IP (1) units, but now only SI units are
+C     supported. Note that code supporting IP units will be removed gradually
+C     from the source code.
       IU8 = 2
 C
       WF(1) = 0.085
