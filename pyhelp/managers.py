@@ -432,8 +432,6 @@ class HelpManager(object):
             yearly_out = 0
             summary_out = 0
 
-            unit_system = 2  # IP if 1 else SI
-
             year_start = self.precip_data.index.year.min()
             year_end = self.precip_data.index.year.max()
             simu_nyear = year_end - year_start + 1
@@ -441,7 +439,7 @@ class HelpManager(object):
             cellparams[cellname] = (fpath_d4, fpath_d7, fpath_d13, fpath_d11,
                                     fpath_d10, fpath_out, daily_out,
                                     monthly_out, yearly_out, summary_out,
-                                    unit_system, simu_nyear, tfsoil)
+                                    simu_nyear, tfsoil)
 
         skipped_cells = list(set(skipped_cells))
         if skipped_cells:
