@@ -15,12 +15,14 @@ C           below which the soil is assumed to be freezing
 C
 
       SUBROUTINE run_simulation (fpath_precip, fpath_tasavg,
-     &  fpath_solrad, fpath_evapo, d10_nlines, d10_input, fpath_output,
+     &  fpath_solrad, d11_input, d10_nlines, d10_input, fpath_output,
      &  IOD, IOM, IOA, IOS, LMYR, TFSOIL
      &  )
 
       PARAMETER (MXYR = 100)
       PARAMETER (MAXMO = 12)
+
+      CHARACTER(len=80), INTENT(IN) :: d11_input(3)
 
       INTEGER, INTENT(IN) :: d10_nlines
       CHARACTER(len=80), INTENT(IN) :: d10_input(d10_nlines)
@@ -150,9 +152,10 @@ C
 
       OPEN (8, FILE = fpath_output, STATUS = 'UNKNOWN')
 
-      ! Read climatic input and soil characteristics and design information.
+      ! Read climatic input and soil characteristics and
+      ! design information.
       CALL READIN(fpath_precip, fpath_tasavg, fpath_solrad,
-     &            fpath_evapo, d10_nlines, d10_input)
+     &            d11_input, d10_nlines, d10_input)
 C
 C    SETS CONTROLS FOR SUBPROFILES AND OUTPUT.
 C
@@ -328,7 +331,7 @@ C    PRINTS SOIL CHARACTERISTICS AND DESIGN INFORMATION.
 C
       IF (IPRE .GE. 2) THEN
          CALL OUTDAT (SWULL, fpath_precip, fpath_tasavg, fpath_solrad,
-     1                fpath_evapo, fpath_output, IU8)
+     1                fpath_output, IU8)
       END IF
 C
 C   INITIALIZING VARIABLES
@@ -1157,22 +1160,23 @@ C
 C  SUBROUTINE READIN READS ET AND SOIL DESIGN DATA, AND WEATHER HEADERS
 C
       SUBROUTINE READIN (fpath_precip, fpath_tasavg, fpath_solrad,
-     1 fpath_evapo, d10_nlines, d10_input)
+     &  d11_input, d10_nlines, d10_input)
 
       CHARACTER(len=260), INTENT(IN) :: fpath_precip
       CHARACTER(len=260), INTENT(IN) :: fpath_tasavg
       CHARACTER(len=260), INTENT(IN) :: fpath_solrad
-      CHARACTER(len=260), INTENT(IN) :: fpath_evapo
+
+      CHARACTER(len=80), INTENT(IN) :: d11_input(3)
 
       INTEGER, INTENT(IN) :: d10_nlines
-      CHARACTER(len=*), INTENT(IN) :: d10_input(d10_nlines)
+      CHARACTER(len=80), INTENT(IN) :: d10_input(d10_nlines)
 
       INTEGER :: ILINE
-      CHARACTER*40 CITY4, CITY7, CITY13, CITY11
+      CHARACTER*40 CITY4, CITY7, CITY13
       CHARACTER*60 TITLE
       COMMON /BLK0/ TITLE
       COMMON /BLK1/ IT4, IT7, IT13, IU4, IU7, IU13, IU11, IU10
-      COMMON /BLK2/ CITY4, CITY7, CITY13, CITY11
+      COMMON /BLK2/ CITY4, CITY7, CITY13
       DOUBLE PRECISION RC(20)
       COMMON /BLK3/ PORO (20), FC (20), WP (20), RC, SW (20),
      1  RS (20), XLAMBD (20), BUB (20), THICK (20), SLOPE (20),
@@ -1188,21 +1192,20 @@ C
       COMMON /BLK27/ IFREZ, IDFS, IFCNT, KCNT, MXKCNT
 C
       DIMENSION DRAD(31)
-C
-C
-C    READS STATE AND CITY , MAX LAI, PLANTING AND HARVESTING DATES,
-C    PROBABILITIES, AND MEAN MONTHLY TEMPERATURES IN DEGREES
-C    FAHRENHEIT FROM *.D11.
-C
+
+      ! Read D11 surface condition (evapotranspiration) data.
+      READ (d11_input(1), 5050) IU11
+      READ (d11_input(3), 5060) ULAT, IPL, IHV, ULAI, EDEPTH, WIND,
+     &  HUM1, HUM2, HUM3, HUM4
+ 5050 FORMAT (I2)
+ 5060 FORMAT (F10.2, I4, I4, F7.0, F8.0, 5F5.0)
+
       IERR = 0
       OPEN (4, FILE = fpath_precip, STATUS = 'OLD', ERR = 1000)
  1010 CONTINUE
       OPEN (7, FILE = fpath_tasavg, STATUS = 'OLD', ERR = 1020)
  1030 CONTINUE
       OPEN (13, FILE = fpath_solrad, STATUS = 'OLD', ERR = 1040)
- 1050 CONTINUE
-      OPEN (11, FILE = fpath_evapo, STATUS = 'OLD', ERR = 1060)
-C
  1070 CONTINUE
       IF (IERR .GT. 0) THEN
         WRITE (*, 6000)
@@ -1211,24 +1214,16 @@ C
         CLOSE (4)
         CLOSE (7)
         CLOSE (13)
-        CLOSE (11)
         STOP
       END IF
 C
       REWIND (4)
       REWIND (7)
       REWIND (13)
-      REWIND (11)
       READ (4, 5040) IT4, IU4, CITY4, (RM (I), I = 1, 12)
       READ (7, 5040) IT7, IU7, CITY7, (TM (I), I = 1, 12)
       READ (13, 5040) IT13, IU13, CITY13, RLAT
-      READ (11, 5050) IU11, CITY11
-      READ (11, 5060) ULAT, IPL, IHV, ULAI, EDEPTH, WIND, HUM1, HUM2,
-     1  HUM3, HUM4
  5040 FORMAT (I2/I2/A40/12F6.2)
- 5050 FORMAT (I2/A40)
- 5060 FORMAT (F10.2,I4,I4,F7.0,F8.0,5F5.0)
-      CLOSE (11)
 C
       IF (IU7 .EQ. 1) THEN
         DO 1075 I = 1, 12
@@ -5465,17 +5460,16 @@ C     CHARACTERISTICS AND DESIGN INFORMATION AND
 C     CLIMATOLOGICAL INPUT DATA
 C
       SUBROUTINE OUTDAT (SWULL, fpath_precip, fpath_tasavg,
-     1 fpath_solrad, fpath_evapo, fpath_output, IU8)
+     1 fpath_solrad, fpath_output, IU8)
 
       CHARACTER(len=260), INTENT(IN) :: fpath_precip
       CHARACTER(len=260), INTENT(IN) :: fpath_tasavg
       CHARACTER(len=260), INTENT(IN) :: fpath_solrad
-      CHARACTER(len=260), INTENT(IN) :: fpath_evapo
       CHARACTER(len=260), INTENT(IN) :: fpath_output
       INTEGER, INTENT(IN) :: IU8
 
       CHARACTER*2 DUMMY1, DUMMY2, DUMMY3, DUMMY4
-      CHARACTER*40 CITY4, CITY7, CITY13, CITY11
+      CHARACTER*40 CITY4, CITY7, CITY13
       CHARACTER*60 TITLE
       INTEGER :: DATTIM(8)
       DOUBLE PRECISION  DTHICK, DRCUL, DBUBUL, DWPUL,
@@ -5483,7 +5477,7 @@ C
 C
       COMMON /BLK0/ TITLE
       COMMON /BLK1/ IT4, IT7, IT13, IU4, IU7, IU13, IU11, IU10
-      COMMON /BLK2/ CITY4, CITY7, CITY13, CITY11
+      COMMON /BLK2/ CITY4, CITY7, CITY13
       DOUBLE PRECISION RC(20)
       COMMON /BLK3/ PORO (20), FC (20), WP (20), RC, SW (20),
      1  RS (20), XLAMBD (20), BUB (20), THICK (20), SLOPE (20),
@@ -5519,12 +5513,11 @@ C
      6  1X,'**',74X,'**'/1X,'**',74X,'**'/1X,78('*')/
      7  1X,78('*'))
       WRITE (8, 6005) fpath_precip, fpath_tasavg, fpath_solrad,
-     1 fpath_evapo, fpath_output
+     &  fpath_output
  6005 FORMAT(///1X,'PRECIPITATION DATA FILE:    ',A260/
      1 1X,'TEMPERATURE DATA FILE:      ', A260/
      2 1X,'SOLAR RADIATION DATA FILE:  ', A260/
-     3 1X,'EVAPOTRANSPIRATION DATA:    ', A260/
-     4 1X,'OUTPUT DATA FILE:           ', A260///)
+     3 1X,'OUTPUT DATA FILE:           ', A260///)
 C
       CALL DATE_AND_TIME(values=DATTIM)
       WRITE(8,6010) DATTIM(5),DATTIM(6),DATTIM(2),DATTIM(3),DATTIM(1)
@@ -5807,9 +5800,6 @@ C
 C
 C    PRINTS WEATHER DATA
 C
-      WRITE (8, 6200) CITY11
- 6200 FORMAT(//21X,'EVAPOTRANSPIRATION AND WEATHER DATA '/21X,35('-')//
-     1 10X,'NOTE:  EVAPOTRANSPIRATION DATA WAS OBTAINED FROM'/19X,A40/)
       WRITE (8, 6263) ULAT
  6263 FORMAT(14X,'STATION LATITUDE',23X,'= ',F6.2,' DEGREES')
       WRITE (8, 6210) ULAI, IPL, IHV
