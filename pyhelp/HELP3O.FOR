@@ -127,18 +127,18 @@ C
       COMMON /BLK33/ JYEAR(MXYR)
       COMMON /BLK35/ NSEG1B, NSEG2B, NSEG3B, NSEG4B, NSEG5B,
      1  NSEG1D, NSEG2D, NSEG3D, NSEG4D, NSEG5D
-C
+
       DIMENSION  BALY(67), BALT(67), SWULL(20), HED1S(31), HED2S(31),
      1  HED3S(31), HED4S(31), HED5S(31), DRIN(68), SWULY(67)
       DATA ISTAR/'*', ' '/
-C
-C     IU8 is now internally set to 2, indicating that SI (International System)
-C     units are used for all inputs and outputs. Previously, IU8 allowed
-C     selection between SI (2) and IP (1) units, but now only SI units are
-C     supported. Note that code supporting IP units will be removed gradually
-C     from the source code.
+
+      ! IU8 is now internally set to 2, indicating that SI (International
+      ! System) units are used for all inputs and outputs. Previously, IU8
+      ! allowed selection between SI (2) and IP (1) units, but now only SI
+      ! units are supported. Note that code supporting IP units will be
+      ! removed gradually from the source code.
       IU8 = 2
-C
+
       WF(1) = 0.085
       WF(2) = 0.334
       WF(3) = 0.252
@@ -146,12 +146,10 @@ C
       WF(5) = 0.091
       WF(6) = 0.054
       WF(7) = 0.033
-C
+
       OPEN (8, FILE = fpath_output, STATUS = 'UNKNOWN')
-C
-C    READS CLIMATIC INPUT AND SOIL CHARACTERISTICS AND DESIGN
-C    INFORMATION.
-C
+
+      ! Read climatic input and soil characteristics and design information.
       CALL READIN(fpath_precip, fpath_tasavg, fpath_solrad,
      1            fpath_evapo, fpath_soil)
 C
