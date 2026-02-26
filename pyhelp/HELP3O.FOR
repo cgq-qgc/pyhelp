@@ -10,8 +10,6 @@ C
 C    DIRECTS THE RUNNING OF THE SIMULATION AND PRINTING OF OUTPUT,
 C    AND PERFORMS THE ACCOUNTING ON THE RESULTS.
 C
-C    IU8 is a flag to indicate the system of units used for the inputs and
-C        outputs. A value of 2 is used for SI and 1 for IP.
 C    TFSOIL is the average air temperature, in Fahrenheit degrees,
 C           below which the soil is assumed to be freezing
 C
@@ -135,11 +133,11 @@ C
      1  HED3S(31), HED4S(31), HED5S(31), DRIN(68), SWULY(67)
       DATA ISTAR/'*', ' '/
 
-      ! IU8 is now internally set to 2, indicating that SI (International
-      ! System) units are used for all inputs and outputs. Previously, IU8
-      ! allowed selection between SI (2) and IP (1) units, but now only SI
-      ! units are supported. Note that code supporting IP units will be
-      ! removed gradually from the source code.
+      ! IU8 is now internally set to 2, indicating that SI units are
+      ! used for outputs. Previously, IU8 allowed selection between
+      ! SI (2) and IP (1) units, but now only SI units are supported.
+      ! Note that code supporting IP units will be removed gradually
+      ! from the source code.
       IU8 = 2
 
       WF(1) = 0.085
