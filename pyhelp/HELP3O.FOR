@@ -154,7 +154,7 @@ C
 
       ! Read climatic input and soil characteristics and design information.
       CALL READIN(fpath_precip, fpath_tasavg, fpath_solrad,
-     1            fpath_evapo, fpath_soil)
+     &            fpath_evapo, d10_nlines, d10_input)
 C
 C    SETS CONTROLS FOR SUBPROFILES AND OUTPUT.
 C
@@ -1159,14 +1159,17 @@ C
 C  SUBROUTINE READIN READS ET AND SOIL DESIGN DATA, AND WEATHER HEADERS
 C
       SUBROUTINE READIN (fpath_precip, fpath_tasavg, fpath_solrad,
-     1 fpath_evapo, fpath_soil)
+     1 fpath_evapo, d10_nlines, d10_input)
 
       CHARACTER(len=260), INTENT(IN) :: fpath_precip
       CHARACTER(len=260), INTENT(IN) :: fpath_tasavg
       CHARACTER(len=260), INTENT(IN) :: fpath_solrad
       CHARACTER(len=260), INTENT(IN) :: fpath_evapo
-      CHARACTER(len=260), INTENT(IN) :: fpath_soil
 
+      INTEGER, INTENT(IN) :: d10_nlines
+      CHARACTER(len=*), INTENT(IN) :: d10_input(d10_nlines)
+
+      INTEGER :: ILINE
       CHARACTER*40 CITY4, CITY7, CITY13, CITY11
       CHARACTER*60 TITLE
       COMMON /BLK0/ TITLE
@@ -1260,21 +1263,25 @@ C
         LAYR(I) = 0
       END DO
 
-      OPEN(10, FILE = fpath_soil, STATUS = 'OLD', ERR = 1120)
-      REWIND 10
+      ILINE = 1
 
-      READ(10, 5070) TITLE
+      READ(d10_input(ILINE), 5070) TITLE
+      ILINE = ILINE + 1
  5070 FORMAT(A60)
 
-      READ(10, 5080) IU10, IPRE, OSNO, AREA, FRUNOF, IRUN
+      READ(d10_input(ILINE), 5080) IU10, IPRE, OSNO, AREA, FRUNOF, IRUN
+      ILINE = ILINE + 1
  5080 FORMAT(I2, I2, 2F10.0, F6.0, I2)
 
       IF (IRUN == 1) THEN
-        READ(10, 5090) CN2
+        READ(d10_input(ILINE), 5090) CN2
+        ILINE = ILINE + 1
       ELSE IF (IRUN == 2) THEN
-        READ(10, 5100) OCN2, SSLOPE, SLENG, CN2
+        READ(d10_input(ILINE), 5100) OCN2, SSLOPE, SLENG, CN2
+        ILINE = ILINE + 1
       ELSE IF (IRUN == 3) THEN
-        READ(10, 5110) SSLOPE, SLENG, ITSOIL, IVEG, CN2
+        READ(d10_input(ILINE), 5110) SSLOPE, SLENG, ITSOIL, IVEG, CN2
+        ILINE = ILINE + 1
       END IF
 
  5090 FORMAT(F7.0)
@@ -1282,11 +1289,19 @@ C
  5110 FORMAT(2F7.0, 2I3, F7.0)
 
       DO J = 1, 20
-        READ(10, 5120, END = 1140) LAYER(J), THICK(J), ISOIL(J),
+        IF (ILINE > d10_nlines) GO TO 1140
+
+        READ(d10_input(ILINE), 5120) LAYER(J), THICK(J), ISOIL(J),
      &    PORO(J), FC(J), WP(J), SW(J), RC(J)
+        ILINE = ILINE + 1
+
         LAY = LAY + 1
-        READ(10, 5130, END = 1140) XLENG(J), SLOPE(J), RECIR(J),
+
+        IF (ILINE > d10_nlines) GO TO 1140
+
+        READ(d10_input(ILINE), 5130) XLENG(J), SLOPE(J), RECIR(J),
      &    LAYR(J), SUBIN(J), PHOLE(J), DEFEC(J), IPQ(J), TRANS(J)
+        ILINE = ILINE + 1
       END DO
 
  5120 FORMAT(I2, F7.0, I4, 4F6.0, F16.0)
@@ -1294,7 +1309,6 @@ C
 
  1140 CONTINUE
 
-      CLOSE (10)
 C
 C   DETERMINES THE BROOKS-COREY PARAMETERS AND EVAPORATION COEFFICIENT
 C
