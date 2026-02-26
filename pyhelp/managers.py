@@ -405,6 +405,15 @@ class HelpManager(object):
         if build_help_input_files:
             self.build_help_input_files(cellnames, sf_edepth, sf_ulai, sf_cn)
 
+        # Format D10 data.
+        grid = self.grid.copy()
+        grid['EZD'] = grid['EZD'] * sf_edepth
+        grid['LAI'] = grid['LAI'] * sf_ulai
+        grid['CN'] = grid['CN'] * sf_cn
+
+        cellnames = self.get_run_cellnames(cellnames)
+        d10data, d11data = format_d10d11_inputs(grid, cellnames)
+
         # Convert from Celcius to Farenheight
         tfsoil = (tfsoil * 1.8) + 32
 
@@ -419,13 +428,16 @@ class HelpManager(object):
             fpath_d4 = self.connect_tables['D4'][cellname]
             fpath_d7 = self.connect_tables['D7'][cellname]
             fpath_d13 = self.connect_tables['D13'][cellname]
-            fpath_d10 = self.connect_tables['D10'][cellname]
+            d10_input = d10data.get(cellname, None)
             fpath_d11 = self.connect_tables['D11'][cellname]
+
             fpath_out = osp.abspath(osp.join(tempdir, str(cellname) + '.OUT'))
 
-            if fpath_d10 is None or fpath_d11 is None:
+            if d10_input is None or fpath_d11 is None:
                 skipped_cells.append(cellname)
                 continue
+
+            d10_input = np.char.ljust(d10_input, 80).astype('S80')
 
             daily_out = 0
             monthly_out = 1
@@ -436,10 +448,13 @@ class HelpManager(object):
             year_end = self.precip_data.index.year.max()
             simu_nyear = year_end - year_start + 1
 
-            cellparams[cellname] = (fpath_d4, fpath_d7, fpath_d13, fpath_d11,
-                                    fpath_d10, fpath_out, daily_out,
-                                    monthly_out, yearly_out, summary_out,
-                                    simu_nyear, tfsoil)
+            cellparams[cellname] = (
+                fpath_d4, fpath_d7, fpath_d13,
+                fpath_d11, d10_input,
+                fpath_out, daily_out,
+                monthly_out, yearly_out, summary_out,
+                simu_nyear, tfsoil
+                )
 
         skipped_cells = list(set(skipped_cells))
         if skipped_cells:
