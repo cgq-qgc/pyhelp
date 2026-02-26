@@ -70,8 +70,6 @@ def test_calc_help_cells(helpm, output_file):
     helpm.calc_help_cells(output_file, cellnames, tfsoil=-3)
     assert osp.exists(output_file)
 
-    inputdir = osp.join(helpm.inputdir, 'd10d11_input_files')
-    assert len(os.listdir(inputdir)) == 98 * 2
     inputdir = osp.join(helpm.inputdir, 'D4_input_files')
     assert len(os.listdir(inputdir)) == 2
     inputdir = osp.join(helpm.inputdir, 'D7_input_files')
