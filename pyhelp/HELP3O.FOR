@@ -17,17 +17,20 @@ C           below which the soil is assumed to be freezing
 C
 
       SUBROUTINE run_simulation (fpath_precip, fpath_tasavg,
-     1 fpath_solrad, fpath_evapo, fpath_soil, fpath_output,
-     2 IOD, IOM, IOA, IOS, LMYR, TFSOIL)
-C
+     &  fpath_solrad, fpath_evapo, d10_nlines, d10_input, fpath_output,
+     &  IOD, IOM, IOA, IOS, LMYR, TFSOIL
+     &  )
+
       PARAMETER (MXYR = 100)
       PARAMETER (MAXMO = 12)
+
+      INTEGER, INTENT(IN) :: d10_nlines
+      CHARACTER(len=80), INTENT(IN) :: d10_input(d10_nlines)
 
       CHARACTER(len=260), INTENT(IN) :: fpath_precip
       CHARACTER(len=260), INTENT(IN) :: fpath_tasavg
       CHARACTER(len=260), INTENT(IN) :: fpath_solrad
       CHARACTER(len=260), INTENT(IN) :: fpath_evapo
-      CHARACTER(len=260), INTENT(IN) :: fpath_soil
       CHARACTER(len=260), INTENT(IN) :: fpath_output
       INTEGER, INTENT(IN) :: IOD
       INTEGER, INTENT(IN) :: IOM
