@@ -30,7 +30,6 @@ C
       CHARACTER(len=260), INTENT(IN) :: fpath_precip
       CHARACTER(len=260), INTENT(IN) :: fpath_tasavg
       CHARACTER(len=260), INTENT(IN) :: fpath_solrad
-      CHARACTER(len=260), INTENT(IN) :: fpath_evapo
       CHARACTER(len=260), INTENT(IN) :: fpath_output
       INTEGER, INTENT(IN) :: IOD
       INTEGER, INTENT(IN) :: IOM
@@ -1394,16 +1393,6 @@ C
       IERR = IERR + 1
       WRITE (*, 6030) fpath_solrad
  6030 FORMAT (1X/' SOLAR RADIATION DATA FILE NOT FOUND!!!  '/1X,A60/)
-      GO TO 1050
- 1060 CONTINUE
-      IERR = IERR + 1
-      WRITE (*, 6040) fpath_evapo
- 6040 FORMAT (1X/' EVAPOTRANSPIRATION DATA FILE NOT FOUND!!!'/1X,A60/)
-      GO TO 1070
- 1120 CONTINUE
-      IERR = IERR + 1
-      WRITE (*, 6050) fpath_soil
- 6050 FORMAT (1X/' SOIL AND DESIGN DATA FILE NOT FOUND!!!  '/1X,A60/)
       GO TO 1070
       END
 C
