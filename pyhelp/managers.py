@@ -426,16 +426,18 @@ class HelpManager(object):
             fpath_d4 = self.connect_tables['D4'][cellname]
             fpath_d7 = self.connect_tables['D7'][cellname]
             fpath_d13 = self.connect_tables['D13'][cellname]
+
             d10_input = d10data.get(cellname, None)
-            fpath_d11 = self.connect_tables['D11'][cellname]
+            d11_input = d11data.get(cellname, None)
 
             fpath_out = osp.abspath(osp.join(tempdir, str(cellname) + '.OUT'))
 
-            if d10_input is None or fpath_d11 is None:
+            if d10_input is None or d11_input is None:
                 skipped_cells.append(cellname)
                 continue
 
             d10_input = np.char.ljust(d10_input, 80).astype('S80')
+            d11_input = np.char.ljust(d11_input, 80).astype('S80')
 
             daily_out = 0
             monthly_out = 1
@@ -448,7 +450,7 @@ class HelpManager(object):
 
             cellparams[cellname] = (
                 fpath_d4, fpath_d7, fpath_d13,
-                fpath_d11, d10_input,
+                d11_input, d10_input,
                 fpath_out, daily_out,
                 monthly_out, yearly_out, summary_out,
                 simu_nyear, tfsoil
