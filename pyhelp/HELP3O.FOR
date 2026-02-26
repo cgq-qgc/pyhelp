@@ -330,7 +330,7 @@ C    PRINTS SOIL CHARACTERISTICS AND DESIGN INFORMATION.
 C
       IF (IPRE .GE. 2) THEN
          CALL OUTDAT (SWULL, fpath_precip, fpath_tasavg, fpath_solrad,
-     1                fpath_evapo, fpath_soil, fpath_output, IU8)
+     1                fpath_evapo, fpath_output, IU8)
       END IF
 C
 C   INITIALIZING VARIABLES
@@ -5467,13 +5467,12 @@ C     CHARACTERISTICS AND DESIGN INFORMATION AND
 C     CLIMATOLOGICAL INPUT DATA
 C
       SUBROUTINE OUTDAT (SWULL, fpath_precip, fpath_tasavg,
-     1 fpath_solrad, fpath_evapo, fpath_soil, fpath_output, IU8)
+     1 fpath_solrad, fpath_evapo, fpath_output, IU8)
 
       CHARACTER(len=260), INTENT(IN) :: fpath_precip
       CHARACTER(len=260), INTENT(IN) :: fpath_tasavg
       CHARACTER(len=260), INTENT(IN) :: fpath_solrad
       CHARACTER(len=260), INTENT(IN) :: fpath_evapo
-      CHARACTER(len=260), INTENT(IN) :: fpath_soil
       CHARACTER(len=260), INTENT(IN) :: fpath_output
       INTEGER, INTENT(IN) :: IU8
 
@@ -5522,13 +5521,12 @@ C
      6  1X,'**',74X,'**'/1X,'**',74X,'**'/1X,78('*')/
      7  1X,78('*'))
       WRITE (8, 6005) fpath_precip, fpath_tasavg, fpath_solrad,
-     1 fpath_evapo, fpath_soil, fpath_output
+     1 fpath_evapo, fpath_output
  6005 FORMAT(///1X,'PRECIPITATION DATA FILE:    ',A260/
      1 1X,'TEMPERATURE DATA FILE:      ', A260/
      2 1X,'SOLAR RADIATION DATA FILE:  ', A260/
      3 1X,'EVAPOTRANSPIRATION DATA:    ', A260/
-     4 1X,'SOIL AND DESIGN DATA FILE:  ', A260/
-     5 1X,'OUTPUT DATA FILE:           ', A260///)
+     4 1X,'OUTPUT DATA FILE:           ', A260///)
 C
       CALL DATE_AND_TIME(values=DATTIM)
       WRITE(8,6010) DATTIM(5),DATTIM(6),DATTIM(2),DATTIM(3),DATTIM(1)
