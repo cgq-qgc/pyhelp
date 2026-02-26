@@ -43,12 +43,16 @@ def rca_params(rca_folder, tmp_path):
         raw_lines = f.read().splitlines()
     d10_input = np.char.ljust(raw_lines, 80).astype('S80')
 
+    with open(osp.join(rca_folder, 'RCRA.D11'), 'r') as f:
+        raw_lines = f.read().splitlines()
+    d11_input = np.char.ljust(raw_lines, 80).astype('S80')
+
     return (osp.join(rca_folder, 'RCRA.D4'),
             osp.join(rca_folder, 'RCRA.D7'),
             osp.join(rca_folder, 'RCRA.D13'),
-            osp.join(rca_folder, 'RCRA.D11'),
+            d11_input,
             d10_input,
-            osp.join(tmp_path, 'NEW_RCA.OUT'),
+            str(osp.join(tmp_path, 'NEW_RCA.OUT')),
             daily_out,
             monthly_out,
             yearly_out,
