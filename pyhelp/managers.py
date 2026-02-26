@@ -255,8 +255,6 @@ class HelpManager(object):
             the whole grid). The default is 1.
         """
         self.clear_cache()
-        self._generate_d10d11_input_files(
-            cellnames, sf_edepth, sf_ulai, sf_cn)
         self._generate_d4d7d13_input_files(
             cellnames)
 
