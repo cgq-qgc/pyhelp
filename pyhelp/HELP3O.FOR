@@ -1159,7 +1159,7 @@ C
 C  SUBROUTINE READIN READS ET AND SOIL DESIGN DATA, AND WEATHER HEADERS
 C
       SUBROUTINE READIN (fpath_precip, fpath_tasavg, fpath_solrad,
-     &  d11_input, d10_nlines, d10_input)
+     &                   d11_input, d10_nlines, d10_input)
 
       CHARACTER(len=260), INTENT(IN) :: fpath_precip
       CHARACTER(len=260), INTENT(IN) :: fpath_tasavg
@@ -1215,7 +1215,7 @@ C
         CLOSE (13)
         STOP
       END IF
-C
+
       REWIND (4)
       REWIND (7)
       REWIND (13)
