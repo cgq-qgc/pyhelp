@@ -52,7 +52,7 @@ def rca_params(rca_folder, tmp_path):
             osp.join(rca_folder, 'RCRA.D13'),
             d11_input,
             d10_input,
-            str(osp.join(tmp_path, 'NEW_RCA.OUT')),
+            osp.join(tmp_path, 'NEW_RCA.OUT'),
             daily_out,
             monthly_out,
             yearly_out,
