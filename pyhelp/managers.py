@@ -369,7 +369,7 @@ class HelpManager(object):
     def calc_help_cells(self, path_to_hdf5=None, cellnames=None, tfsoil=0,
                         sf_edepth: float = 1, sf_ulai: float = 1,
                         sf_cn: float = 1,
-                        build_help_input_files: bool = True) -> HelpOutput:
+                        build_help_input_files: bool = False) -> HelpOutput:
         """
         Calcul the water budget for all eligible cells with HELP.
 
@@ -394,22 +394,21 @@ class HelpManager(object):
             Global scale factor for the Curve Number (applied to
             the whole grid). The default is 1.
         build_help_input_files: bool
-            A flag to indicate whether to generate the basic HELP input
-            files before running the simulation.
+            A flag to indicate whether to generate the basic D10 and D11 HELP
+            input files before running the simulation. These files are not
+            used by the HELP model after cgq-qgc/pyhelp#109, but these files
+            can still be usefull for debugging purposes. On the other hand,
+            input weather data files (D4, D7, and D13) are always generated
+            before the start of a new simulation run.
         """
-        if build_help_input_files:
-            self.build_help_input_files(cellnames, sf_edepth, sf_ulai, sf_cn)
+        # Create input weather data files.
+        self._generate_d4d7d13_input_files(cellnames)
 
-        # Format D10 data.
-        grid = self.grid.copy()
-        grid['EZD'] = grid['EZD'] * sf_edepth
-        grid['LAI'] = grid['LAI'] * sf_ulai
-        grid['CN'] = grid['CN'] * sf_cn
+        # Format D10 and D11 data.
+        d10data, d11data = self._generate_d10d11_input_data(
+            cellnames, sf_edepth, sf_ulai, sf_cn, build_help_input_files)
 
-        cellnames = self.get_run_cellnames(cellnames)
-        d10data, d11data = format_d10d11_inputs(grid, cellnames)
-
-        # Convert from Celcius to Farenheight
+        # Convert from Celcius to Farenheight.
         tfsoil = (tfsoil * 1.8) + 32
 
         tempdir = osp.join(self.inputdir, ".temp")
