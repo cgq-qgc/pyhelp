@@ -231,33 +231,6 @@ class HelpManager(object):
         delete_folder_recursively(self.inputdir)
         print('done')
 
-    def build_help_input_files(self, cellnames: list = None,
-                               sf_edepth: float = 1, sf_ulai: float = 1,
-                               sf_cn: float = 1):
-        """
-        Clear all cached HELP input data files and generate new ones from the
-        weather and grid input data files.
-
-        Parameters
-        ----------
-        cellnames : list, optional
-            The list of cell ids for which D10 and D11 HELP input files
-            are to be generated. If None, D10 and D11 HELP input files are
-            generated for each cell of the grid with a "run" value of 1.
-        sf_edepth : float, optional
-            Global scale factor for the Evaporative Zone Depth (applied to
-            the whole grid). The default is 1.
-        sf_ulai : float, optional
-            Global scale factor for the Maximum Leaf Area Index (applied to
-            the whole grid). The default is 1.
-        sf_cn : float, optional
-            Global scale factor for the Curve Number (applied to
-            the whole grid). The default is 1.
-        """
-        self.clear_cache()
-        self._generate_d4d7d13_input_files(
-            cellnames)
-
     def _generate_d10d11_input_data(
             self, cellnames, sf_edepth, sf_ulai, sf_cn,
             write_input_files: bool = False
@@ -401,6 +374,8 @@ class HelpManager(object):
             input weather data files (D4, D7, and D13) are always generated
             before the start of a new simulation run.
         """
+        self.clear_cache()
+
         # Create input weather data files.
         self._generate_d4d7d13_input_files(cellnames)
 
@@ -685,7 +660,6 @@ if __name__ == '__main__':
     workdir = "C:/Users/User/pyhelp/example"
     helpm = HelpManager(workdir)
 
-    helpm.build_help_input_files()
     path_hdf5 = osp.join(workdir, 'help_example.out')
     output_help = helpm.calc_help_cells(path_hdf5, tfsoil=-3)
     path_hdf5 = osp.join(workdir, 'surf_example.out')
