@@ -1192,13 +1192,6 @@ C
 C
       DIMENSION DRAD(31)
 
-      ! Read D11 surface condition (evapotranspiration) data.
-      READ (d11_input(1), 5050) IU11
-      READ (d11_input(3), 5060) ULAT, IPL, IHV, ULAI, EDEPTH, WIND,
-     &  HUM1, HUM2, HUM3, HUM4
- 5050 FORMAT (I2)
- 5060 FORMAT (F10.2, I4, I4, F7.0, F8.0, 5F5.0)
-
       IERR = 0
       OPEN (4, FILE = fpath_precip, STATUS = 'OLD', ERR = 1000)
  1010 CONTINUE
@@ -1223,7 +1216,14 @@ C
       READ (7, 5040) IT7, IU7, CITY7, (TM (I), I = 1, 12)
       READ (13, 5040) IT13, IU13, CITY13, RLAT
  5040 FORMAT (I2/I2/A40/12F6.2)
-C
+
+      ! Read D11 surface condition (evapotranspiration) data.
+      READ (d11_input(1), 5050) IU11
+      READ (d11_input(3), 5060) ULAT, IPL, IHV, ULAI, EDEPTH, WIND,
+     &  HUM1, HUM2, HUM3, HUM4
+ 5050 FORMAT (I2)
+ 5060 FORMAT (F10.2, I4, I4, F7.0, F8.0, 5F5.0)
+
       IF (IU7 .EQ. 1) THEN
         DO 1075 I = 1, 12
           TM (I) = (TM (I) - 32.0) / 1.8
