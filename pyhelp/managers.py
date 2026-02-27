@@ -258,8 +258,10 @@ class HelpManager(object):
         self._generate_d4d7d13_input_files(
             cellnames)
 
-    def _generate_d10d11_input_files(self, cellnames, sf_edepth,
-                                     sf_ulai, sf_cn):
+    def _generate_d10d11_input_data(
+            self, cellnames, sf_edepth, sf_ulai, sf_cn,
+            write_input_files: bool = False
+            ):
         """
         Prepare the D10 and D11 input datafiles for each cell.
 
@@ -275,10 +277,6 @@ class HelpManager(object):
         if sf_cn < 0:
             raise ValueError("sf_cn value cannot be lower than 0.")
 
-        d10d11_inputdir = osp.join(self.inputdir, 'd10d11_input_files')
-        if not osp.exists(d10d11_inputdir):
-            os.makedirs(d10d11_inputdir)
-
         # Only keep the cells that are going to be run in HELP because we
         # don't need the D10 or D11 input files for those that aren't.
         cellnames = self.get_run_cellnames(cellnames)
@@ -293,15 +291,14 @@ class HelpManager(object):
         d10data, d11data = format_d10d11_inputs(grid, cellnames)
 
         # Write the D10 and D11 input files.
-        d10_conn_tbl, d11_conn_tbl = write_d10d11_allcells(
-            d10d11_inputdir, d10data, d11data)
+        if write_input_files:
+            d10d11_inputdir = osp.join(self.inputdir, 'd10d11_input_files')
+            if not osp.exists(d10d11_inputdir):
+                os.makedirs(d10d11_inputdir)
 
-        # Update the connection table.
-        print("\rSaving the connectivity tables...", end=' ')
-        self.connect_tables['D10'] = d10_conn_tbl
-        self.connect_tables['D11'] = d11_conn_tbl
-        self._save_connect_tables()
-        print("done")
+            write_d10d11_allcells(d10d11_inputdir, d10data, d11data)
+
+        return d10data, d11data
 
     def _generate_d4d7d13_input_files(self, cellnames):
         """
