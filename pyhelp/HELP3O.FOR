@@ -10,24 +10,26 @@ C
 C    DIRECTS THE RUNNING OF THE SIMULATION AND PRINTING OF OUTPUT,
 C    AND PERFORMS THE ACCOUNTING ON THE RESULTS.
 C
-C    IU8 is a flag to indicate the system of units used for the inputs and
-C        outputs. A value of 2 is used for SI and 1 for IP.
 C    TFSOIL is the average air temperature, in Fahrenheit degrees,
 C           below which the soil is assumed to be freezing
 C
 
       SUBROUTINE run_simulation (fpath_precip, fpath_tasavg,
-     1 fpath_solrad, fpath_evapo, fpath_soil, fpath_output,
-     2 IOD, IOM, IOA, IOS, LMYR, TFSOIL)
-C
+     &  fpath_solrad, d11_input, d10_nlines, d10_input, fpath_output,
+     &  IOD, IOM, IOA, IOS, LMYR, TFSOIL
+     &  )
+
       PARAMETER (MXYR = 100)
       PARAMETER (MAXMO = 12)
+
+      CHARACTER(len=80), INTENT(IN) :: d11_input(3)
+
+      INTEGER, INTENT(IN) :: d10_nlines
+      CHARACTER(len=80), INTENT(IN) :: d10_input(d10_nlines)
 
       CHARACTER(len=260), INTENT(IN) :: fpath_precip
       CHARACTER(len=260), INTENT(IN) :: fpath_tasavg
       CHARACTER(len=260), INTENT(IN) :: fpath_solrad
-      CHARACTER(len=260), INTENT(IN) :: fpath_evapo
-      CHARACTER(len=260), INTENT(IN) :: fpath_soil
       CHARACTER(len=260), INTENT(IN) :: fpath_output
       INTEGER, INTENT(IN) :: IOD
       INTEGER, INTENT(IN) :: IOM
@@ -127,18 +129,18 @@ C
       COMMON /BLK33/ JYEAR(MXYR)
       COMMON /BLK35/ NSEG1B, NSEG2B, NSEG3B, NSEG4B, NSEG5B,
      1  NSEG1D, NSEG2D, NSEG3D, NSEG4D, NSEG5D
-C
+
       DIMENSION  BALY(67), BALT(67), SWULL(20), HED1S(31), HED2S(31),
      1  HED3S(31), HED4S(31), HED5S(31), DRIN(68), SWULY(67)
       DATA ISTAR/'*', ' '/
-C
-C     IU8 is now internally set to 2, indicating that SI (International System)
-C     units are used for all inputs and outputs. Previously, IU8 allowed
-C     selection between SI (2) and IP (1) units, but now only SI units are
-C     supported. Note that code supporting IP units will be removed gradually
-C     from the source code.
+
+      ! IU8 is now internally set to 2, indicating that SI units are
+      ! used for outputs. Previously, IU8 allowed selection between
+      ! SI (2) and IP (1) units, but now only SI units are supported.
+      ! Note that code supporting IP units will be removed gradually
+      ! from the source code.
       IU8 = 2
-C
+
       WF(1) = 0.085
       WF(2) = 0.334
       WF(3) = 0.252
@@ -146,14 +148,13 @@ C
       WF(5) = 0.091
       WF(6) = 0.054
       WF(7) = 0.033
-C
+
       OPEN (8, FILE = fpath_output, STATUS = 'UNKNOWN')
-C
-C    READS CLIMATIC INPUT AND SOIL CHARACTERISTICS AND DESIGN
-C    INFORMATION.
-C
+
+      ! Read climatic input and soil characteristics and
+      ! design information.
       CALL READIN(fpath_precip, fpath_tasavg, fpath_solrad,
-     1            fpath_evapo, fpath_soil)
+     &            d11_input, d10_nlines, d10_input)
 C
 C    SETS CONTROLS FOR SUBPROFILES AND OUTPUT.
 C
@@ -329,7 +330,7 @@ C    PRINTS SOIL CHARACTERISTICS AND DESIGN INFORMATION.
 C
       IF (IPRE .GE. 2) THEN
          CALL OUTDAT (SWULL, fpath_precip, fpath_tasavg, fpath_solrad,
-     1                fpath_evapo, fpath_soil, fpath_output, IU8)
+     1                fpath_output, IU8)
       END IF
 C
 C   INITIALIZING VARIABLES
@@ -1158,19 +1159,23 @@ C
 C  SUBROUTINE READIN READS ET AND SOIL DESIGN DATA, AND WEATHER HEADERS
 C
       SUBROUTINE READIN (fpath_precip, fpath_tasavg, fpath_solrad,
-     1 fpath_evapo, fpath_soil)
+     &                   d11_input, d10_nlines, d10_input)
 
       CHARACTER(len=260), INTENT(IN) :: fpath_precip
       CHARACTER(len=260), INTENT(IN) :: fpath_tasavg
       CHARACTER(len=260), INTENT(IN) :: fpath_solrad
-      CHARACTER(len=260), INTENT(IN) :: fpath_evapo
-      CHARACTER(len=260), INTENT(IN) :: fpath_soil
 
-      CHARACTER*40 CITY4, CITY7, CITY13, CITY11
+      CHARACTER(len=80), INTENT(IN) :: d11_input(3)
+
+      INTEGER, INTENT(IN) :: d10_nlines
+      CHARACTER(len=80), INTENT(IN) :: d10_input(d10_nlines)
+
+      INTEGER :: ILINE
+      CHARACTER*40 CITY4, CITY7, CITY13
       CHARACTER*60 TITLE
       COMMON /BLK0/ TITLE
       COMMON /BLK1/ IT4, IT7, IT13, IU4, IU7, IU13, IU11, IU10
-      COMMON /BLK2/ CITY4, CITY7, CITY13, CITY11
+      COMMON /BLK2/ CITY4, CITY7, CITY13
       DOUBLE PRECISION RC(20)
       COMMON /BLK3/ PORO (20), FC (20), WP (20), RC, SW (20),
      1  RS (20), XLAMBD (20), BUB (20), THICK (20), SLOPE (20),
@@ -1186,21 +1191,13 @@ C
       COMMON /BLK27/ IFREZ, IDFS, IFCNT, KCNT, MXKCNT
 C
       DIMENSION DRAD(31)
-C
-C
-C    READS STATE AND CITY , MAX LAI, PLANTING AND HARVESTING DATES,
-C    PROBABILITIES, AND MEAN MONTHLY TEMPERATURES IN DEGREES
-C    FAHRENHEIT FROM *.D11.
-C
+
       IERR = 0
       OPEN (4, FILE = fpath_precip, STATUS = 'OLD', ERR = 1000)
  1010 CONTINUE
       OPEN (7, FILE = fpath_tasavg, STATUS = 'OLD', ERR = 1020)
  1030 CONTINUE
       OPEN (13, FILE = fpath_solrad, STATUS = 'OLD', ERR = 1040)
- 1050 CONTINUE
-      OPEN (11, FILE = fpath_evapo, STATUS = 'OLD', ERR = 1060)
-C
  1070 CONTINUE
       IF (IERR .GT. 0) THEN
         WRITE (*, 6000)
@@ -1209,25 +1206,24 @@ C
         CLOSE (4)
         CLOSE (7)
         CLOSE (13)
-        CLOSE (11)
         STOP
       END IF
-C
+
       REWIND (4)
       REWIND (7)
       REWIND (13)
-      REWIND (11)
       READ (4, 5040) IT4, IU4, CITY4, (RM (I), I = 1, 12)
       READ (7, 5040) IT7, IU7, CITY7, (TM (I), I = 1, 12)
       READ (13, 5040) IT13, IU13, CITY13, RLAT
-      READ (11, 5050) IU11, CITY11
-      READ (11, 5060) ULAT, IPL, IHV, ULAI, EDEPTH, WIND, HUM1, HUM2,
-     1  HUM3, HUM4
  5040 FORMAT (I2/I2/A40/12F6.2)
- 5050 FORMAT (I2/A40)
- 5060 FORMAT (F10.2,I4,I4,F7.0,F8.0,5F5.0)
-      CLOSE (11)
-C
+
+      ! Read D11 surface condition (evapotranspiration) data.
+      READ (d11_input(1), 5050) IU11
+      READ (d11_input(3), 5060) ULAT, IPL, IHV, ULAI, EDEPTH, WIND,
+     &  HUM1, HUM2, HUM3, HUM4
+ 5050 FORMAT (I2)
+ 5060 FORMAT (F10.2, I4, I4, F7.0, F8.0, 5F5.0)
+
       IF (IU7 .EQ. 1) THEN
         DO 1075 I = 1, 12
           TM (I) = (TM (I) - 32.0) / 1.8
@@ -1247,45 +1243,64 @@ C
       DO 1110 I = 275, 366
         RH (I) = HUM4
  1110 CONTINUE
-C
-C   READS DATA10
-C
+
+      ! Reads DATA10
       OCN2 = 0.
       SSLOPE = 0.
       SLENG = 0.
       IVEG = 0
       ITSOIL = 0
       LAY = 0
-C    COMPILER CORRECTIONS BELOW
-      DO 3000 I = 1, 20
-        LAYR (I) = 0
- 3000 CONTINUE
-C     COMPILER CORRECTIONS ABOVE
-      OPEN (10, FILE = fpath_soil, STATUS = 'OLD', ERR = 1120)
-      REWIND 10
-      READ (10, 5070) TITLE
+      DO I = 1, 20
+        LAYR(I) = 0
+      END DO
+
+      ILINE = 1
+
+      READ(d10_input(ILINE), 5070) TITLE
+      ILINE = ILINE + 1
  5070 FORMAT(A60)
-      READ (10, 5080) IU10, IPRE, OSNO, AREA, FRUNOF, IRUN
- 5080 FORMAT(I2,I2,2F10.0,F6.0,I2)
-      IF (IRUN .EQ. 1) READ (10, 5090) CN2
-      IF (IRUN .EQ. 2) READ (10, 5100) OCN2, SSLOPE, SLENG, CN2
-      IF (IRUN .EQ. 3) READ (10, 5110) SSLOPE, SLENG, ITSOIL, IVEG, CN2
+
+      READ(d10_input(ILINE), 5080) IU10, IPRE, OSNO, AREA, FRUNOF, IRUN
+      ILINE = ILINE + 1
+ 5080 FORMAT(I2, I2, 2F10.0, F6.0, I2)
+
+      IF (IRUN == 1) THEN
+        READ(d10_input(ILINE), 5090) CN2
+        ILINE = ILINE + 1
+      ELSE IF (IRUN == 2) THEN
+        READ(d10_input(ILINE), 5100) OCN2, SSLOPE, SLENG, CN2
+        ILINE = ILINE + 1
+      ELSE IF (IRUN == 3) THEN
+        READ(d10_input(ILINE), 5110) SSLOPE, SLENG, ITSOIL, IVEG, CN2
+        ILINE = ILINE + 1
+      END IF
+
  5090 FORMAT(F7.0)
  5100 FORMAT(4F7.0)
- 5110 FORMAT(2F7.0,2I3,F7.0)
-C
-      DO 1130 J = 1, 20
-        READ (10, 5120, END = 1140) LAYER (J), THICK (J), ISOIL (J),
-     1    PORO (J), FC (J), WP (J), SW (J), RC (J)
+ 5110 FORMAT(2F7.0, 2I3, F7.0)
+
+      DO J = 1, 20
+        IF (ILINE > d10_nlines) GO TO 1140
+
+        READ(d10_input(ILINE), 5120) LAYER(J), THICK(J), ISOIL(J),
+     &    PORO(J), FC(J), WP(J), SW(J), RC(J)
+        ILINE = ILINE + 1
+
         LAY = LAY + 1
-        READ (10, 5130, END = 1140) XLENG (J), SLOPE (J), RECIR (J),
-     1    LAYR (J), SUBIN (J), PHOLE (J), DEFEC (J), IPQ (J), TRANS (J)
- 1130 CONTINUE
- 5120 FORMAT(I2,F7.0,I4,4F6.0,F16.0)
- 5130 FORMAT(F7.0,2F6.0,I3,F13.0,2F7.0,I2,G14.6)
+
+        IF (ILINE > d10_nlines) GO TO 1140
+
+        READ(d10_input(ILINE), 5130) XLENG(J), SLOPE(J), RECIR(J),
+     &    LAYR(J), SUBIN(J), PHOLE(J), DEFEC(J), IPQ(J), TRANS(J)
+        ILINE = ILINE + 1
+      END DO
+
+ 5120 FORMAT(I2, F7.0, I4, 4F6.0, F16.0)
+ 5130 FORMAT(F7.0, 2F6.0, I3, F13.0, 2F7.0, I2, G14.6)
+
  1140 CONTINUE
-C
-      CLOSE (10)
+
 C
 C   DETERMINES THE BROOKS-COREY PARAMETERS AND EVAPORATION COEFFICIENT
 C
@@ -1378,16 +1393,6 @@ C
       IERR = IERR + 1
       WRITE (*, 6030) fpath_solrad
  6030 FORMAT (1X/' SOLAR RADIATION DATA FILE NOT FOUND!!!  '/1X,A60/)
-      GO TO 1050
- 1060 CONTINUE
-      IERR = IERR + 1
-      WRITE (*, 6040) fpath_evapo
- 6040 FORMAT (1X/' EVAPOTRANSPIRATION DATA FILE NOT FOUND!!!'/1X,A60/)
-      GO TO 1070
- 1120 CONTINUE
-      IERR = IERR + 1
-      WRITE (*, 6050) fpath_soil
- 6050 FORMAT (1X/' SOIL AND DESIGN DATA FILE NOT FOUND!!!  '/1X,A60/)
       GO TO 1070
       END
 C
@@ -5444,18 +5449,16 @@ C     CHARACTERISTICS AND DESIGN INFORMATION AND
 C     CLIMATOLOGICAL INPUT DATA
 C
       SUBROUTINE OUTDAT (SWULL, fpath_precip, fpath_tasavg,
-     1 fpath_solrad, fpath_evapo, fpath_soil, fpath_output, IU8)
+     1 fpath_solrad, fpath_output, IU8)
 
       CHARACTER(len=260), INTENT(IN) :: fpath_precip
       CHARACTER(len=260), INTENT(IN) :: fpath_tasavg
       CHARACTER(len=260), INTENT(IN) :: fpath_solrad
-      CHARACTER(len=260), INTENT(IN) :: fpath_evapo
-      CHARACTER(len=260), INTENT(IN) :: fpath_soil
       CHARACTER(len=260), INTENT(IN) :: fpath_output
       INTEGER, INTENT(IN) :: IU8
 
       CHARACTER*2 DUMMY1, DUMMY2, DUMMY3, DUMMY4
-      CHARACTER*40 CITY4, CITY7, CITY13, CITY11
+      CHARACTER*40 CITY4, CITY7, CITY13
       CHARACTER*60 TITLE
       INTEGER :: DATTIM(8)
       DOUBLE PRECISION  DTHICK, DRCUL, DBUBUL, DWPUL,
@@ -5463,7 +5466,7 @@ C
 C
       COMMON /BLK0/ TITLE
       COMMON /BLK1/ IT4, IT7, IT13, IU4, IU7, IU13, IU11, IU10
-      COMMON /BLK2/ CITY4, CITY7, CITY13, CITY11
+      COMMON /BLK2/ CITY4, CITY7, CITY13
       DOUBLE PRECISION RC(20)
       COMMON /BLK3/ PORO (20), FC (20), WP (20), RC, SW (20),
      1  RS (20), XLAMBD (20), BUB (20), THICK (20), SLOPE (20),
@@ -5499,13 +5502,11 @@ C
      6  1X,'**',74X,'**'/1X,'**',74X,'**'/1X,78('*')/
      7  1X,78('*'))
       WRITE (8, 6005) fpath_precip, fpath_tasavg, fpath_solrad,
-     1 fpath_evapo, fpath_soil, fpath_output
+     &  fpath_output
  6005 FORMAT(///1X,'PRECIPITATION DATA FILE:    ',A260/
      1 1X,'TEMPERATURE DATA FILE:      ', A260/
      2 1X,'SOLAR RADIATION DATA FILE:  ', A260/
-     3 1X,'EVAPOTRANSPIRATION DATA:    ', A260/
-     4 1X,'SOIL AND DESIGN DATA FILE:  ', A260/
-     5 1X,'OUTPUT DATA FILE:           ', A260///)
+     3 1X,'OUTPUT DATA FILE:           ', A260///)
 C
       CALL DATE_AND_TIME(values=DATTIM)
       WRITE(8,6010) DATTIM(5),DATTIM(6),DATTIM(2),DATTIM(3),DATTIM(1)
@@ -5788,9 +5789,6 @@ C
 C
 C    PRINTS WEATHER DATA
 C
-      WRITE (8, 6200) CITY11
- 6200 FORMAT(//21X,'EVAPOTRANSPIRATION AND WEATHER DATA '/21X,35('-')//
-     1 10X,'NOTE:  EVAPOTRANSPIRATION DATA WAS OBTAINED FROM'/19X,A40/)
       WRITE (8, 6263) ULAT
  6263 FORMAT(14X,'STATION LATITUDE',23X,'= ',F6.2,' DEGREES')
       WRITE (8, 6210) ULAI, IPL, IHV

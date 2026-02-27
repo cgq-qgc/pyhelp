@@ -231,37 +231,10 @@ class HelpManager(object):
         delete_folder_recursively(self.inputdir)
         print('done')
 
-    def build_help_input_files(self, cellnames: list = None,
-                               sf_edepth: float = 1, sf_ulai: float = 1,
-                               sf_cn: float = 1):
-        """
-        Clear all cached HELP input data files and generate new ones from the
-        weather and grid input data files.
-
-        Parameters
-        ----------
-        cellnames : list, optional
-            The list of cell ids for which D10 and D11 HELP input files
-            are to be generated. If None, D10 and D11 HELP input files are
-            generated for each cell of the grid with a "run" value of 1.
-        sf_edepth : float, optional
-            Global scale factor for the Evaporative Zone Depth (applied to
-            the whole grid). The default is 1.
-        sf_ulai : float, optional
-            Global scale factor for the Maximum Leaf Area Index (applied to
-            the whole grid). The default is 1.
-        sf_cn : float, optional
-            Global scale factor for the Curve Number (applied to
-            the whole grid). The default is 1.
-        """
-        self.clear_cache()
-        self._generate_d10d11_input_files(
-            cellnames, sf_edepth, sf_ulai, sf_cn)
-        self._generate_d4d7d13_input_files(
-            cellnames)
-
-    def _generate_d10d11_input_files(self, cellnames, sf_edepth,
-                                     sf_ulai, sf_cn):
+    def _generate_d10d11_input_data(
+            self, cellnames, sf_edepth, sf_ulai, sf_cn,
+            write_input_files: bool = False
+            ):
         """
         Prepare the D10 and D11 input datafiles for each cell.
 
@@ -277,10 +250,6 @@ class HelpManager(object):
         if sf_cn < 0:
             raise ValueError("sf_cn value cannot be lower than 0.")
 
-        d10d11_inputdir = osp.join(self.inputdir, 'd10d11_input_files')
-        if not osp.exists(d10d11_inputdir):
-            os.makedirs(d10d11_inputdir)
-
         # Only keep the cells that are going to be run in HELP because we
         # don't need the D10 or D11 input files for those that aren't.
         cellnames = self.get_run_cellnames(cellnames)
@@ -295,15 +264,14 @@ class HelpManager(object):
         d10data, d11data = format_d10d11_inputs(grid, cellnames)
 
         # Write the D10 and D11 input files.
-        d10_conn_tbl, d11_conn_tbl = write_d10d11_allcells(
-            d10d11_inputdir, d10data, d11data)
+        if write_input_files:
+            d10d11_inputdir = osp.join(self.inputdir, 'd10d11_input_files')
+            if not osp.exists(d10d11_inputdir):
+                os.makedirs(d10d11_inputdir)
 
-        # Update the connection table.
-        print("\rSaving the connectivity tables...", end=' ')
-        self.connect_tables['D10'] = d10_conn_tbl
-        self.connect_tables['D11'] = d11_conn_tbl
-        self._save_connect_tables()
-        print("done")
+            write_d10d11_allcells(d10d11_inputdir, d10data, d11data)
+
+        return d10data, d11data
 
     def _generate_d4d7d13_input_files(self, cellnames):
         """
@@ -374,7 +342,7 @@ class HelpManager(object):
     def calc_help_cells(self, path_to_hdf5=None, cellnames=None, tfsoil=0,
                         sf_edepth: float = 1, sf_ulai: float = 1,
                         sf_cn: float = 1,
-                        build_help_input_files: bool = True) -> HelpOutput:
+                        build_help_input_files: bool = False) -> HelpOutput:
         """
         Calcul the water budget for all eligible cells with HELP.
 
@@ -399,13 +367,23 @@ class HelpManager(object):
             Global scale factor for the Curve Number (applied to
             the whole grid). The default is 1.
         build_help_input_files: bool
-            A flag to indicate whether to generate the basic HELP input
-            files before running the simulation.
+            A flag to indicate whether to generate the basic D10 and D11 HELP
+            input files before running the simulation. These files are not
+            used by the HELP model after cgq-qgc/pyhelp#109, but these files
+            can still be usefull for debugging purposes. On the other hand,
+            input weather data files (D4, D7, and D13) are always generated
+            before the start of a new simulation run.
         """
-        if build_help_input_files:
-            self.build_help_input_files(cellnames, sf_edepth, sf_ulai, sf_cn)
+        self.clear_cache()
 
-        # Convert from Celcius to Farenheight
+        # Create input weather data files.
+        self._generate_d4d7d13_input_files(cellnames)
+
+        # Format D10 and D11 data.
+        d10data, d11data = self._generate_d10d11_input_data(
+            cellnames, sf_edepth, sf_ulai, sf_cn, build_help_input_files)
+
+        # Convert from Celcius to Farenheight.
         tfsoil = (tfsoil * 1.8) + 32
 
         tempdir = osp.join(self.inputdir, ".temp")
@@ -419,13 +397,18 @@ class HelpManager(object):
             fpath_d4 = self.connect_tables['D4'][cellname]
             fpath_d7 = self.connect_tables['D7'][cellname]
             fpath_d13 = self.connect_tables['D13'][cellname]
-            fpath_d10 = self.connect_tables['D10'][cellname]
-            fpath_d11 = self.connect_tables['D11'][cellname]
+
+            d10_input = d10data.get(cellname, None)
+            d11_input = d11data.get(cellname, None)
+
             fpath_out = osp.abspath(osp.join(tempdir, str(cellname) + '.OUT'))
 
-            if fpath_d10 is None or fpath_d11 is None:
+            if d10_input is None or d11_input is None:
                 skipped_cells.append(cellname)
                 continue
+
+            d10_input = np.char.ljust(d10_input, 80).astype('S80')
+            d11_input = np.char.ljust(d11_input, 80).astype('S80')
 
             daily_out = 0
             monthly_out = 1
@@ -436,10 +419,13 @@ class HelpManager(object):
             year_end = self.precip_data.index.year.max()
             simu_nyear = year_end - year_start + 1
 
-            cellparams[cellname] = (fpath_d4, fpath_d7, fpath_d13, fpath_d11,
-                                    fpath_d10, fpath_out, daily_out,
-                                    monthly_out, yearly_out, summary_out,
-                                    simu_nyear, tfsoil)
+            cellparams[cellname] = (
+                fpath_d4, fpath_d7, fpath_d13,
+                d11_input, d10_input,
+                fpath_out, daily_out,
+                monthly_out, yearly_out, summary_out,
+                simu_nyear, tfsoil
+                )
 
         skipped_cells = list(set(skipped_cells))
         if skipped_cells:
@@ -674,7 +660,6 @@ if __name__ == '__main__':
     workdir = "C:/Users/User/pyhelp/example"
     helpm = HelpManager(workdir)
 
-    helpm.build_help_input_files()
     path_hdf5 = osp.join(workdir, 'help_example.out')
     output_help = helpm.calc_help_cells(path_hdf5, tfsoil=-3)
     path_hdf5 = osp.join(workdir, 'surf_example.out')
