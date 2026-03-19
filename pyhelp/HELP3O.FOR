@@ -1321,23 +1321,69 @@ C
 
       ILINE = 1
 
-      READ(d10_input(ILINE), 5070) TITLE
+      ! Read cell title.
+      READ(d10_input(ILINE), 5070, IOSTAT=IERR) TITLE
+      IF (IERR /= 0) THEN
+         WRITE (*, *) 'ERROR: D10 TITLE FORMAT INCORRECT!'
+         WRITE (*, *) 'FAILED AT D10 LINE: ', ILINE
+         IERR = 9
+         RETURN
+      END IF
+
       ILINE = ILINE + 1
+
  5070 FORMAT(A60)
 
-      READ(d10_input(ILINE), 5080) IU10, IPRE, OSNO, AREA, FRUNOF, IRUN
+      ! Read global parameters.
+      READ(d10_input(ILINE), 5080, IOSTAT=IERR) IU10, IPRE, OSNO,
+     &  AREA, FRUNOF, IRUN
+      IF (IERR /= 0) THEN
+         WRITE (*, *) 'ERROR: D10 GLOBAL PARAMETERS FORMAT INCORRECT!'
+         WRITE (*, *) 'FAILED AT D10 LINE: ', ILINE
+         IERR = 10
+         RETURN
+      END IF
+
       ILINE = ILINE + 1
+
  5080 FORMAT(I2, I2, 2F10.0, F6.0, I2)
 
+      ! Read Runoff parameters based on IRUN flag.
       IF (IRUN == 1) THEN
-        READ(d10_input(ILINE), 5090) CN2
+        READ(d10_input(ILINE), 5090, IOSTAT=IERR) CN2
+        IF (IERR /= 0) THEN
+           WRITE (*, *) 'ERROR: D10 IRUN=1 FORMAT INCORRECT!'
+           WRITE (*, *) 'FAILED AT D10 LINE: ', ILINE
+           IERR = 11
+           RETURN
+        END IF
+
         ILINE = ILINE + 1
+
       ELSE IF (IRUN == 2) THEN
-        READ(d10_input(ILINE), 5100) OCN2, SSLOPE, SLENG, CN2
+        READ(d10_input(ILINE), 5100, IOSTAT=IERR) OCN2, SSLOPE,
+     &    SLENG, CN2
+        IF (IERR /= 0) THEN
+           WRITE (*, *) 'ERROR: D10 IRUN=2 FORMAT INCORRECT!'
+           WRITE (*, *) 'FAILED AT D10 LINE: ', ILINE
+           IERR = 12
+           RETURN
+        END IF
+
         ILINE = ILINE + 1
+
       ELSE IF (IRUN == 3) THEN
-        READ(d10_input(ILINE), 5110) SSLOPE, SLENG, ITSOIL, IVEG, CN2
+        READ(d10_input(ILINE), 5110, IOSTAT=IERR) SSLOPE, SLENG,
+     &    ITSOIL, IVEG, CN2
+        IF (IERR /= 0) THEN
+           WRITE (*, *) 'ERROR: D10 IRUN=3 FORMAT INCORRECT!'
+           WRITE (*, *) 'FAILED AT D10 LINE: ', ILINE
+           IERR = 13
+           RETURN
+        END IF
+
         ILINE = ILINE + 1
+
       END IF
 
  5090 FORMAT(F7.0)
@@ -1347,17 +1393,34 @@ C
       DO J = 1, 20
         IF (ILINE > d10_nlines) GO TO 1140
 
-        READ(d10_input(ILINE), 5120) LAYER(J), THICK(J), ISOIL(J),
-     &    PORO(J), FC(J), WP(J), SW(J), RC(J)
-        ILINE = ILINE + 1
+        ! Read layer properties line 1.
+        READ(d10_input(ILINE), 5120, IOSTAT=IERR) LAYER(J), THICK(J),
+     &    ISOIL(J), PORO(J), FC(J), WP(J), SW(J), RC(J)
+        IF (IERR /= 0) THEN
+           WRITE (*, *) 'ERROR: D10 LAYER PROPERTIES FORMAT INCORRECT!'
+           WRITE (*, *) 'LAYER NUMBER = ', J
+           IERR = 14
+           RETURN
+        END IF
 
+        ILINE = ILINE + 1
         LAY = LAY + 1
 
         IF (ILINE > d10_nlines) GO TO 1140
 
-        READ(d10_input(ILINE), 5130) XLENG(J), SLOPE(J), RECIR(J),
-     &    LAYR(J), SUBIN(J), PHOLE(J), DEFEC(J), IPQ(J), TRANS(J)
+        ! Read layer properties line 2.
+        READ(d10_input(ILINE), 5130, IOSTAT=IERR) XLENG(J), SLOPE(J),
+     &    RECIR(J), LAYR(J), SUBIN(J), PHOLE(J), DEFEC(J), IPQ(J),
+     &    TRANS(J)
+        IF (IERR /= 0) THEN
+           WRITE (*, *) 'ERROR: D10 LAYER PROPERTIES FORMAT INCORRECT!'
+           WRITE (*, *) 'LAYER NUMBER = ', J
+           IERR = 15
+           RETURN
+        END IF
+
         ILINE = ILINE + 1
+
       END DO
 
  5120 FORMAT(I2, F7.0, I4, 4F6.0, F16.0)
@@ -1365,8 +1428,10 @@ C
 
  1140 CONTINUE
 
-
-      ! DETERMINES THE BROOKS-COREY PARAMETERS AND EVAPORATION COEFFICIENT
+      ! --------------------------------------------------------------
+      ! Determine the Brooks-Corey parameters and
+      ! evaporation coefficient
+      ! --------------------------------------------------------------
 
       DO 1150 J = 1, LAY
         IF (LAYER (J) .EQ. 4) THEN
