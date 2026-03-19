@@ -38,6 +38,7 @@ C
       INTEGER, INTENT(IN) :: LMYR
       REAL, INTENT(IN) :: TFSOIL
 
+      INTEGER :: IERR
       INTEGER :: IU8
 
       DOUBLE PRECISION BALY, BALT, DRIN, SWULY, DUMMY1, DUMMY2
@@ -154,7 +155,12 @@ C
       ! Read climatic input and soil characteristics and
       ! design information.
       CALL READIN(fpath_precip, fpath_tasavg, fpath_solrad,
-     &            d11_input, d10_nlines, d10_input)
+     &            d11_input, d10_nlines, d10_input, IERR)
+
+      ! If READIN failed, immediately exit run_simulation.
+      IF (IERR /= 0) THEN
+         RETURN
+      END IF
 C
 C    SETS CONTROLS FOR SUBPROFILES AND OUTPUT.
 C
@@ -1159,7 +1165,7 @@ C
 C  SUBROUTINE READIN READS ET AND SOIL DESIGN DATA, AND WEATHER HEADERS
 C
       SUBROUTINE READIN (fpath_precip, fpath_tasavg, fpath_solrad,
-     &                   d11_input, d10_nlines, d10_input)
+     &                   d11_input, d10_nlines, d10_input, IERR)
 
       CHARACTER(len=260), INTENT(IN) :: fpath_precip
       CHARACTER(len=260), INTENT(IN) :: fpath_tasavg
@@ -1170,7 +1176,8 @@ C
       INTEGER, INTENT(IN) :: d10_nlines
       CHARACTER(len=80), INTENT(IN) :: d10_input(d10_nlines)
 
-      INTEGER :: IERR
+      INTEGER, INTENT(OUT) :: IERR
+
       INTEGER :: ILINE
       CHARACTER*40 CITY4, CITY7, CITY13
       CHARACTER*60 TITLE
