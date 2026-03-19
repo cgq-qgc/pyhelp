@@ -1253,9 +1253,21 @@ C
  5040 FORMAT (I2/I2/A40/12F6.2)
 
       ! Read D11 surface condition (evapotranspiration) data.
-      READ (d11_input(1), 5050) IU11
-      READ (d11_input(3), 5060) ULAT, IPL, IHV, ULAI, EDEPTH, WIND,
-     &  HUM1, HUM2, HUM3, HUM4
+      READ (d11_input(1), 5050, IOSTAT=IERR) IU11
+      IF (IERR /= 0) THEN
+         WRITE (*, *) 'ERROR: D11 LINE 1 FORMAT INCORRECT!'
+         IERR = 7
+         RETURN
+      END IF
+
+      READ (d11_input(3), 5060, IOSTAT=IERR) ULAT, IPL, IHV, ULAI,
+     &  EDEPTH, WIND, HUM1, HUM2, HUM3, HUM4
+      IF (IERR /= 0) THEN
+         WRITE (*, *) 'ERROR: D11 LINE 3 FORMAT INCORRECT!'
+         IERR = 8
+         RETURN
+      END IF
+
  5050 FORMAT (I2)
  5060 FORMAT (F10.2, I4, I4, F7.0, F8.0, 5F5.0)
 
