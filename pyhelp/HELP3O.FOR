@@ -1170,6 +1170,7 @@ C
       INTEGER, INTENT(IN) :: d10_nlines
       CHARACTER(len=80), INTENT(IN) :: d10_input(d10_nlines)
 
+      INTEGER :: IERR
       INTEGER :: ILINE
       CHARACTER*40 CITY4, CITY7, CITY13
       CHARACTER*60 TITLE
