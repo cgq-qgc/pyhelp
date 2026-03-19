@@ -1271,27 +1271,37 @@ C
  5050 FORMAT (I2)
  5060 FORMAT (F10.2, I4, I4, F7.0, F8.0, 5F5.0)
 
-      IF (IU7 .EQ. 1) THEN
-        DO 1075 I = 1, 12
-          TM (I) = (TM (I) - 32.0) / 1.8
- 1075   CONTINUE
+      ! Convert temperature from Fahrenheit to Celsius if IP units are used.
+      IF (IU7 == 1) THEN
+        DO I = 1, 12
+          TM(I) = (TM(I) - 32.0) / 1.8
+        END DO
       END IF
-      IF (IU11 .NE. 1) EDEPTH = EDEPTH / 2.54
-      IF (IU11 .NE. 1) WIND = WIND / 1.609
-      DO 1080 I = 1, 91
-        RH (I) = HUM1
- 1080 CONTINUE
-      DO 1090 I = 92, 182
-        RH (I) = HUM2
- 1090 CONTINUE
-      DO 1100 I = 183, 274
-        RH (I) = HUM3
- 1100 CONTINUE
-      DO 1110 I = 275, 366
-        RH (I) = HUM4
- 1110 CONTINUE
 
-      ! Reads DATA10
+      ! Convert evaporative zone depth and wind speed to SI units if needed.
+      IF (IU11 /= 1) THEN
+        EDEPTH = EDEPTH / 2.54
+        WIND = WIND / 1.609
+      END IF
+
+      ! Assign quarterly relative humidity values to daily arrays.
+      DO I = 1, 91
+        RH(I) = HUM1
+      END DO
+
+      DO I = 92, 182
+        RH(I) = HUM2
+      END DO
+
+      DO I = 183, 274
+        RH(I) = HUM3
+      END DO
+
+      DO I = 275, 366
+        RH(I) = HUM4
+      END DO
+
+      ! Reads D10 soil and design data.
       OCN2 = 0.
       SSLOPE = 0.
       SLENG = 0.
