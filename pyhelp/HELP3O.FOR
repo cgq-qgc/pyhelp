@@ -1195,7 +1195,9 @@ C
       ! Initialize error flag to success.
       IERR = 0
 
-      ! Open the Files Safely using IOSTAT.
+      ! -------------------------------------------------------------
+      ! Open and read climatic input data (D4, D7, and D13)
+      ! -------------------------------------------------------------
       OPEN (4, FILE=fpath_precip, STATUS='OLD', IOSTAT=IERR)
       IF (IERR /= 0) THEN
          WRITE (*, 6010) fpath_precip
@@ -1224,7 +1226,6 @@ C
  6020 FORMAT (1X/' TEMPERATURE DATA FILE NOT FOUND!!!  '/1X,A60/)
  6030 FORMAT (1X/' SOLAR RADIATION DATA FILE NOT FOUND!!!  '/1X,A60/)
 
-      ! Read the Open Files Safely using IOSTAT.
       REWIND (4)
       REWIND (7)
       REWIND (13)
@@ -1252,7 +1253,9 @@ C
 
  5040 FORMAT (I2/I2/A40/12F6.2)
 
-      ! Read D11 surface condition (evapotranspiration) data.
+      ! -------------------------------------------------------------
+      ! Read D11 surface condition (evapotranspiration) data
+      ! -------------------------------------------------------------
       READ (d11_input(1), 5050, IOSTAT=IERR) IU11
       IF (IERR /= 0) THEN
          WRITE (*, *) 'ERROR: D11 LINE 1 FORMAT INCORRECT!'
@@ -1271,14 +1274,16 @@ C
  5050 FORMAT (I2)
  5060 FORMAT (F10.2, I4, I4, F7.0, F8.0, 5F5.0)
 
-      ! Convert temperature from Fahrenheit to Celsius if IP units are used.
+      ! Convert temperature from Fahrenheit to Celsius if IP units
+      ! are used.
       IF (IU7 == 1) THEN
         DO I = 1, 12
           TM(I) = (TM(I) - 32.0) / 1.8
         END DO
       END IF
 
-      ! Convert evaporative zone depth and wind speed to SI units if needed.
+      ! Convert evaporative zone depth and wind speed to SI units
+      ! if needed.
       IF (IU11 /= 1) THEN
         EDEPTH = EDEPTH / 2.54
         WIND = WIND / 1.609
@@ -1301,7 +1306,9 @@ C
         RH(I) = HUM4
       END DO
 
-      ! Reads D10 soil and design data.
+      ! -------------------------------------------------------------
+      ! Reads D10 soil and design data
+      ! -------------------------------------------------------------
       OCN2 = 0.
       SSLOPE = 0.
       SLENG = 0.
@@ -1358,9 +1365,9 @@ C
 
  1140 CONTINUE
 
-C
-C   DETERMINES THE BROOKS-COREY PARAMETERS AND EVAPORATION COEFFICIENT
-C
+
+      ! DETERMINES THE BROOKS-COREY PARAMETERS AND EVAPORATION COEFFICIENT
+
       DO 1150 J = 1, LAY
         IF (LAYER (J) .EQ. 4) THEN
           PORO (J) = .04
