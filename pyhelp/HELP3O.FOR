@@ -1189,32 +1189,67 @@ C
       COMMON /BLK19/ IPL, IHV, IPRE, IRUN, ITSOIL, IVEG
       COMMON /BLK26/ TMPSUM, TMPAVG, TAVG(30)
       COMMON /BLK27/ IFREZ, IDFS, IFCNT, KCNT, MXKCNT
-C
+
       DIMENSION DRAD(31)
 
+      ! Initialize error flag to success.
       IERR = 0
-      OPEN (4, FILE = fpath_precip, STATUS = 'OLD', ERR = 1000)
- 1010 CONTINUE
-      OPEN (7, FILE = fpath_tasavg, STATUS = 'OLD', ERR = 1020)
- 1030 CONTINUE
-      OPEN (13, FILE = fpath_solrad, STATUS = 'OLD', ERR = 1040)
- 1070 CONTINUE
-      IF (IERR .GT. 0) THEN
-        WRITE (*, 6000)
- 6000    FORMAT (1X/' CORRECT THE DOS PATH AND FILE NAMES BEFORE ',
-     1    'RESTARTING.'/)
-        CLOSE (4)
-        CLOSE (7)
-        CLOSE (13)
-        STOP
+
+      ! Open the Files Safely using IOSTAT.
+      OPEN (4, FILE=fpath_precip, STATUS='OLD', IOSTAT=IERR)
+      IF (IERR /= 0) THEN
+         WRITE (*, 6010) fpath_precip
+         IERR = 1
+         RETURN
       END IF
 
+      OPEN (7, FILE=fpath_tasavg, STATUS='OLD', IOSTAT=IERR)
+      IF (IERR /= 0) THEN
+         WRITE (*, 6020) fpath_tasavg
+         CLOSE (4)
+         IERR = 2
+         RETURN
+      END IF
+
+      OPEN (13, FILE=fpath_solrad, STATUS='OLD', IOSTAT=IERR)
+      IF (IERR /= 0) THEN
+         WRITE (*, 6030) fpath_solrad
+         CLOSE (4)
+         CLOSE (7)
+         IERR = 3
+         RETURN
+      END IF
+
+ 6010 FORMAT (1X/' PRECIPITATION DATA FILE NOT FOUND!!!  '/1X,A60/)
+ 6020 FORMAT (1X/' TEMPERATURE DATA FILE NOT FOUND!!!  '/1X,A60/)
+ 6030 FORMAT (1X/' SOLAR RADIATION DATA FILE NOT FOUND!!!  '/1X,A60/)
+
+      ! Read the Open Files Safely using IOSTAT.
       REWIND (4)
       REWIND (7)
       REWIND (13)
-      READ (4, 5040) IT4, IU4, CITY4, (RM (I), I = 1, 12)
-      READ (7, 5040) IT7, IU7, CITY7, (TM (I), I = 1, 12)
-      READ (13, 5040) IT13, IU13, CITY13, RLAT
+
+      READ (4, 5040, IOSTAT=IERR) IT4, IU4, CITY4, (RM (I), I=1,12)
+      IF (IERR /= 0) THEN
+         WRITE (*, *) 'ERROR: PRECIPITATION HEADER FORMAT INCORRECT!'
+         IERR = 4
+         RETURN
+      END IF
+
+      READ (7, 5040, IOSTAT=IERR) IT7, IU7, CITY7, (TM (I), I=1,12)
+      IF (IERR /= 0) THEN
+         WRITE (*, *) 'ERROR: PRECIPITATION HEADER FORMAT INCORRECT!'
+         IERR = 5
+         RETURN
+      END IF
+
+      READ (13, 5040, IOSTAT=IERR) IT13, IU13, CITY13, RLAT
+      IF (IERR /= 0) THEN
+         WRITE (*, *) 'ERROR: SOLAR RADIATION FILE FORMAT INCORRECT!'
+         IERR = 6
+         RETURN
+      END IF
+
  5040 FORMAT (I2/I2/A40/12F6.2)
 
       ! Read D11 surface condition (evapotranspiration) data.
@@ -1379,22 +1414,6 @@ C
 C
       RETURN
 C
- 1000 CONTINUE
-      IERR = IERR + 1
-      WRITE (*, 6010) fpath_precip
- 6010 FORMAT (1X/' PRECIPITATION DATA FILE NOT FOUND!!!  '/1X,A60/)
-      GO TO 1010
- 1020 CONTINUE
-      IERR = IERR + 1
-      WRITE (*, 6020) fpath_tasavg
- 6020 FORMAT (1X/' TEMPERATURE DATA FILE NOT FOUND!!!  '/1X,A60/)
-      GO TO 1030
- 1040 CONTINUE
-      IERR = IERR + 1
-      WRITE (*, 6030) fpath_solrad
- 6030 FORMAT (1X/' SOLAR RADIATION DATA FILE NOT FOUND!!!  '/1X,A60/)
-      GO TO 1070
-      END
 C
 C
 C      ************************** SGMNT *************************
