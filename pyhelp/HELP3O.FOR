@@ -1510,20 +1510,22 @@ C
       IDFS = 35.4 - (0.154 * RADAVG)
       IF (IDFS .LT. 1) IDFS = 1
       MXKCNT = (IDFS + 2) / 3
-C
+
+      ! Reset file pointer and skip the header so the next
+      ! subroutine starts reading exactly at the daily data.
       REWIND 13
       READ (13, 5040) IT13, IU13, CITY13, RLAT
-C
+
       RETURN
-C
-C
-C
+      END
+
+
 C      ************************** SGMNT *************************
 C
 C
 C    SUBROUTINE SGMNT BREAKS THE LAYERS INTO MODELING SEGMENTS AND
 C       ASSIGNS THICKNESS, AND PROPERTIES TO THE SEGMENTS.
-C
+
       SUBROUTINE SGMNT
 C
       DOUBLE PRECISION DSWUL, DTHICK, DRCUL, DBUBUL,
