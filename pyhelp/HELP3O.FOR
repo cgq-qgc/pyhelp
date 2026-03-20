@@ -16,7 +16,7 @@ C
 
       SUBROUTINE run_simulation (fpath_precip, fpath_tasavg,
      &  fpath_solrad, d11_input, d10_nlines, d10_input, fpath_output,
-     &  IOD, IOM, IOA, IOS, LMYR, TFSOIL
+     &  IOD, IOM, IOA, IOS, LMYR, TFSOIL, IERR
      &  )
 
       PARAMETER (MXYR = 100)
@@ -38,7 +38,8 @@ C
       INTEGER, INTENT(IN) :: LMYR
       REAL, INTENT(IN) :: TFSOIL
 
-      INTEGER :: IERR
+      INTEGER, INTENT(OUT) :: IERR
+
       INTEGER :: IU8
 
       DOUBLE PRECISION BALY, BALT, DRIN, SWULY, DUMMY1, DUMMY2
@@ -134,6 +135,9 @@ C
       DIMENSION  BALY(67), BALT(67), SWULL(20), HED1S(31), HED2S(31),
      1  HED3S(31), HED4S(31), HED5S(31), DRIN(68), SWULY(67)
       DATA ISTAR/'*', ' '/
+
+      ! Initialize error flag to success.
+      IERR = 0
 
       ! IU8 is now internally set to 2, indicating that SI units are
       ! used for outputs. Previously, IU8 allowed selection between
@@ -1517,7 +1521,7 @@ C
       READ (13, 5040) IT13, IU13, CITY13, RLAT
 
       RETURN
-      END
+      END SUBROUTINE READIN
 
 
 C      ************************** SGMNT *************************
