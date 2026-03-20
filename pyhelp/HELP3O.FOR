@@ -6617,6 +6617,14 @@ C
 C
       WRITE (8, 6012) JYEAR (IYR)
       WRITE (8, 6020)
+
+ 6012 FORMAT (1X/22X, 'MONTHLY TOTALS (MM) FOR YEAR', I5/
+     &  1X, 126('-'))
+ 6020 FORMAT (1X, /34X, 'JAN', 5X, 'FEB', 5X, 'MAR',
+     &  5X, 'APR', 5X, 'MAY', 5X, 'JUN', 5X, 'JUL',
+     &  5X, 'AUG', 5X, 'SEP', 5X, 'OCT', 5X, 'NOV',
+     &  5X, 'DEC', /31X, 12(1X, '-------'))
+
       MONTHE = 12
       MONTHB = MONTHE - 11
       MONTH6 = MONTHE - 6
@@ -6824,12 +6832,6 @@ c      1       LP(5)-1, (SHED5 (J) * 2.54, J = 7, 12)
 c           END IF
 c         END IF
 c       END IF
- 6012  FORMAT(1X/22X,'MONTHLY TOTALS (MM) FOR YEAR',I5/
-     1  1X, 126('-'))
- 6020 FORMAT(1X, /34X, 'JAN', 5X, 'FEB', 5X, 'MAR',
-     1  5X, 'APR', 5X, 'MAY', 5X, 'JUN', 5X, 'JUL',
-     2  5X, 'AUG', 5X, 'SEP', 5X, 'OCT', 5X, 'NOV',
-     3  5X, 'DEC', /31X, 12(1X, '-------'))
  6032 FORMAT(' PRECIPITATION', 17X, 12(1X, F7.3))
  6042 FORMAT(' RUNOFF', 24X, 12(1X, F7.3))
  6052 FORMAT(' EVAPOTRANSPIRATION', 12X, 12(1X, F7.3), /)
