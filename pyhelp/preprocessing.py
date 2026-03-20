@@ -165,22 +165,55 @@ def _format_d10_singlecell(row):
                        '{0:>6}'.format(sw) +
                        '{0:>16.14f}'.format(rc)])
 
-        recir = subin = phole = defec = ipq = trans = ''
-        layr = 0
-
         # READ (10, 5130) XLENG (J), SLOPE (J), RECIR (J), LAYR (J),
         #   SUBIN (J), PHOLE (J), DEFEC (J), IPQ (J), TRANS (J)
         # 5130 FORMAT(F7.0,2F6.0,I3,F13.0,2F7.0,I2,G14.6)
 
-        d10dat.append(['{0:>7.0f}'.format(xleng) +
-                       '{0:>6.2f}'.format(slope) +
-                       '{0:>6}'.format(recir) +
-                       '{0:>3}'.format(layr) +
-                       '{0:>13}'.format(subin) +
-                       '{0:>7}'.format(phole) +
-                       '{0:>7}'.format(defec) +
-                       '{0:>2}'.format(ipq) +
-                       '{0:>14}'.format(trans)])
+        # XLENG(J):
+        #     Drainage Length for layer J (The maximum distance
+        #     water must travel laterally to reach a drain or
+        #     collection pipe).
+        # SLOPE(J):
+        #     Slope of the layer (in percent). Used for computing
+        #     lateral drainage.
+        # RECIR(J):
+        #     Recirculation fraction (percentage of lateral drainage
+        #     from this layer that is recirculated back into the
+        #     landfill).
+        # LAYR(J):
+        #     Layer number receiving the recirculated water.
+        # SUBIN(J):
+        #     Subsurface inflow (steady flow of groundwater entering
+        #     this layer from outside the system).
+        # PHOLE(J):
+        #     Pinhole density (number of pinholes per acre/hectare
+        #     in a flexible membrane liner - FML).
+        # DEFEC(J):
+        #     Installation defects (number of installation defects
+        #     per acre/hectare in the FML).
+        # IPQ(J):
+        #     Placement quality index for the FML liner. (1 = Perfect,
+        #     2 = Excellent, 3 = Good, 4 = Poor, 5 = Bad, 6 = With
+        #     Geotextile).
+        # TRANS(J):
+        #     Transmissivity of the geotextile (if IPQ(J) == 6).
+
+        # Other than XLENG and SLOPE, all the other parameters are used
+        # for advanced landfill engineering features that are not
+        # used for purely natural groundwater recharge assessment.
+
+        recir = subin = phole = defec = ipq = trans = ''
+        layr = 0
+
+        d10dat.append(['{0:>7.0f}'.format(xleng) +  # XLENG
+                       '{0:>6.2f}'.format(slope) +  # SLOPE
+                       '{0:>6}'.format(recir) +     # RECIR
+                       '{0:>3}'.format(layr) +      # LAYR
+                       '{0:>13}'.format(subin) +    # SUBIN
+                       '{0:>7}'.format(phole) +     # PHOLE
+                       '{0:>7}'.format(defec) +     # DEFEC
+                       '{0:>2}'.format(ipq) +       # IPQ
+                       '{0:>14}'.format(trans)])    # TRANS
 
     return d10dat
 

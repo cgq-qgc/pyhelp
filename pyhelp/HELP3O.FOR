@@ -4,15 +4,44 @@ C    LMYR IS THE NUMBER OF YEARS OF SIMULATION
 C    OSNO IS THE INITIAL SNOW WATER
 C    AREA IS AREA PROJECTED ON HORIZONTAL PLANE
 C
-C******************************MAIN*************************
-C                         OUTPUT ROUTINE
-C
-C    DIRECTS THE RUNNING OF THE SIMULATION AND PRINTING OF OUTPUT,
-C    AND PERFORMS THE ACCOUNTING ON THE RESULTS.
-C
-C    TFSOIL is the average air temperature, in Fahrenheit degrees,
-C           below which the soil is assumed to be freezing
-C
+
+!=======================================================================
+!     SUBROUTINE: run_simulation
+!
+!     DESCRIPTION:
+!     Main entry point for running the HELP3O simulation from Python.
+!     Directs the simulation steps, handles accounting of water routing,
+!     and generates output reports.
+!
+!     INPUT ARGUMENTS (INTENT IN):
+!     fpath_precip : CHARACTER(len=260) - File path to the daily
+!                    precipitation data file (Unit 4).
+!     fpath_tasavg : CHARACTER(len=260) - File path to the daily
+!                    average temperature data file (Unit 7).
+!     fpath_solrad : CHARACTER(len=260) - File path to the daily
+!                    solar radiation data file (Unit 13).
+!     d11_input    : CHARACTER(len=80) Array(3) - Array containing 3
+!                    lines of surface condition (evapotranspiration)
+!                    data.
+!     d10_nlines   : INTEGER - The number of lines contained in the
+!                    d10_input array.
+!     d10_input    : CHARACTER(len=80) Array(d10_nlines) - Array
+!                    containing soil and design layout data.
+!     fpath_output : CHARACTER(len=260) - File path where the
+!                    simulation output report will be saved (Unit 8).
+!     IOD          : INTEGER - Flag for Daily Output (1=Yes, 0=No).
+!     IOM          : INTEGER - Flag for Monthly Output (1=Yes, 0=No).
+!     IOA          : INTEGER - Flag for Annual Output (1=Yes, 0=No).
+!     IOS          : INTEGER - Flag for Summary Output (1=Yes, 0=No).
+!     LMYR         : INTEGER - Total number of years to simulate.
+!     TFSOIL       : REAL - Average air temperature (in Fahrenheit)
+!                    below which the soil is assumed to be freezing.
+!
+!     OUTPUT ARGUMENTS (INTENT OUT):
+!     IERR         : INTEGER - Error code flag. Returns 0 on success.
+!                    Values 1-15 indicate file I/O or parsing errors
+!                    during the initialization/read step.
+!=======================================================================
 
       SUBROUTINE run_simulation (fpath_precip, fpath_tasavg,
      &  fpath_solrad, d11_input, d10_nlines, d10_input, fpath_output,
@@ -1005,14 +1034,15 @@ C
           GO TO 1060
         END IF
  1090 CONTINUE
+
       REWIND 4
       REWIND 7
-      REWIND 11
       REWIND 13
+
       CLOSE (4)
       CLOSE (7)
-      CLOSE (11)
       CLOSE (13)
+
 C    COMPILER CORRECTIONS BELOW
 C     Do subprofiles exist? (NSEGnB not initialized, use NSEGn)
       IF (NSEG2 .GT. 0) DSWUL(NSEG2B) = DSWUL(NSEG2B) +  EXWAT2
@@ -1334,7 +1364,7 @@ C
       ILINE = 1
 
       ! Read cell title.
-      READ(d10_input(ILINE), 5070, IOSTAT=IERR) TITLE
+      READ (d10_input(ILINE), 5070, IOSTAT=IERR) TITLE
       IF (IERR /= 0) THEN
          WRITE (*, *) 'ERROR: D10 TITLE FORMAT INCORRECT!'
          WRITE (*, *) 'FAILED AT D10 LINE: ', ILINE
@@ -1347,7 +1377,7 @@ C
  5070 FORMAT(A60)
 
       ! Read global parameters.
-      READ(d10_input(ILINE), 5080, IOSTAT=IERR) IU10, IPRE, OSNO,
+      READ (d10_input(ILINE), 5080, IOSTAT=IERR) IU10, IPRE, OSNO,
      &  AREA, FRUNOF, IRUN
       IF (IERR /= 0) THEN
          WRITE (*, *) 'ERROR: D10 GLOBAL PARAMETERS FORMAT INCORRECT!'
@@ -1362,7 +1392,7 @@ C
 
       ! Read Runoff parameters based on IRUN flag.
       IF (IRUN == 1) THEN
-        READ(d10_input(ILINE), 5090, IOSTAT=IERR) CN2
+        READ (d10_input(ILINE), 5090, IOSTAT=IERR) CN2
         IF (IERR /= 0) THEN
            WRITE (*, *) 'ERROR: D10 IRUN=1 FORMAT INCORRECT!'
            WRITE (*, *) 'FAILED AT D10 LINE: ', ILINE
@@ -1373,7 +1403,7 @@ C
         ILINE = ILINE + 1
 
       ELSE IF (IRUN == 2) THEN
-        READ(d10_input(ILINE), 5100, IOSTAT=IERR) OCN2, SSLOPE,
+        READ (d10_input(ILINE), 5100, IOSTAT=IERR) OCN2, SSLOPE,
      &    SLENG, CN2
         IF (IERR /= 0) THEN
            WRITE (*, *) 'ERROR: D10 IRUN=2 FORMAT INCORRECT!'
@@ -1385,7 +1415,7 @@ C
         ILINE = ILINE + 1
 
       ELSE IF (IRUN == 3) THEN
-        READ(d10_input(ILINE), 5110, IOSTAT=IERR) SSLOPE, SLENG,
+        READ (d10_input(ILINE), 5110, IOSTAT=IERR) SSLOPE, SLENG,
      &    ITSOIL, IVEG, CN2
         IF (IERR /= 0) THEN
            WRITE (*, *) 'ERROR: D10 IRUN=3 FORMAT INCORRECT!'
@@ -1406,7 +1436,7 @@ C
         IF (ILINE > d10_nlines) GO TO 1140
 
         ! Read layer properties line 1.
-        READ(d10_input(ILINE), 5120, IOSTAT=IERR) LAYER(J), THICK(J),
+        READ (d10_input(ILINE), 5120, IOSTAT=IERR) LAYER(J), THICK(J),
      &    ISOIL(J), PORO(J), FC(J), WP(J), SW(J), RC(J)
         IF (IERR /= 0) THEN
            WRITE (*, *) 'ERROR: D10 LAYER PROPERTIES FORMAT INCORRECT!'
@@ -1421,7 +1451,7 @@ C
         IF (ILINE > d10_nlines) GO TO 1140
 
         ! Read layer properties line 2.
-        READ(d10_input(ILINE), 5130, IOSTAT=IERR) XLENG(J), SLOPE(J),
+        READ (d10_input(ILINE), 5130, IOSTAT=IERR) XLENG(J), SLOPE(J),
      &    RECIR(J), LAYR(J), SUBIN(J), PHOLE(J), DEFEC(J), IPQ(J),
      &    TRANS(J)
         IF (IERR /= 0) THEN
@@ -3684,7 +3714,7 @@ C
          END IF
  1000 CONTINUE
       RETURN
-      END
+      END SUBROUTINE SOLT
 C
 C *************************** TSTR **************************
 C
@@ -6457,10 +6487,9 @@ C
      4  HED2M1 (12), HED3M1 (12), HED4M1 (12), HED5M1 (12),
      5  RCRIM1 (20,12), RCR1M1 (12), RCR2M1 (12),
      6  RCR3M1 (12), RCR4M1 (12), RCR5M1 (12)
-C
-C     ACCUMULATES MONTHLY TOTALS FOR COMPUTING AVERAGES AND
-C       STANDARD DEVIATIONS.
-C
+
+      ! Accumulate monthly totals for computing averages and
+      ! standard deviations.
       IF (IOS .EQ. 1) THEN
         DO I = 1, 12
           PREM1(I)  =  PREM1(I)  +  PREM(I)
@@ -6519,22 +6548,22 @@ C
           END DO
         END DO
       END IF
+
       IF (IOM .EQ. 0) RETURN
-C
-C     PRINTS HEADING FOR MONTHLY RESULTS AND PRINTS
-C     MONTHLY PRECIPITATION, RUNOFF AND EVAPOTRANSPIRATION.
-C
+
+      ! Print heading for monthly results and print
+      ! monthly precipitation, runoff and evapotranspiration.
+
       WRITE (8, 6000)
       CALL OUTMO2
       WRITE (8, 6110)
+
  6000 FORMAT(1X//1X, 126('*'))
  6110 FORMAT(1X, 126('*')//)
+
       RETURN
       END SUBROUTINE OUTMO
-C
-C
-C
-C
+
 C     ************************ OUTMO2 *************************
 C
 C     SUBROUTINE OUTMO PRINTS MONTHLY TOTALS in MM and CM.
@@ -6566,7 +6595,6 @@ C
 C     ACCUMULATES MONTHLY TOTALS FOR COMPUTING AVERAGES AND
 C       STANDARD DEVIATIONS.
 C
-C
 C     PRINTS HEADING FOR MONTHLY RESULTS AND PRINTS
 C     MONTHLY PRECIPITATION, RUNOFF AND EVAPOTRANSPIRATION.
 C
@@ -6582,254 +6610,99 @@ C
       MDAY(10) = 31
       MDAY(11) = 30
       MDAY(12) = 31
-C
-C    DETERMINES IF THE YEAR IS A LEAP YEAR.
-C
+
+      ! Determines if the year is a leap year.
       MND = LEAP (JYEAR(IYR), NT)
-C
+
       WRITE (8, 6012) JYEAR (IYR)
       WRITE (8, 6020)
+
+ 6012 FORMAT (1X/22X, 'MONTHLY TOTALS (MM) FOR YEAR', I5/
+     &  1X, 126('-'))
+ 6020 FORMAT (1X, /34X, 'JAN', 5X, 'FEB', 5X, 'MAR',
+     &  5X, 'APR', 5X, 'MAY', 5X, 'JUN', 5X, 'JUL',
+     &  5X, 'AUG', 5X, 'SEP', 5X, 'OCT', 5X, 'NOV',
+     &  5X, 'DEC', /31X, 12(1X, '-------'))
+
       MONTHE = 12
       MONTHB = MONTHE - 11
       MONTH6 = MONTHE - 6
       MONTH7 = MONTHE - 5
-        WRITE (8, 6032) (PREM (J) * 25.4, J = MONTHB, MONTHE)
-        WRITE (8, 6042) (RUNM (J) * 25.4, J = MONTHB, MONTHE)
-        WRITE (8, 6052) (ETM (J) * 25.4, J = MONTHB, MONTHE)
-      DO 2010 K = 1, LP(1)
-          IF (LSIN(K) .GT. 0) THEN
-            DO 2011 J = 1, 12
-               SUBINM (K,J) = MDAY(J) * SUBIN(K)
- 2011       CONTINUE
-            IF (MND .EQ. 366) SUBINM(K,2) = SUBINM(K,2) + SUBIN(K)
-            WRITE(8,6077) (SUBINM(K,J) * 25.4,
-     1      J=MONTHB,MONTH6), K, (SUBINM (K,J) * 25.4, J=MONTH7,MONTHE)
-          END IF
-          IF (LRIN(K) .GT. 0) WRITE(8,6065) (RCRIM(K,J) * 25.4,
-     1    J=MONTHB,MONTH6), K, (RCRIM (K,J) * 25.4, J=MONTH7,MONTHE)
- 2010 CONTINUE
-        IF (LD(1) .GT. 0) THEN
-          WRITE (8, 6062) LD(1), (DRN1M (J) * 25.4, J=MONTHB,MONTH6),
-     1    (DRN1M (J) * 25.4, J = MONTH7, MONTHE)
-          IF (LAYR(LD(1)) .GT. 0) WRITE (8, 6067) (RCR1M (J) * 25.4,
-     1    J=MONTHB,MONTH6), LD(1), (RCR1M (J) * 25.4, J=MONTH7,MONTHE)
-        END IF
-        WRITE (8, 6072) LP(1), (PRC1M (J) * 25.4, J = MONTHB, MONTH6),
-     1   (PRC1M (J) * 25.4, J = MONTH7, MONTHE)
-      IF (LP(2) .GT. 0) THEN
-        DO 2020 K = LP(1)+1, LP(2)
-          IF (LSIN(K) .GT. 0) THEN
-            DO 2021 J = 1, 12
-               SUBINM (K,J) = MDAY(J) * SUBIN(K)
- 2021       CONTINUE
-            IF (MND .EQ. 366) SUBINM(K,2) = SUBINM(K,2) + SUBIN(K)
-            WRITE(8,6077) (SUBINM(K,J) * 25.4,
-     1      J=MONTHB,MONTH6), K, (SUBINM (K,J) * 25.4, J=MONTH7,MONTHE)
-          END IF
-            IF (LRIN(K) .GT. 0) WRITE(8,6065) (RCRIM(K,J) * 25.4,
-     1      J=MONTHB,MONTH6), K, (RCRIM (K,J) * 25.4, J=MONTH7,MONTHE)
- 2020   CONTINUE
-          IF (LD(2) .GT. 0) THEN
-            WRITE (8, 6062) LD(2), (DRN2M (J) * 25.4, J=MONTHB,MONTH6),
-     1      (DRN2M (J) * 25.4, J = MONTH7, MONTHE)
-            IF (LAYR(LD(2)) .GT. 0) WRITE (8, 6067) (RCR2M (J) * 25.4,
-     1      J=MONTHB,MONTH6), LD(2), (RCR2M(J) * 25.4, J=MONTH7,MONTHE)
-          END IF
-          WRITE (8, 6072) LP(2), (PRC2M (J) * 25.4, J = MONTHB, MONTH6),
-     1     (PRC2M (J) * 25.4, J = MONTH7, MONTHE)
-      END IF
-      IF (LP(3) .GT. 0) THEN
-        DO 2030 K = LP(2)+1, LP(3)
-          IF (LSIN(K) .GT. 0) THEN
-            DO 2031 J = 1, 12
-               SUBINM (K,J) = MDAY(J) * SUBIN(K)
- 2031       CONTINUE
-            IF (MND .EQ. 366) SUBINM(K,2) = SUBINM(K,2) + SUBIN(K)
-            WRITE(8,6077) (SUBINM(K,J) * 25.4,
-     1      J=MONTHB,MONTH6), K, (SUBINM (K,J) * 25.4, J=MONTH7,MONTHE)
-          END IF
-            IF (LRIN(K) .GT. 0) WRITE(8,6065) (RCRIM(K,J) * 25.4,
-     1      J=MONTHB,MONTH6), K, (RCRIM (K,J) * 25.4, J=MONTH7,MONTHE)
- 2030   CONTINUE
-          IF (LD(3) .GT. 0) THEN
-            WRITE (8, 6062) LD(3), (DRN3M (J) * 25.4, J=MONTHB,MONTH6),
-     1      (DRN3M (J) * 25.4, J = MONTH7, MONTHE)
-            IF (LAYR(LD(3)) .GT. 0) WRITE (8, 6067) (RCR3M (J) * 25.4,
-     1      J=MONTHB,MONTH6), LD(3), (RCR3M(J) * 25.4, J=MONTH7,MONTHE)
-          END IF
-          WRITE (8, 6072) LP(3), (PRC3M (J) * 25.4, J = MONTHB, MONTH6),
-     1     (PRC3M (J) * 25.4, J = MONTH7, MONTHE)
-      END IF
-      IF (LP(4) .GT. 0) THEN
-        DO 2040 K = LP(3)+1, LP(4)
-          IF (LSIN(K) .GT. 0) THEN
-            DO 2041 J = 1, 12
-               SUBINM (K,J) = MDAY(J) * SUBIN(K)
- 2041       CONTINUE
-            IF (MND .EQ. 366) SUBINM(K,2) = SUBINM(K,2) + SUBIN(K)
-            WRITE(8,6077) (SUBINM(K,J) * 25.4,
-     1      J=MONTHB,MONTH6), K, (SUBINM (K,J) * 25.4, J=MONTH7,MONTHE)
-          END IF
-            IF (LRIN(K) .GT. 0) WRITE(8,6065) (RCRIM(K,J) * 25.4,
-     1      J=MONTHB,MONTH6), K, (RCRIM (K,J) * 25.4, J=MONTH7,MONTHE)
- 2040   CONTINUE
-          IF (LD(4) .GT. 0) THEN
-            WRITE (8, 6062) LD(4), (DRN4M (J) * 25.4, J=MONTHB,MONTH6),
-     1      (DRN4M (J) * 25.4, J = MONTH7, MONTHE)
-            IF (LAYR(LD(4)) .GT. 0) WRITE (8, 6067) (RCR4M (J) * 25.4,
-     1      J=MONTHB,MONTH6), LD(4), (RCR4M(J) * 25.4, J=MONTH7,MONTHE)
-          END IF
-          WRITE (8, 6072) LP(4), (PRC4M (J) * 25.4, J = MONTHB, MONTH6),
-     1     (PRC4M (J) * 25.4, J = MONTH7, MONTHE)
-      END IF
-      IF (LP(5) .GT. 0) THEN
-        DO 2050 K = LP(4)+1, LP(5)
-          IF (LSIN(K) .GT. 0) THEN
-            DO 2051 J = 1, 12
-               SUBINM (K,J) = MDAY(J) * SUBIN(K)
- 2051       CONTINUE
-            IF (MND .EQ. 366) SUBINM(K,2) = SUBINM(K,2) + SUBIN(K)
-            WRITE(8,6077) (SUBINM(K,J) * 25.4,
-     1      J=MONTHB,MONTH6), K, (SUBINM (K,J) * 25.4, J=MONTH7,MONTHE)
-          END IF
-            IF (LRIN(K) .GT. 0) WRITE(8,6065) (RCRIM(K,J) * 25.4,
-     1      J=MONTHB,MONTH6), K, (RCRIM (K,J) * 25.4, J=MONTH7,MONTHE)
- 2050   CONTINUE
-          IF (LD(5) .GT. 0) THEN
-            WRITE (8, 6062) LD(5), (DRN5M (J) * 25.4, J=MONTHB,MONTH6),
-     1      (DRN5M (J) * 25.4, J = MONTH7, MONTHE)
-            IF (LAYR(LD(5)) .GT. 0) WRITE (8, 6067) (RCR5M (J) * 25.4,
-     1      J=MONTHB,MONTH6), LD(5), (RCR5M(J) * 25.4, J=MONTH7,MONTHE)
-          END IF
-          WRITE (8, 6072) LP(5), (PRC5M (J) * 25.4, J = MONTHB, MONTH6),
-     1     (PRC5M (J) * 25.4, J = MONTH7, MONTHE)
-      END IF
-      IF (LP(6) .GT. 0) THEN
-        DO 2060 K = LP(5)+1, LP(6)
-          IF (LSIN(K) .GT. 0) THEN
-            DO 2061 J = 1, 12
-               SUBINM (K,J) = MDAY(J) * SUBIN(K)
- 2061       CONTINUE
-            IF (MND .EQ. 366) SUBINM(K,2) = SUBINM(K,2) + SUBIN(K)
-            WRITE(8,6077) (SUBINM(K,J) * 25.4,
-     1      J=MONTHB,MONTH6), K, (SUBINM (K,J) * 25.4, J=MONTH7,MONTHE)
-          END IF
-            IF (LRIN(K) .GT. 0) WRITE(8,6065) (RCRIM(K,J) * 25.4,
-     1      J=MONTHB,MONTH6), K, (RCRIM (K,J) * 25.4, J=MONTH7,MONTHE)
- 2060   CONTINUE
-          WRITE (8, 6072) LP(6), (PRC6M (J) * 25.4, J = MONTHB, MONTH6),
-     1     (PRC6M (J), J = MONTH7, MONTHE)
-      END IF
-c       IF (LP(1) .GT. 0) THEN
-c         IF (LAYER (LP(1)) .GT. 2) THEN
-c           WRITE (8, 6082)
-c           IF (LAYER(LP(1)-1) .LE. 2) THEN
-c             WRITE (8, 6090) (HED1M (J) * 2.54, J = MONTHB, MONTH6),
-c      1       LP(1), (HED1M (J) * 2.54, J = MONTH7, MONTHE)
-c             WRITE (8, 6100) (SHED1 (J) * 2.54, J = 1, 6),
-c      1       LP(1), (SHED1 (J) * 2.54, J = 7, 12)
-c           ELSE
-c             WRITE (8, 6090) (HED1M (J) * 2.54, J = MONTHB, MONTH6),
-c      1       LP(1)-1, (HED1M (J) * 2.54, J = MONTH7, MONTHE)
-c             WRITE (8, 6100) (SHED1 (J) * 2.54, J = 1, 6),
-c      1       LP(1)-1, (SHED1 (J) * 2.54, J = 7, 12)
-c           END IF
-c         END IF
-c       END IF
-c       IF (LP(2) .GT. 0) THEN
-c         IF (LAYER (LP(2)) .GT. 2) THEN
-c           IF (LAYER(LP(2)-1) .LE. 2) THEN
-c             WRITE (8, 6090) (HED2M (J) * 2.54, J = MONTHB, MONTH6),
-c      1       LP(2), (HED2M (J) * 2.54, J = MONTH7, MONTHE)
-c             WRITE (8, 6100) (SHED2 (J) * 2.54, J = 1, 6),
-c      1       LP(2), (SHED2 (J) * 2.54, J = 7, 12)
-c           ELSE
-c             WRITE (8, 6090) (HED2M (J) * 2.54, J = MONTHB, MONTH6),
-c      1       LP(2)-1, (HED2M (J) * 2.54, J = MONTH7, MONTHE)
-c             WRITE (8, 6100) (SHED2 (J) * 2.54, J = 1, 6),
-c      1       LP(2)-1, (SHED2 (J) * 2.54, J = 7, 12)
-c           END IF
-c         END IF
-c       END IF
-c       IF (LP(3) .GT. 0) THEN
-c         IF (LAYER (LP(3)) .GT. 2) THEN
-c           IF (LAYER(LP(3)-1) .LE. 2) THEN
-c             WRITE (8, 6090) (HED3M (J) * 2.54, J = MONTHB, MONTH6),
-c      1       LP(3), (HED3M (J) * 2.54, J = MONTH7, MONTHE)
-c             WRITE (8, 6100) (SHED3 (J) * 2.54, J = 1, 6),
-c      1       LP(3), (SHED3 (J) * 2.54, J = 7, 12)
-c           ELSE
-c             WRITE (8, 6090) (HED3M (J) * 2.54, J = MONTHB, MONTH6),
-c      1       LP(3)-1, (HED3M (J) * 2.54, J = MONTH7, MONTHE)
-c             WRITE (8, 6100) (SHED3 (J) * 2.54, J = 1, 6),
-c      1       LP(3)-1, (SHED3 (J) * 2.54, J = 7, 12)
-c           END IF
-c         END IF
-c       END IF
-c       IF (LP(4) .GT. 0) THEN
-c         IF (LAYER (LP(4)) .GT. 2) THEN
-c           IF (LAYER(LP(4)-1) .LE. 2) THEN
-c             WRITE (8, 6090) (HED4M (J) * 2.54, J = MONTHB, MONTH6),
-c      1       LP(4), (HED4M (J) * 2.54, J = MONTH7, MONTHE)
-c             WRITE (8, 6100) (SHED4 (J) * 2.54, J = 1, 6),
-c      1       LP(4), (SHED4 (J) * 2.54, J = 7, 12)
-c           ELSE
-c             WRITE (8, 6090) (HED4M (J) * 2.54, J = MONTHB, MONTH6),
-c      1       LP(4)-1, (HED4M (J) * 2.54, J = MONTH7, MONTHE)
-c             WRITE (8, 6100) (SHED4 (J) * 2.54, J = 1, 6),
-c      1       LP(4)-1, (SHED4 (J) * 2.54, J = 7, 12)
-c           END IF
-c         END IF
-c       END IF
-c       IF (LP(5) .GT. 0) THEN
-c         IF (LAYER (LP(5)) .GT. 2) THEN
-c           IF (LAYER(LP(5)-1) .LE. 2) THEN
-c             WRITE (8, 6090) (HED5M (J) * 2.54, J = MONTHB, MONTH6),
-c      1       LP(5), (HED5M (J) * 2.54, J = MONTH7, MONTHE)
-c             WRITE (8, 6100) (SHED5 (J) * 2.54, J = 1, 6),
-c      1       LP(5), (SHED5 (J) * 2.54, J = 7, 12)
-c           ELSE
-c             WRITE (8, 6090) (HED5M (J) * 2.54, J = MONTHB, MONTH6),
-c      1       LP(5)-1, (HED5M (J) * 2.54, J = MONTH7, MONTHE)
-c             WRITE (8, 6100) (SHED5 (J) * 2.54, J = 1, 6),
-c      1       LP(5)-1, (SHED5 (J) * 2.54, J = 7, 12)
-c           END IF
-c         END IF
-c       END IF
- 6012  FORMAT(1X/22X,'MONTHLY TOTALS (MM) FOR YEAR',I5/
-     1  1X, 126('-'))
- 6020 FORMAT(1X, /34X, 'JAN', 5X, 'FEB', 5X, 'MAR',
-     1  5X, 'APR', 5X, 'MAY', 5X, 'JUN', 5X, 'JUL',
-     2  5X, 'AUG', 5X, 'SEP', 5X, 'OCT', 5X, 'NOV',
-     3  5X, 'DEC', /31X, 12(1X, '-------'))
+
+      WRITE (8, 6032) (PREM (J) * 25.4, J = 1, 12)
+      WRITE (8, 6042) (RUNM (J) * 25.4, J = 1, 12)
+      WRITE (8, 6052) (ETM (J) * 25.4, J = 1, 12)
+
  6032 FORMAT(' PRECIPITATION', 17X, 12(1X, F7.3))
  6042 FORMAT(' RUNOFF', 24X, 12(1X, F7.3))
  6052 FORMAT(' EVAPOTRANSPIRATION', 12X, 12(1X, F7.3), /)
+
+      ! LP (Layer Percolation):
+      !   Track the layer number that represents the bottom
+      !   boundary of each subprofile.
+      ! LD (Layer Drainage):
+      !   Track the layer number of lateral drainage layers.
+
+      ! Write monthly outputs for FIRST subprofile.
+      IF (LD(1) > 0) THEN
+        WRITE (8, 6062) LD(1), (DRN1M (J) * 25.4, J=1, 12)
+      END IF
+
+      WRITE (8, 6072) LP(1), (PRC1M (J) * 25.4, J=1, 12)
+
+      ! Write monthly outputs for SECOND subprofile.
+      IF (LP(2) > 0) THEN
+        IF (LD(2) > 0) THEN
+          WRITE (8, 6062) LD(2), (DRN2M (J) * 25.4, J=1, 12)
+        END IF
+
+        WRITE (8, 6072) LP(2), (PRC2M (J) * 25.4, J=1, 12)
+      END IF
+
+      ! Write monthly outputs for THIRD subprofile.
+      IF (LP(3) > 0) THEN
+        IF (LD(3) > 0) THEN
+          WRITE (8, 6062) LD(3), (DRN3M (J) * 25.4, J=1, 12)
+        END IF
+
+        WRITE (8, 6072) LP(3), (PRC3M (J) * 25.4, J=1, 12)
+      END IF
+
+      ! Write monthly outputs for FOURTH subprofile.
+      IF (LP(4) > 0) THEN
+        IF (LD(4) > 0) THEN
+          WRITE (8, 6062) LD(4), (DRN4M (J) * 25.4, J=1, 12)
+        END IF
+
+        WRITE (8, 6072) LP(4), (PRC4M (J) * 25.4, J=1, 12)
+      END IF
+
+      ! Write monthly outputs for FIFTH subprofile.
+      IF (LP(5) > 0) THEN
+        IF (LD(5) > 0) THEN
+          WRITE (8, 6062) LD(5), (DRN5M (J) * 25.4, J=1, 12)
+        END IF
+
+        WRITE (8, 6072) LP(5), (PRC5M (J) * 25.4, J=1, 12)
+      END IF
+
+      ! Write monthly outputs for SIXTH subprofile.
+      IF (LP(6) .GT. 0) THEN
+        WRITE (8, 6072) LP(6), (PRC6M (J) * 25.4, J=1, 12)
+      END IF
+
  6062 FORMAT(' LAT. DRAINAGE IN LAYER', I3, 5X, 12(1X, F7.3))
  6072 FORMAT(' PERCOLATION THROUGH LAYER', I3, 2X, 12(1X, F7.3), /)
 
- 6077 FORMAT(1X/' SUBSURFACE INFLOW INTO  ',7X,6F8.3/3X,
-     1 'LAYER',I3,'         ',12X,6F8.3)
- 6065 FORMAT(1X,/' LATERAL DRAINAGE RECIRCULATED',2X,6F8.3/3X,
-     1 'INTO LAYER',I3,'         ',7X,6F8.3)
- 6067 FORMAT(1X,/' LATERAL DRAINAGE RECIRCULATED',2X,6F8.3/3X,
-     1 'FROM LAYER',I3,'         ',7X,6F8.3)
-
- 6082 FORMAT(1X//1X,79('-')/22X,
-     1       'MONTHLY SUMMARIES FOR DAILY HEADS (CM)'/1X,79('-')/)
- 6090 FORMAT(1X/' AVERAGE DAILY HEAD ON ',8X,6F8.3/3X,
-     1 'TOP OF LAYER',I3,'  ',11X,6F8.3)
- 6100 FORMAT(1X/' STD. DEVIATION OF DAILY ',6X,6(F8.3)/3X,
-     1 'HEAD ON TOP OF LAYER',I3,5X,6F8.3)
       RETURN
-      END
-C
-C
+      END SUBROUTINE OUTMO2
+
+
 C      ************************* OUTYR ************************
 C
 C     SUBROUTINE OUTYR PRINTS THE ANNUAL TOTALS
 C     FOR A YEAR OF SIMULATION RESULTS.
-C
+
       SUBROUTINE OUTYR (IOA, IOS, IU8)
 
       INTEGER, INTENT(IN) :: IOA
