@@ -66,7 +66,8 @@ def test_run_help3o(rca_params):
     """
     Test that the HELP3O extension run and create an output file as expected.
     """
-    HELP3O.run_simulation(*rca_params)
+    error_flag = HELP3O.run_simulation(*rca_params)
+    assert error_flag == 0
     assert osp.exists(rca_params[5])
 
 
