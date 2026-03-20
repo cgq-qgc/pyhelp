@@ -30,7 +30,14 @@ DEL_TEMPFILES = True
 def run_help_singlecell(item):
     """Run HELP for a single cell."""
     cellname, outparam = item
-    HELP3O.run_simulation(*outparam)
+
+    error_code = HELP3O.run_simulation(*outparam)
+    if error_code != 0:
+        raise RuntimeError(
+            f"Run simulation for cell {cellname} failed "
+            f"with error code {error_code}."
+            )
+
     results = read_monthly_help_output(outparam[5])
     if DEL_TEMPFILES:
         os.remove(outparam[5])

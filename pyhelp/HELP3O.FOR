@@ -16,7 +16,7 @@ C
 
       SUBROUTINE run_simulation (fpath_precip, fpath_tasavg,
      &  fpath_solrad, d11_input, d10_nlines, d10_input, fpath_output,
-     &  IOD, IOM, IOA, IOS, LMYR, TFSOIL
+     &  IOD, IOM, IOA, IOS, LMYR, TFSOIL, IERR
      &  )
 
       PARAMETER (MXYR = 100)
@@ -38,7 +38,9 @@ C
       INTEGER, INTENT(IN) :: LMYR
       REAL, INTENT(IN) :: TFSOIL
 
-	  INTEGER :: IU8
+      INTEGER, INTENT(OUT) :: IERR
+
+      INTEGER :: IU8
 
       DOUBLE PRECISION BALY, BALT, DRIN, SWULY, DUMMY1, DUMMY2
 C    1  QDRN1, QDRN2, QDRN3, QDRN4, QDRN5,
@@ -134,6 +136,9 @@ C
      1  HED3S(31), HED4S(31), HED5S(31), DRIN(68), SWULY(67)
       DATA ISTAR/'*', ' '/
 
+      ! Initialize error flag to success.
+      IERR = 0
+
       ! IU8 is now internally set to 2, indicating that SI units are
       ! used for outputs. Previously, IU8 allowed selection between
       ! SI (2) and IP (1) units, but now only SI units are supported.
@@ -154,7 +159,12 @@ C
       ! Read climatic input and soil characteristics and
       ! design information.
       CALL READIN(fpath_precip, fpath_tasavg, fpath_solrad,
-     &            d11_input, d10_nlines, d10_input)
+     &            d11_input, d10_nlines, d10_input, IERR)
+
+      ! If READIN failed, immediately exit run_simulation.
+      IF (IERR /= 0) THEN
+         RETURN
+      END IF
 C
 C    SETS CONTROLS FOR SUBPROFILES AND OUTPUT.
 C
@@ -1159,7 +1169,7 @@ C
 C  SUBROUTINE READIN READS ET AND SOIL DESIGN DATA, AND WEATHER HEADERS
 C
       SUBROUTINE READIN (fpath_precip, fpath_tasavg, fpath_solrad,
-     &                   d11_input, d10_nlines, d10_input)
+     &                   d11_input, d10_nlines, d10_input, IERR)
 
       CHARACTER(len=260), INTENT(IN) :: fpath_precip
       CHARACTER(len=260), INTENT(IN) :: fpath_tasavg
@@ -1169,6 +1179,8 @@ C
 
       INTEGER, INTENT(IN) :: d10_nlines
       CHARACTER(len=80), INTENT(IN) :: d10_input(d10_nlines)
+
+      INTEGER, INTENT(OUT) :: IERR
 
       INTEGER :: ILINE
       CHARACTER*40 CITY4, CITY7, CITY13
@@ -1189,62 +1201,126 @@ C
       COMMON /BLK19/ IPL, IHV, IPRE, IRUN, ITSOIL, IVEG
       COMMON /BLK26/ TMPSUM, TMPAVG, TAVG(30)
       COMMON /BLK27/ IFREZ, IDFS, IFCNT, KCNT, MXKCNT
-C
+
       DIMENSION DRAD(31)
 
+      ! Initialize error flag to success.
       IERR = 0
-      OPEN (4, FILE = fpath_precip, STATUS = 'OLD', ERR = 1000)
- 1010 CONTINUE
-      OPEN (7, FILE = fpath_tasavg, STATUS = 'OLD', ERR = 1020)
- 1030 CONTINUE
-      OPEN (13, FILE = fpath_solrad, STATUS = 'OLD', ERR = 1040)
- 1070 CONTINUE
-      IF (IERR .GT. 0) THEN
-        WRITE (*, 6000)
- 6000    FORMAT (1X/' CORRECT THE DOS PATH AND FILE NAMES BEFORE ',
-     1    'RESTARTING.'/)
-        CLOSE (4)
-        CLOSE (7)
-        CLOSE (13)
-        STOP
+
+      ! -------------------------------------------------------------
+      ! Open and read climatic input data (D4, D7, and D13)
+      ! -------------------------------------------------------------
+      OPEN (4, FILE=fpath_precip, STATUS='OLD', IOSTAT=IERR)
+      IF (IERR /= 0) THEN
+         WRITE (*, 6010) fpath_precip
+         IERR = 1
+         RETURN
       END IF
+
+      OPEN (7, FILE=fpath_tasavg, STATUS='OLD', IOSTAT=IERR)
+      IF (IERR /= 0) THEN
+         WRITE (*, 6020) fpath_tasavg
+         CLOSE (4)
+         IERR = 2
+         RETURN
+      END IF
+
+      OPEN (13, FILE=fpath_solrad, STATUS='OLD', IOSTAT=IERR)
+      IF (IERR /= 0) THEN
+         WRITE (*, 6030) fpath_solrad
+         CLOSE (4)
+         CLOSE (7)
+         IERR = 3
+         RETURN
+      END IF
+
+ 6010 FORMAT (1X/' PRECIPITATION DATA FILE NOT FOUND!!!  '/1X,A60/)
+ 6020 FORMAT (1X/' TEMPERATURE DATA FILE NOT FOUND!!!  '/1X,A60/)
+ 6030 FORMAT (1X/' SOLAR RADIATION DATA FILE NOT FOUND!!!  '/1X,A60/)
 
       REWIND (4)
       REWIND (7)
       REWIND (13)
-      READ (4, 5040) IT4, IU4, CITY4, (RM (I), I = 1, 12)
-      READ (7, 5040) IT7, IU7, CITY7, (TM (I), I = 1, 12)
-      READ (13, 5040) IT13, IU13, CITY13, RLAT
+
+      READ (4, 5040, IOSTAT=IERR) IT4, IU4, CITY4, (RM (I), I=1,12)
+      IF (IERR /= 0) THEN
+         WRITE (*, *) 'ERROR: PRECIPITATION HEADER FORMAT INCORRECT!'
+         IERR = 4
+         RETURN
+      END IF
+
+      READ (7, 5040, IOSTAT=IERR) IT7, IU7, CITY7, (TM (I), I=1,12)
+      IF (IERR /= 0) THEN
+         WRITE (*, *) 'ERROR: PRECIPITATION HEADER FORMAT INCORRECT!'
+         IERR = 5
+         RETURN
+      END IF
+
+      READ (13, 5040, IOSTAT=IERR) IT13, IU13, CITY13, RLAT
+      IF (IERR /= 0) THEN
+         WRITE (*, *) 'ERROR: SOLAR RADIATION FILE FORMAT INCORRECT!'
+         IERR = 6
+         RETURN
+      END IF
+
  5040 FORMAT (I2/I2/A40/12F6.2)
 
-      ! Read D11 surface condition (evapotranspiration) data.
-      READ (d11_input(1), 5050) IU11
-      READ (d11_input(3), 5060) ULAT, IPL, IHV, ULAI, EDEPTH, WIND,
-     &  HUM1, HUM2, HUM3, HUM4
+      ! -------------------------------------------------------------
+      ! Read D11 surface condition (evapotranspiration) data
+      ! -------------------------------------------------------------
+      READ (d11_input(1), 5050, IOSTAT=IERR) IU11
+      IF (IERR /= 0) THEN
+         WRITE (*, *) 'ERROR: D11 LINE 1 FORMAT INCORRECT!'
+         IERR = 7
+         RETURN
+      END IF
+
+      READ (d11_input(3), 5060, IOSTAT=IERR) ULAT, IPL, IHV, ULAI,
+     &  EDEPTH, WIND, HUM1, HUM2, HUM3, HUM4
+      IF (IERR /= 0) THEN
+         WRITE (*, *) 'ERROR: D11 LINE 3 FORMAT INCORRECT!'
+         IERR = 8
+         RETURN
+      END IF
+
  5050 FORMAT (I2)
  5060 FORMAT (F10.2, I4, I4, F7.0, F8.0, 5F5.0)
 
-      IF (IU7 .EQ. 1) THEN
-        DO 1075 I = 1, 12
-          TM (I) = (TM (I) - 32.0) / 1.8
- 1075   CONTINUE
+      ! Convert temperature from Fahrenheit to Celsius if IP units
+      ! are used.
+      IF (IU7 == 1) THEN
+        DO I = 1, 12
+          TM(I) = (TM(I) - 32.0) / 1.8
+        END DO
       END IF
-      IF (IU11 .NE. 1) EDEPTH = EDEPTH / 2.54
-      IF (IU11 .NE. 1) WIND = WIND / 1.609
-      DO 1080 I = 1, 91
-        RH (I) = HUM1
- 1080 CONTINUE
-      DO 1090 I = 92, 182
-        RH (I) = HUM2
- 1090 CONTINUE
-      DO 1100 I = 183, 274
-        RH (I) = HUM3
- 1100 CONTINUE
-      DO 1110 I = 275, 366
-        RH (I) = HUM4
- 1110 CONTINUE
 
-      ! Reads DATA10
+      ! Convert evaporative zone depth and wind speed to SI units
+      ! if needed.
+      IF (IU11 /= 1) THEN
+        EDEPTH = EDEPTH / 2.54
+        WIND = WIND / 1.609
+      END IF
+
+      ! Assign quarterly relative humidity values to daily arrays.
+      DO I = 1, 91
+        RH(I) = HUM1
+      END DO
+
+      DO I = 92, 182
+        RH(I) = HUM2
+      END DO
+
+      DO I = 183, 274
+        RH(I) = HUM3
+      END DO
+
+      DO I = 275, 366
+        RH(I) = HUM4
+      END DO
+
+      ! -------------------------------------------------------------
+      ! Reads D10 soil and design data
+      ! -------------------------------------------------------------
       OCN2 = 0.
       SSLOPE = 0.
       SLENG = 0.
@@ -1257,23 +1333,69 @@ C
 
       ILINE = 1
 
-      READ(d10_input(ILINE), 5070) TITLE
+      ! Read cell title.
+      READ(d10_input(ILINE), 5070, IOSTAT=IERR) TITLE
+      IF (IERR /= 0) THEN
+         WRITE (*, *) 'ERROR: D10 TITLE FORMAT INCORRECT!'
+         WRITE (*, *) 'FAILED AT D10 LINE: ', ILINE
+         IERR = 9
+         RETURN
+      END IF
+
       ILINE = ILINE + 1
+
  5070 FORMAT(A60)
 
-      READ(d10_input(ILINE), 5080) IU10, IPRE, OSNO, AREA, FRUNOF, IRUN
+      ! Read global parameters.
+      READ(d10_input(ILINE), 5080, IOSTAT=IERR) IU10, IPRE, OSNO,
+     &  AREA, FRUNOF, IRUN
+      IF (IERR /= 0) THEN
+         WRITE (*, *) 'ERROR: D10 GLOBAL PARAMETERS FORMAT INCORRECT!'
+         WRITE (*, *) 'FAILED AT D10 LINE: ', ILINE
+         IERR = 10
+         RETURN
+      END IF
+
       ILINE = ILINE + 1
+
  5080 FORMAT(I2, I2, 2F10.0, F6.0, I2)
 
+      ! Read Runoff parameters based on IRUN flag.
       IF (IRUN == 1) THEN
-        READ(d10_input(ILINE), 5090) CN2
+        READ(d10_input(ILINE), 5090, IOSTAT=IERR) CN2
+        IF (IERR /= 0) THEN
+           WRITE (*, *) 'ERROR: D10 IRUN=1 FORMAT INCORRECT!'
+           WRITE (*, *) 'FAILED AT D10 LINE: ', ILINE
+           IERR = 11
+           RETURN
+        END IF
+
         ILINE = ILINE + 1
+
       ELSE IF (IRUN == 2) THEN
-        READ(d10_input(ILINE), 5100) OCN2, SSLOPE, SLENG, CN2
+        READ(d10_input(ILINE), 5100, IOSTAT=IERR) OCN2, SSLOPE,
+     &    SLENG, CN2
+        IF (IERR /= 0) THEN
+           WRITE (*, *) 'ERROR: D10 IRUN=2 FORMAT INCORRECT!'
+           WRITE (*, *) 'FAILED AT D10 LINE: ', ILINE
+           IERR = 12
+           RETURN
+        END IF
+
         ILINE = ILINE + 1
+
       ELSE IF (IRUN == 3) THEN
-        READ(d10_input(ILINE), 5110) SSLOPE, SLENG, ITSOIL, IVEG, CN2
+        READ(d10_input(ILINE), 5110, IOSTAT=IERR) SSLOPE, SLENG,
+     &    ITSOIL, IVEG, CN2
+        IF (IERR /= 0) THEN
+           WRITE (*, *) 'ERROR: D10 IRUN=3 FORMAT INCORRECT!'
+           WRITE (*, *) 'FAILED AT D10 LINE: ', ILINE
+           IERR = 13
+           RETURN
+        END IF
+
         ILINE = ILINE + 1
+
       END IF
 
  5090 FORMAT(F7.0)
@@ -1283,17 +1405,34 @@ C
       DO J = 1, 20
         IF (ILINE > d10_nlines) GO TO 1140
 
-        READ(d10_input(ILINE), 5120) LAYER(J), THICK(J), ISOIL(J),
-     &    PORO(J), FC(J), WP(J), SW(J), RC(J)
-        ILINE = ILINE + 1
+        ! Read layer properties line 1.
+        READ(d10_input(ILINE), 5120, IOSTAT=IERR) LAYER(J), THICK(J),
+     &    ISOIL(J), PORO(J), FC(J), WP(J), SW(J), RC(J)
+        IF (IERR /= 0) THEN
+           WRITE (*, *) 'ERROR: D10 LAYER PROPERTIES FORMAT INCORRECT!'
+           WRITE (*, *) 'LAYER NUMBER = ', J
+           IERR = 14
+           RETURN
+        END IF
 
+        ILINE = ILINE + 1
         LAY = LAY + 1
 
         IF (ILINE > d10_nlines) GO TO 1140
 
-        READ(d10_input(ILINE), 5130) XLENG(J), SLOPE(J), RECIR(J),
-     &    LAYR(J), SUBIN(J), PHOLE(J), DEFEC(J), IPQ(J), TRANS(J)
+        ! Read layer properties line 2.
+        READ(d10_input(ILINE), 5130, IOSTAT=IERR) XLENG(J), SLOPE(J),
+     &    RECIR(J), LAYR(J), SUBIN(J), PHOLE(J), DEFEC(J), IPQ(J),
+     &    TRANS(J)
+        IF (IERR /= 0) THEN
+           WRITE (*, *) 'ERROR: D10 LAYER PROPERTIES FORMAT INCORRECT!'
+           WRITE (*, *) 'LAYER NUMBER = ', J
+           IERR = 15
+           RETURN
+        END IF
+
         ILINE = ILINE + 1
+
       END DO
 
  5120 FORMAT(I2, F7.0, I4, 4F6.0, F16.0)
@@ -1301,9 +1440,11 @@ C
 
  1140 CONTINUE
 
-C
-C   DETERMINES THE BROOKS-COREY PARAMETERS AND EVAPORATION COEFFICIENT
-C
+      ! --------------------------------------------------------------
+      ! Determine the Brooks-Corey parameters and
+      ! evaporation coefficient
+      ! --------------------------------------------------------------
+
       DO 1150 J = 1, LAY
         IF (LAYER (J) .EQ. 4) THEN
           PORO (J) = .04
@@ -1373,36 +1514,22 @@ C
       IDFS = 35.4 - (0.154 * RADAVG)
       IF (IDFS .LT. 1) IDFS = 1
       MXKCNT = (IDFS + 2) / 3
-C
+
+      ! Reset file pointer and skip the header so the next
+      ! subroutine starts reading exactly at the daily data.
       REWIND 13
       READ (13, 5040) IT13, IU13, CITY13, RLAT
-C
+
       RETURN
-C
- 1000 CONTINUE
-      IERR = IERR + 1
-      WRITE (*, 6010) fpath_precip
- 6010 FORMAT (1X/' PRECIPITATION DATA FILE NOT FOUND!!!  '/1X,A60/)
-      GO TO 1010
- 1020 CONTINUE
-      IERR = IERR + 1
-      WRITE (*, 6020) fpath_tasavg
- 6020 FORMAT (1X/' TEMPERATURE DATA FILE NOT FOUND!!!  '/1X,A60/)
-      GO TO 1030
- 1040 CONTINUE
-      IERR = IERR + 1
-      WRITE (*, 6030) fpath_solrad
- 6030 FORMAT (1X/' SOLAR RADIATION DATA FILE NOT FOUND!!!  '/1X,A60/)
-      GO TO 1070
-      END
-C
-C
+      END SUBROUTINE READIN
+
+
 C      ************************** SGMNT *************************
 C
 C
 C    SUBROUTINE SGMNT BREAKS THE LAYERS INTO MODELING SEGMENTS AND
 C       ASSIGNS THICKNESS, AND PROPERTIES TO THE SEGMENTS.
-C
+
       SUBROUTINE SGMNT
 C
       DOUBLE PRECISION DSWUL, DTHICK, DRCUL, DBUBUL,
