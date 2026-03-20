@@ -1364,7 +1364,7 @@ C
       ILINE = 1
 
       ! Read cell title.
-      READ(d10_input(ILINE), 5070, IOSTAT=IERR) TITLE
+      READ (d10_input(ILINE), 5070, IOSTAT=IERR) TITLE
       IF (IERR /= 0) THEN
          WRITE (*, *) 'ERROR: D10 TITLE FORMAT INCORRECT!'
          WRITE (*, *) 'FAILED AT D10 LINE: ', ILINE
@@ -1377,7 +1377,7 @@ C
  5070 FORMAT(A60)
 
       ! Read global parameters.
-      READ(d10_input(ILINE), 5080, IOSTAT=IERR) IU10, IPRE, OSNO,
+      READ (d10_input(ILINE), 5080, IOSTAT=IERR) IU10, IPRE, OSNO,
      &  AREA, FRUNOF, IRUN
       IF (IERR /= 0) THEN
          WRITE (*, *) 'ERROR: D10 GLOBAL PARAMETERS FORMAT INCORRECT!'
