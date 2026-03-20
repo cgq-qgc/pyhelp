@@ -1391,7 +1391,7 @@ C
 
       ! Read Runoff parameters based on IRUN flag.
       IF (IRUN == 1) THEN
-        READ(d10_input(ILINE), 5090, IOSTAT=IERR) CN2
+        READ (d10_input(ILINE), 5090, IOSTAT=IERR) CN2
         IF (IERR /= 0) THEN
            WRITE (*, *) 'ERROR: D10 IRUN=1 FORMAT INCORRECT!'
            WRITE (*, *) 'FAILED AT D10 LINE: ', ILINE
@@ -1402,7 +1402,7 @@ C
         ILINE = ILINE + 1
 
       ELSE IF (IRUN == 2) THEN
-        READ(d10_input(ILINE), 5100, IOSTAT=IERR) OCN2, SSLOPE,
+        READ (d10_input(ILINE), 5100, IOSTAT=IERR) OCN2, SSLOPE,
      &    SLENG, CN2
         IF (IERR /= 0) THEN
            WRITE (*, *) 'ERROR: D10 IRUN=2 FORMAT INCORRECT!'
@@ -1414,7 +1414,7 @@ C
         ILINE = ILINE + 1
 
       ELSE IF (IRUN == 3) THEN
-        READ(d10_input(ILINE), 5110, IOSTAT=IERR) SSLOPE, SLENG,
+        READ (d10_input(ILINE), 5110, IOSTAT=IERR) SSLOPE, SLENG,
      &    ITSOIL, IVEG, CN2
         IF (IERR /= 0) THEN
            WRITE (*, *) 'ERROR: D10 IRUN=3 FORMAT INCORRECT!'
@@ -1435,7 +1435,7 @@ C
         IF (ILINE > d10_nlines) GO TO 1140
 
         ! Read layer properties line 1.
-        READ(d10_input(ILINE), 5120, IOSTAT=IERR) LAYER(J), THICK(J),
+        READ (d10_input(ILINE), 5120, IOSTAT=IERR) LAYER(J), THICK(J),
      &    ISOIL(J), PORO(J), FC(J), WP(J), SW(J), RC(J)
         IF (IERR /= 0) THEN
            WRITE (*, *) 'ERROR: D10 LAYER PROPERTIES FORMAT INCORRECT!'
@@ -1450,7 +1450,7 @@ C
         IF (ILINE > d10_nlines) GO TO 1140
 
         ! Read layer properties line 2.
-        READ(d10_input(ILINE), 5130, IOSTAT=IERR) XLENG(J), SLOPE(J),
+        READ (d10_input(ILINE), 5130, IOSTAT=IERR) XLENG(J), SLOPE(J),
      &    RECIR(J), LAYR(J), SUBIN(J), PHOLE(J), DEFEC(J), IPQ(J),
      &    TRANS(J)
         IF (IERR /= 0) THEN
@@ -3713,7 +3713,7 @@ C
          END IF
  1000 CONTINUE
       RETURN
-      END
+      END SUBROUTINE SOLT
 C
 C *************************** TSTR **************************
 C
@@ -6486,10 +6486,9 @@ C
      4  HED2M1 (12), HED3M1 (12), HED4M1 (12), HED5M1 (12),
      5  RCRIM1 (20,12), RCR1M1 (12), RCR2M1 (12),
      6  RCR3M1 (12), RCR4M1 (12), RCR5M1 (12)
-C
-C     ACCUMULATES MONTHLY TOTALS FOR COMPUTING AVERAGES AND
-C       STANDARD DEVIATIONS.
-C
+
+      ! Accumulate monthly totals for computing averages and
+      ! standard deviations.
       IF (IOS .EQ. 1) THEN
         DO I = 1, 12
           PREM1(I)  =  PREM1(I)  +  PREM(I)
@@ -6548,22 +6547,22 @@ C
           END DO
         END DO
       END IF
+
       IF (IOM .EQ. 0) RETURN
-C
-C     PRINTS HEADING FOR MONTHLY RESULTS AND PRINTS
-C     MONTHLY PRECIPITATION, RUNOFF AND EVAPOTRANSPIRATION.
-C
+
+      ! Print heading for monthly results and print
+      ! monthly precipitation, runoff and evapotranspiration.
+
       WRITE (8, 6000)
       CALL OUTMO2
       WRITE (8, 6110)
+
  6000 FORMAT(1X//1X, 126('*'))
  6110 FORMAT(1X, 126('*')//)
+
       RETURN
       END SUBROUTINE OUTMO
-C
-C
-C
-C
+
 C     ************************ OUTMO2 *************************
 C
 C     SUBROUTINE OUTMO PRINTS MONTHLY TOTALS in MM and CM.
@@ -6594,7 +6593,6 @@ C
 C
 C     ACCUMULATES MONTHLY TOTALS FOR COMPUTING AVERAGES AND
 C       STANDARD DEVIATIONS.
-C
 C
 C     PRINTS HEADING FOR MONTHLY RESULTS AND PRINTS
 C     MONTHLY PRECIPITATION, RUNOFF AND EVAPOTRANSPIRATION.
