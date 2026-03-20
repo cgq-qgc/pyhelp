@@ -1034,14 +1034,15 @@ C
           GO TO 1060
         END IF
  1090 CONTINUE
+
       REWIND 4
       REWIND 7
-      REWIND 11
       REWIND 13
+
       CLOSE (4)
       CLOSE (7)
-      CLOSE (11)
       CLOSE (13)
+
 C    COMPILER CORRECTIONS BELOW
 C     Do subprofiles exist? (NSEGnB not initialized, use NSEGn)
       IF (NSEG2 .GT. 0) DSWUL(NSEG2B) = DSWUL(NSEG2B) +  EXWAT2
