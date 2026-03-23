@@ -294,35 +294,24 @@ C
       RUN = 0.0
       ES1T = 0.0
       TS2 = 0.0
-      DRN1 = 0.0D0
-      DRN2 = 0.0D0
-      DRN3 = 0.0D0
-      DRN4 = 0.0D0
-      DRN5 = 0.0D0
-      PRC1 = 0.0D0
-      PRC2 = 0.0D0
-      PRC3 = 0.0D0
-      PRC4 = 0.0D0
-      PRC5 = 0.0D0
-      PRC6 = 0.0D0
-      HED1 = 0.0D0
-      HED2 = 0.0D0
-      HED3 = 0.0D0
-      HED4 = 0.0D0
-      HED5 = 0.0D0
-C    COMPILER CORRECTIONS BELOW
-      RCR1 = 0.0D0
-      RCR2 = 0.0D0
-      RCR3 = 0.0D0
-      RCR4 = 0.0D0
-      RCR5 = 0.0D0
-C     COMPILER CORRECTIONS ABOVE
+
+      DRN1 = 0.0D0; DRN2 = 0.0D0; DRN3 = 0.0D0;
+      DRN4 = 0.0D0; DRN5 = 0.0D0
+
+      PRC1 = 0.0D0; PRC2 = 0.0D0; PRC3 = 0.0D0
+      PRC4 = 0.0D0; PRC5 = 0.0D0; PRC6 = 0.0D0
+
+      HED1 = 0.0D0; HED2 = 0.0D0; HED3 = 0.0D0
+      HED4 = 0.0D0; HED5 = 0.0D0
+
+      RCR1 = 0.0D0; RCR2 = 0.0D0; RCR3 = 0.0D0
+      RCR4 = 0.0D0; RCR5 = 0.0D0
+
       ADDRUN = 0.0
-      EXWAT2 = 0.0
-      EXWAT3 = 0.0
-      EXWAT4 = 0.0
-      EXWAT5 = 0.0
-      EXWAT6 = 0.0
+
+      EXWAT2 = 0.0; EXWAT3 = 0.0; EXWAT4 = 0.0
+      EXWAT5 = 0.0; EXWAT6 = 0.0
+
 C     QDRN1 = 0.0D0
 C     QDRN2 = 0.0D0
 C     QDRN3 = 0.0D0
