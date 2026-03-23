@@ -515,26 +515,24 @@ C     THY6 = 0.0D0
           CALL EVAPOT
           DO J = 1, 19
             IF (DABS (BALT(J)) .LT. 1.E-08) BALT(J) = 0.0
-C
-C    COMPUTES DAILY LEAF AREA INDEX , PLANT TRANSPIRATION
-C    WHEN SOIL WATER CONTENT LIMITS
-C    PLANT TRANSPIRATION AND DISTRIBUTES EVAPOTRANSPIRATION
-C    AMONG TOP SEGMENTS.
-C
           END DO
+
+          ! Computes daily leaf area index, plant transpiration
+          ! when soil water content limits
+          ! plant transpiration and distributes evapotranspiration
+          ! among top segments.
           CALL CRPMOD
-C
-C    COMPUTES LATERAL AND VERTICAL WATER ROUTING IN THE TOP
-C    SUBPROFILE.
-C
+
+          ! Computes lateral and vertical water routing in the top
+          ! subprofile.
           ADDRUN = 0.0
           NPROF = 1
           CALL DRAIN (PINF, DRN1, PRC1, HED1, BALY, BALT, ADDRUN,
-     1       NPROF, NSEG1B, NSEG1E, LAY1B, LAY1E, DRIN, SWULY)
-C
-C    ACCOUNTING IS PERFORMED.
-C
-          IF (HED1 .GT. PHED1) PHED1 = HED1
+     &                NPROF, NSEG1B, NSEG1E, LAY1B, LAY1E, DRIN,
+     &                SWULY)
+
+          ! Accounting is performed.
+          IF (HED1 > PHED1) PHED1 = HED1
           SWULE = 0.0
           EXET = 0.0
           DO 1130 J = 1, 7
