@@ -562,9 +562,9 @@ C     THY6 = 0.0D0
             ADDRUN = 0.0
           END IF
 
-          DO 1140 J = 1, NSEG1D
+          DO J = 1, NSEG1D
             SWUL(J) = DSWUL(J)
- 1140     CONTINUE
+          END DO
 C
 C     PERFORM ACCOUNTING OF MONTHLY AND ANNUAL TOTALS AND
 C     PEAK VALUES FOR THE TOP SUBPROFILE.
