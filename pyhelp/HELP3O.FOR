@@ -6615,11 +6615,6 @@ C
      &  5X, 'AUG', 5X, 'SEP', 5X, 'OCT', 5X, 'NOV',
      &  5X, 'DEC', /31X, 12(1X, '-------'))
 
-      MONTHE = 12
-      MONTHB = MONTHE - 11
-      MONTH6 = MONTHE - 6
-      MONTH7 = MONTHE - 5
-
       WRITE (8, 6032) (PREM (J) * 25.4, J = 1, 12)
       WRITE (8, 6042) (RUNM (J) * 25.4, J = 1, 12)
       WRITE (8, 6052) (ETM (J) * 25.4, J = 1, 12)
