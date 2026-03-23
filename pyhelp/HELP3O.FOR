@@ -334,29 +334,29 @@ C     THY3 = 0.0D0
 C     THY4 = 0.0D0
 C     THY5 = 0.0D0
 C     THY6 = 0.0D0
+
       CALL INITIA
+
       IDA = 0
       ND = 365
+
  1060 CONTINUE
-C
-C  INITIALIZE COEFFICIENTS FOR THE HYDRO-17 SNOWMELT CALCULATIONS
-C
+
+      ! Initialize coefficients for the HYDRO-17 snowmelt calculations.
       CALL SNOCOEF
-C
-C    INITIALIZES TIME STEPS AND RESETS VALUES AFTER INITIALIZATION YEAR
-C
+
+      ! Initializes time steps and resets values after
+      ! initialization year.
       CALL SETUPS (SWULL, BALT, BALY, EXWAT2, EXWAT3, EXWAT4,
-     1  EXWAT5, EXWAT6)
-C
-C    PRINTS SOIL CHARACTERISTICS AND DESIGN INFORMATION.
-C
+     &             EXWAT5, EXWAT6)
+
+      ! Print soil characteristics and design information.
       IF (IPRE .GE. 2) THEN
          CALL OUTDAT (SWULL, fpath_precip, fpath_tasavg, fpath_solrad,
-     1                fpath_output, IU8)
+     &                fpath_output, IU8)
       END IF
-C
-C   INITIALIZING VARIABLES
-C
+
+      ! Initializing variables.
       OSWULE = 0.0
       DO J = 1, NSEG
         OSWULE = OSWULE + DSWUL(J)
@@ -367,6 +367,7 @@ C
       END DO
       PSW = SWULE/EDEPTH
       DSW = SWULE/EDEPTH
+
       IMO = 0
       IDA = 1
       PRC1A1 = 0.0
