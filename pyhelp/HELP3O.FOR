@@ -295,7 +295,7 @@ C
       ES1T = 0.0
       TS2 = 0.0
 
-      DRN1 = 0.0D0; DRN2 = 0.0D0; DRN3 = 0.0D0;
+      DRN1 = 0.0D0; DRN2 = 0.0D0; DRN3 = 0.0D0
       DRN4 = 0.0D0; DRN5 = 0.0D0
 
       PRC1 = 0.0D0; PRC2 = 0.0D0; PRC3 = 0.0D0
