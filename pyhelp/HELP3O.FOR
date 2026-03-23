@@ -535,7 +535,7 @@ C     THY6 = 0.0D0
           IF (HED1 > PHED1) PHED1 = HED1
           SWULE = 0.0
           EXET = 0.0
-          DO 1130 J = 1, 7
+          DO J = 1, 7
             IF ((DSWUL(J) + (BALT(J)/2.0D0)) .LT. DWPUL(J)) THEN
               EXET2 = EXET + DWPUL(J) - DSWUL(J) - (BALT(J)/2.0D0)
               IF (EXET .LE. ETT) THEN
@@ -545,7 +545,8 @@ C     THY6 = 0.0D0
               END IF
             END IF
             SWULE = SWULE + DSWUL(J) + BALT(J)/2.0D0
- 1130     CONTINUE
+          END DO
+
           SWE = SWULE/EDEPTH
           IF (SWE .LT. DSW) DSW = SWE
           IF (SWE .GT. PSW) PSW = SWE
