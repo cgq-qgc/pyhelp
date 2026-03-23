@@ -2554,8 +2554,8 @@ C     COMPILER CORRECTIONS ABOVE
       TBB = 0.
       TS = 200.
       DO I = 1, 12
-         IF (TM (I) .GT. TBB) TBB = TM (I)
-         IF (TM (I) .LT. TS) TS = TM (I)
+         IF (TM (I) > TBB) TBB = TM (I)
+         IF (TM (I) < TS) TS = TM (I)
          AVT = AVT + TM (I)
          ! WFT (I) = PWD (I)/(1. - PWW (I) + PWD (I))
          WFT (I) = 0.2 /(1. - 0.4 + 0.2)
@@ -2569,14 +2569,14 @@ C     COMPILER CORRECTIONS ABOVE
       ! to compute PHU - POTENTIAL HEAT UNITS
       CALL DATFIT(12,TM,A1,A2,A3)
       PHUX = 0.
-      IF (IPL .GE. IHV) THEN
+      IF (IPL >= IHV) THEN
          PHU = AHU (IPL, 365, A1,A2,A3)
          PHUX = PHU
          PHU = PHU + AHU (1, IHV, A1,A2,A3)
       ELSE
          PHU = AHU (IPL, IHV, A1, A2, A3)
       END IF
-      IF (PHU .LT. 30.) PHU = 30.
+      IF (PHU < 30.) PHU = 30.
 
       ! Initializing variables.
       XLAI = (PHUX/PHU)*ULAI
@@ -2595,7 +2595,7 @@ C     COMPILER CORRECTIONS ABOVE
 
          ! Accumulating thicknesses of each layer
          ! Z = depth from surface to bottom of segment I
-         IF (I .EQ. 1) THEN
+         IF (I == 1) THEN
             ZSEG = 0.
          ELSE
             ZSEG = Z (I - 1)
