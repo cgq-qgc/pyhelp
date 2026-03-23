@@ -232,12 +232,14 @@ C
       DO J = 1, 7
         SWULE = SWULE + SWUL(J)
       END DO
+
       OSWULE = 0.0
       DO J = 1, NSEG
         OSWULE = OSWULE + SWUL(J)
         DSWUL(J) = SWUL(J)
         SWULI(J) = SWUL(J)
       END DO
+
       NSEG1B = 1
       NSEG1E = NSEG1
       NSEG1D = NSEG1E
@@ -283,11 +285,11 @@ C
         LAY6B = LP(5) + 1
         LAY6E = LP(6)
       END IF
-      DO J = 1, 67
-        BALT(J) = 0.0D0
-        BALY(J) = 0.0D0
-        ET(J) = 0.0
-      END DO
+
+      BALT = 0.0D0
+      BALY = 0.0D0
+      ET = 0.0
+
       IODAY = 0
       RUN = 0.0
       ES1T = 0.0
