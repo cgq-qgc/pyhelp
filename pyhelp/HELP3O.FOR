@@ -6541,6 +6541,7 @@ C
         END DO
       END IF
 
+      ! If flag for monthly output is False.
       IF (IOM .EQ. 0) RETURN
 
       ! Print heading for monthly results and print
@@ -6582,29 +6583,6 @@ C
       COMMON /BLK32/ SHED1 (12), SHED2 (12), SHED3 (12), SHED4 (12),
      1  SHED5 (12)
       COMMON /BLK33/ JYEAR (MXYR)
-      DIMENSION MDAY(12)
-C
-C     ACCUMULATES MONTHLY TOTALS FOR COMPUTING AVERAGES AND
-C       STANDARD DEVIATIONS.
-C
-C     PRINTS HEADING FOR MONTHLY RESULTS AND PRINTS
-C     MONTHLY PRECIPITATION, RUNOFF AND EVAPOTRANSPIRATION.
-C
-      MDAY(1) = 31
-      MDAY(2) = 28
-      MDAY(3) = 31
-      MDAY(4) = 30
-      MDAY(5) = 31
-      MDAY(6) = 30
-      MDAY(7) = 31
-      MDAY(8) = 31
-      MDAY(9) = 30
-      MDAY(10) = 31
-      MDAY(11) = 30
-      MDAY(12) = 31
-
-      ! Determine if the year is a leap year.
-      MND = LEAP (JYEAR(IYR), NT)
 
       WRITE (8, 6012) JYEAR (IYR)
       WRITE (8, 6020)
