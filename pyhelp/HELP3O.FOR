@@ -3650,34 +3650,38 @@ C     GS = GS + TMPC/PHU
  1060 IF (XLAI .LT. 0.0) XLAI = 0.0
       RETURN
       END
-C
-C ****************************** SOLT **************************
-C
+
+
+      !=================================================================
+      ! SUBROUTINE: SOLT
+      !
+      ! Estimates daily average temperature at the bottom
+      ! of each soil layer
+      !=================================================================
       SUBROUTINE SOLT
-C     THIS SUBROUTINE ESTIMATES DAILY AVERAGE TEMPERATURE AT THE BOTTOM
-C     OF EACH SOIL LAYER
-C
+
       COMMON /BLK8/ PRE (370), TMPF (366), RAD (366)
       COMMON /BLK9/ PINF, ES1T, SMELT, GMRO, ADDRUN, OLDSNO, SNO, WF(7),
-     1  SSNO
+     &  SSNO
       COMMON /BLK16/ LD(5), LP(6), LPQ(5), LCASE(5), IYR, IDA, MO,
-     1  NSTEP(6), ND
+     &  NSTEP(6), ND
       COMMON /BLK20/ TSEG (7), Z (7), FCS (7), ST (7)
       COMMON /BLK21/ TB, TO, TS, AVT, AMP, ABD, PHU, GS, CV,
-     1   RSD, DM, WFT (12), DD, DLAI
-C
-C*****DETERMINING BCV
-C
+     &   RSD, DM, WFT (12), DD, DLAI
+
+      ! DetermininG BCV.
       IF(CV.LT.0.0)CV=0.0
       IF(CV.GT.20000.)CV=20000.
-      BCV = CV/(CV + EXP (7.563 - (0.0001297*CV)))
-      IF ((SNO*25.4) .GT. 120.) THEN
+
+      BCV = CV / (CV + EXP (7.563 - (0.0001297*CV)))
+
+      IF ((SNO*25.4) > 120.) THEN
          BCV = AMAX1 (1., BCV)
-      ELSE IF (SNO .GT. 0.0) THEN
+      ELSE IF (SNO > 0.0) THEN
          XX = (SNO*25.4)/(SNO*25.4 + EXP (6.055 - (.3002*SNO*25.4)))
          BCV = AMAX1 (XX, BCV)
       END IF
-C
+
       XI = IDA
       ALX = (XI - 200.)/58.13
       TMPC = (TMPF (IDA) - 32.)/1.8
@@ -3686,19 +3690,22 @@ C
       ELSE
          ST0 = WFT (MO)*5. + TMPC - 5.
       END IF
+
       XX = BCV*TO + (1. - BCV)*ST0
       DT = XX - (AVT + AMP*COS (ALX))
-      DO 1000 K = 1, 7
+      DO K = 1, 7
          ZD = - Z (K)/DD
-         IF(ABS(ZD).LT.37.)THEN
+         IF(ABS(ZD) < 37.) THEN
             TSEG (K) = AVT + (AMP*COS (ALX + ZD) + DT)*EXP (ZD)
          ELSE
             TSEG(K) = AVT
          END IF
- 1000 CONTINUE
+      END DO
+
       RETURN
       END SUBROUTINE SOLT
-C
+
+
 C *************************** TSTR **************************
 C
 C      SUBROUTINE TSTR APPLIES A TEMPERATURE STRESS FACTOR TO CROPS
