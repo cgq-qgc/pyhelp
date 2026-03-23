@@ -550,9 +550,9 @@ C     THY6 = 0.0D0
           SWE = SWULE/EDEPTH
           IF (SWE .LT. DSW) DSW = SWE
           IF (SWE .GT. PSW) PSW = SWE
-C
-C    EXCESS WATER ADDED TO THE TOP SEGMENT IS DIVERTED TO RUNOFF.
-C
+
+          ! Excess water added to the top segment is
+          ! diverted to runoff.
           RUN = RUN + ADDRUN*FRUNOF
           ADDRUN = ADDRUN*(1.0 - FRUNOF)
           IF (SNO .GT. 0.0) THEN
