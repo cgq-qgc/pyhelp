@@ -3679,8 +3679,8 @@ C     GS = GS + TMPC/PHU
       IF(CV.LT.0.0)CV=0.0
       IF(CV.GT.20000.)CV=20000.
 
+      ! Calculate the Biomass/Snow Cover Factor.
       BCV = CV / (CV + EXP (7.563 - (0.0001297*CV)))
-
       IF ((SNO*25.4) > 120.) THEN
          BCV = AMAX1 (1., BCV)
       ELSE IF (SNO > 0.0) THEN
@@ -3690,14 +3690,20 @@ C     GS = GS + TMPC/PHU
 
       XI = IDA
       ALX = (XI - 200.)/58.13
+
+      ! Convert air temperature from Fahrenheit to Celsius.
       TMPC = (TMPF (IDA) - 32.)/1.8
+
+      ! Estimate bare soil surface temperature (ST0).
       IF (RAD (IDA) .EQ. 0.) THEN
          ST0 = WFT (MO)*5. + TMPC
       ELSE
          ST0 = WFT (MO)*5. + TMPC - 5.
       END IF
 
+      ! Calculate actual ground surface temperature (XX).
       XX = BCV*TO + (1. - BCV)*ST0
+
       DT = XX - (AVT + AMP*COS (ALX))
       DO K = 1, 7
          ZD = - Z (K)/DD
