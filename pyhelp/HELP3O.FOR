@@ -370,206 +370,91 @@ C     THY6 = 0.0D0
 
       IMO = 0
       IDA = 1
-      PRC1A1 = 0.0
-      PRC2A1 = 0.0
-      PRC3A1 = 0.0
-      PRC4A1 = 0.0
-      PRC5A1 = 0.0
-      PRC6A1 = 0.0
-      DRN1A1 = 0.0
-      DRN2A1 = 0.0
-      DRN3A1 = 0.0
-      DRN4A1 = 0.0
-      DRN5A1 = 0.0
-      RCR1A1 = 0.0
-      RCR2A1 = 0.0
-      RCR3A1 = 0.0
-      RCR4A1 = 0.0
-      RCR5A1 = 0.0
-      HED1A1 = 0.0
-      HED2A1 = 0.0
-      HED3A1 = 0.0
-      HED4A1 = 0.0
-      HED5A1 = 0.0
-      RUNA1 = 0.0
-      PREA1 = 0.0
-      ETA1 = 0.0
-      STOR1 = 0.0
-      PRC1A2 = 0.0
-      PRC2A2 = 0.0
-      PRC3A2 = 0.0
-      PRC4A2 = 0.0
-      PRC5A2 = 0.0
-      PRC6A2 = 0.0
-      DRN1A2 = 0.0
-      DRN2A2 = 0.0
-      DRN3A2 = 0.0
-      DRN4A2 = 0.0
-      DRN5A2 = 0.0
-      RCR1A2 = 0.0
-      RCR2A2 = 0.0
-      RCR3A2 = 0.0
-      RCR4A2 = 0.0
-      RCR5A2 = 0.0
-      HED1A2 = 0.0
-      HED2A2 = 0.0
-      HED3A2 = 0.0
-      HED4A2 = 0.0
-      HED5A2 = 0.0
-      RUNA2 = 0.0
-      PREA2 = 0.0
-      ETA2  = 0.0
-      STOR2 = 0.0
-      DO K = 1, 20
-        RCRIA(K) = 0.0
-        RCRIA1(K) = 0.0
-        RCRIA2(K) = 0.0
-        SUBINA(K) = 0.0
-      END DO
-      PPRC1 = 0.0
-      PPRC2 = 0.0
-      PPRC3 = 0.0
-      PPRC4 = 0.0
-      PPRC5 = 0.0
-      PPRC6 = 0.0
-      PDRN1 = 0.0
-      PDRN2 = 0.0
-      PDRN3 = 0.0
-      PDRN4 = 0.0
-      PDRN5 = 0.0
-      PRCR1 = 0.0
-      PRCR2 = 0.0
-      PRCR3 = 0.0
-      PRCR4 = 0.0
-      PRCR5 = 0.0
-      PRUN = 0.0
-      PPRE = 0.0
-      PSNO = 0.0
-      PHED1 = 0.0
-      PHED2 = 0.0
-      PHED3 = 0.0
-      PHED4 = 0.0
-      PHED5 = 0.0
-      DO I = 1, MAXMO
-        PREM1(I)  = 0.0
-        RUNM1(I)  = 0.0
-        ETM1(I)   = 0.0
-        DRN1M1(I) = 0.0
-        DRN2M1(I) = 0.0
-        DRN3M1(I) = 0.0
-        DRN4M1(I) = 0.0
-        DRN5M1(I) = 0.0
-        RCR1M1(I) = 0.0
-        RCR2M1(I) = 0.0
-        RCR3M1(I) = 0.0
-        RCR4M1(I) = 0.0
-        RCR5M1(I) = 0.0
-        HED1M1(I) = 0.0
-        HED2M1(I) = 0.0
-        HED3M1(I) = 0.0
-        HED4M1(I) = 0.0
-        HED5M1(I) = 0.0
-        PRC1M1(I) = 0.0
-        PRC2M1(I) = 0.0
-        PRC3M1(I) = 0.0
-        PRC4M1(I) = 0.0
-        PRC5M1(I) = 0.0
-        PRC6M1(I) = 0.0
-        DO K = 1, 20
-          RCRIM1(K,I) = 0.0
-          RCRIM(K,I) = 0.0
-          SUBINM(K,I) = 0.0
-          RCRIM2(K,I) = 0.0
-        END DO
-        PREM2(I)  = 0.0
-        RUNM2(I)  = 0.0
-        ETM2(I)   = 0.0
-        DRN1M2(I) = 0.0
-        DRN2M2(I) = 0.0
-        DRN3M2(I) = 0.0
-        DRN4M2(I) = 0.0
-        DRN5M2(I) = 0.0
-        RCR1M2(I) = 0.0
-        RCR2M2(I) = 0.0
-        RCR3M2(I) = 0.0
-        RCR4M2(I) = 0.0
-        RCR5M2(I) = 0.0
-        HED1M2(I) = 0.0
-        HED2M2(I) = 0.0
-        HED3M2(I) = 0.0
-        HED4M2(I) = 0.0
-        HED5M2(I) = 0.0
-        PRC1M2(I) = 0.0
-        PRC2M2(I) = 0.0
-        PRC3M2(I) = 0.0
-        PRC4M2(I) = 0.0
-        PRC5M2(I) = 0.0
-        PRC6M2(I) = 0.0
-      END DO
-C
-C    START YEARLY LOOP FOR SIMULATION. IYR IS THE NUMBER
-C    OF THE YEAR.
-C
-      DO 1090 IYR = 1, LMYR
-        PRC1A = 0.0
-        PRC2A = 0.0
-        PRC3A = 0.0
-        PRC4A = 0.0
-        PRC5A = 0.0
-        PRC6A = 0.0
-        DRN1A = 0.0
-        DRN2A = 0.0
-        DRN3A = 0.0
-        DRN4A = 0.0
-        DRN5A = 0.0
-        RCR1A = 0.0
-        RCR2A = 0.0
-        RCR3A = 0.0
-        RCR4A = 0.0
-        RCR5A = 0.0
-        HED1A = 0.0
-        HED2A = 0.0
-        HED3A = 0.0
-        HED4A = 0.0
-        HED5A = 0.0
-        RUNA  = 0.0
-        PREA  = 0.0
-        ETA   = 0.0
-        BAL   = 0.0
-        STOR  = 0.0
 
-      DO I = 1, 12
-        HED1M(I) = 0.0
-        HED2M(I) = 0.0
-        HED3M(I) = 0.0
-        HED4M(I) = 0.0
-        HED5M(I) = 0.0
-        PRC1M(I) = 0.0
-        PRC2M(I) = 0.0
-        PRC3M(I) = 0.0
-        PRC4M(I) = 0.0
-        PRC5M(I) = 0.0
-        PRC6M(I) = 0.0
-        RCR1M(I) = 0.0
-        RCR2M(I) = 0.0
-        RCR3M(I) = 0.0
-        RCR4M(I) = 0.0
-        RCR5M(I) = 0.0
-        DO K = 1, 20
-          RCRIM(K,I) = 0.0
-        END DO
-        DRN1M(I) = 0.0
-        DRN2M(I) = 0.0
-        DRN3M(I) = 0.0
-        DRN4M(I) = 0.0
-        DRN5M(I) = 0.0
-        RUNM(I) = 0.0
-        PREM(I) = 0.0
-        ETM(I) = 0.0
-      END DO
-      DO K = 1, 20
-        RCRIA(K) = 0.0
-      END DO
+      PRC1A1 = 0.0; PRC2A1 = 0.0; PRC3A1 = 0.0
+      PRC4A1 = 0.0; PRC5A1 = 0.0; PRC6A1 = 0.0
+      DRN1A1 = 0.0; DRN2A1 = 0.0; DRN3A1 = 0.0
+      DRN4A1 = 0.0; DRN5A1 = 0.0
+      RCR1A1 = 0.0; RCR2A1 = 0.0; RCR3A1 = 0.0
+      RCR4A1 = 0.0; RCR5A1 = 0.0
+      HED1A1 = 0.0; HED2A1 = 0.0; HED3A1 = 0.0
+      HED4A1 = 0.0; HED5A1 = 0.0
+      RUNA1 = 0.0; PREA1 = 0.0; ETA1 = 0.0; STOR1 = 0.0
+
+      PRC1A2 = 0.0; PRC2A2 = 0.0; PRC3A2 = 0.0
+      PRC4A2 = 0.0; PRC5A2 = 0.0; PRC6A2 = 0.0
+      DRN1A2 = 0.0; DRN2A2 = 0.0; DRN3A2 = 0.0
+      DRN4A2 = 0.0; DRN5A2 = 0.0
+      RCR1A2 = 0.0; RCR2A2 = 0.0; RCR3A2 = 0.0
+      RCR4A2 = 0.0; RCR5A2 = 0.0
+      HED1A2 = 0.0; HED2A2 = 0.0; HED3A2 = 0.0
+      HED4A2 = 0.0; HED5A2 = 0.0
+      RUNA2 = 0.0; PREA2 = 0.0; ETA2  = 0.0; STOR2 = 0.0
+
+      RCRIA = 0.0; RCRIA1 = 0.0; RCRIA2 = 0.0;
+      SUBINA = 0.0
+
+      PPRC1 = 0.0; PPRC2 = 0.0; PPRC3 = 0.0
+      PPRC4 = 0.0; PPRC5 = 0.0; PPRC6 = 0.0
+      PDRN1 = 0.0; PDRN2 = 0.0; PDRN3 = 0.0
+      PDRN4 = 0.0; PDRN5 = 0.0
+      PRCR1 = 0.0; PRCR2 = 0.0; PRCR3 = 0.0
+      PRCR4 = 0.0; PRCR5 = 0.0
+
+      PRUN = 0.0; PPRE = 0.0; PSNO = 0.0
+
+      PHED1 = 0.0; PHED2 = 0.0; PHED3 = 0.0
+      PHED4 = 0.0; PHED5 = 0.0
+
+      PREM1 = 0.0; RUNM1 = 0.0; ETM1 = 0.0
+      DRN1M1 = 0.0; DRN2M1 = 0.0; DRN3M1 = 0.0
+      DRN4M1 = 0.0; DRN5M1 = 0.0
+      RCR1M1 = 0.0; RCR2M1 = 0.0; RCR3M1 = 0.0
+      RCR4M1 = 0.0; RCR5M1 = 0.0
+      HED1M1 = 0.0; HED2M1 = 0.0; HED3M1 = 0.0
+      HED4M1 = 0.0; HED5M1 = 0.0
+      PRC1M1 = 0.0; PRC2M1 = 0.0; PRC3M1 = 0.0
+      PRC4M1 = 0.0; PRC5M1 = 0.0; PRC6M1 = 0.0
+      RCRIM1 = 0.0; RCRIM = 0.0; SUBINM = 0.0; RCRIM2 = 0.0
+
+      PREM2 = 0.0; RUNM2 = 0.0; ETM2 = 0.0
+      DRN1M2 = 0.0; DRN2M2 = 0.0; DRN3M2 = 0.0
+      DRN4M2 = 0.0; DRN5M2 = 0.0
+      RCR1M2 = 0.0; RCR2M2 = 0.0; RCR3M2 = 0.0
+      RCR4M2 = 0.0; RCR5M2 = 0.0
+      HED1M2 = 0.0; HED2M2 = 0.0; HED3M2 = 0.0
+      HED4M2 = 0.0; HED5M2 = 0.0
+      PRC1M2 = 0.0; PRC2M2 = 0.0; PRC3M2 = 0.0
+      PRC4M2 = 0.0; PRC5M2 = 0.0; PRC6M2 = 0.0
+
+      ! Start yearly loop for simulation.
+      ! IYR is the number of the year.
+      DO 1090 IYR = 1, LMYR
+        PRC1A = 0.0; PRC2A = 0.0; PRC3A = 0.0; PRC4A = 0.0
+        PRC5A = 0.0; PRC6A = 0.0
+        DRN1A = 0.0; DRN2A = 0.0; DRN3A = 0.0; DRN4A = 0.0
+        DRN5A = 0.0
+        RCR1A = 0.0; RCR2A = 0.0; RCR3A = 0.0; RCR4A = 0.0
+        RCR5A = 0.0
+        HED1A = 0.0; HED2A = 0.0; HED3A = 0.0; HED4A = 0.0
+        HED5A = 0.0
+
+        RUNA = 0.0; PREA  = 0.0; ETA   = 0.0
+        BAL = 0.0
+        STOR = 0.0
+
+        HED1M = 0.0; HED2M = 0.0; HED3M = 0.0; HED4M = 0.0
+        HED5M = 0.0
+        PRC1M = 0.0; PRC2M = 0.0; PRC3M = 0.0; PRC4M = 0.0
+        PRC5M = 0.0; PRC6M = 0.0
+        RCR1M = 0.0; RCR2M = 0.0; RCR3M = 0.0; RCR4M = 0.0
+        RCR5M = 0.0
+        DRN1M = 0.0; DRN2M = 0.0; DRN3M = 0.0; DRN4M = 0.0
+        DRN5M = 0.0
+
+        RUNM = 0.0; PREM = 0.0; ETM = 0.0
+
+        RCRIM = 0.0; RCRIA = 0.0
 
         ! IMO is the number of the month.
         ! MO1 is the number of the month of the year.
