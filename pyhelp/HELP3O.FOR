@@ -193,48 +193,41 @@ C
       IF (IERR /= 0) THEN
          RETURN
       END IF
-C
-C    SETS CONTROLS FOR SUBPROFILES AND OUTPUT.
-C
+
+      ! Sets controls for subprofiles and output.
       CALL CNTRLD
-C
-C    ASSIGNS THICKNESSES AND SOIL CHARACTERISTICS TO SEGMENTS.
-C
+
+      ! Assigns thicknesses and soil characteristics to segments.
       CALL SGMNT
-C
-C    COMPUTES MAXIMUM STORAGE RETENTION PARMETER.
-C
+
+      ! Computes maximum storage retention parameter.
       C2 = CN2*CN2
       C3 = CN2*C2
       C4 = CN2*C3
       CN1 = 0.3750701*CN2 + 2.756779E-03*C2 - 1.638951E-05*C3 +
-     1  5.142644E-07*C4
+     &  5.142644E-07*C4
       SMXN = (1000./CN1) - 10.0
-C
-C   SMX FOR FROZEN SOIL CONDITIONS
-C
+
+      ! SMX for frozen soil conditions.
       CN22 = 95.0
       IF (CN2 .GE. 80) CN22 = 98.0
       C22 = CN22*CN22
       C33 = CN22*C22
       C44 = CN22*C33
       CN11 = 0.3750701*CN22 + 2.756779E-03*C22 - 1.638951E-05*C33 +
-     1  5.142644E-07*C44
+     &  5.142644E-07*C44
       SMXF = (1000./CN11) - 10.
-C
-C    COMPUTES SOIL CHARACTERISTICS OF THE EVAPORATIVE ZONE.
-C
+
+      ! Computes soil characteristics of the evaporative zone.
       ULE = 0.0
-      DO 1000 J = 1, 7
+      DO J = 1, 7
         ULE = ULE + UL(J)
- 1000 CONTINUE
-C
-C    COMPUTES SOIL EVAPORATION COEFFICIENT.
-C
+      END DO
+
+      ! Computes soil evaporation coefficient.
       CALL ETCOEF
-C
-C    INITIALIZES ACCOUNTING VARIABLES.
-C
+
+      ! Initializes accounting variables.
       SWULE = 0.0
       DO J = 1, 7
         SWULE = SWULE + SWUL(J)
@@ -639,10 +632,9 @@ C
 
           ! Compute soil temperature at bottom of each segment.
           CALL SOLT
-C
-C    COMPUTES SURFACE AND SOIL EVAPORATION AND POTENTIAL PLANT
-C    TRANSPIRATION.
-C
+
+         ! Computes surface and soil evaporation and potential plant
+         ! Transpiration.
           CALL EVAPOT
           DO 1120 J = 1, 19
             IF (DABS (BALT(J)) .LT. 1.E-08) BALT(J) = 0.0
