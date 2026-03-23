@@ -232,12 +232,14 @@ C
       DO J = 1, 7
         SWULE = SWULE + SWUL(J)
       END DO
+
       OSWULE = 0.0
       DO J = 1, NSEG
         OSWULE = OSWULE + SWUL(J)
         DSWUL(J) = SWUL(J)
         SWULI(J) = SWUL(J)
       END DO
+
       NSEG1B = 1
       NSEG1E = NSEG1
       NSEG1D = NSEG1E
@@ -283,44 +285,33 @@ C
         LAY6B = LP(5) + 1
         LAY6E = LP(6)
       END IF
-      DO J = 1, 67
-        BALT(J) = 0.0D0
-        BALY(J) = 0.0D0
-        ET(J) = 0.0
-      END DO
+
+      BALT = 0.0D0
+      BALY = 0.0D0
+      ET = 0.0
+
       IODAY = 0
       RUN = 0.0
       ES1T = 0.0
       TS2 = 0.0
-      DRN1 = 0.0D0
-      DRN2 = 0.0D0
-      DRN3 = 0.0D0
-      DRN4 = 0.0D0
-      DRN5 = 0.0D0
-      PRC1 = 0.0D0
-      PRC2 = 0.0D0
-      PRC3 = 0.0D0
-      PRC4 = 0.0D0
-      PRC5 = 0.0D0
-      PRC6 = 0.0D0
-      HED1 = 0.0D0
-      HED2 = 0.0D0
-      HED3 = 0.0D0
-      HED4 = 0.0D0
-      HED5 = 0.0D0
-C    COMPILER CORRECTIONS BELOW
-      RCR1 = 0.0D0
-      RCR2 = 0.0D0
-      RCR3 = 0.0D0
-      RCR4 = 0.0D0
-      RCR5 = 0.0D0
-C     COMPILER CORRECTIONS ABOVE
+
+      DRN1 = 0.0D0; DRN2 = 0.0D0; DRN3 = 0.0D0
+      DRN4 = 0.0D0; DRN5 = 0.0D0
+
+      PRC1 = 0.0D0; PRC2 = 0.0D0; PRC3 = 0.0D0
+      PRC4 = 0.0D0; PRC5 = 0.0D0; PRC6 = 0.0D0
+
+      HED1 = 0.0D0; HED2 = 0.0D0; HED3 = 0.0D0
+      HED4 = 0.0D0; HED5 = 0.0D0
+
+      RCR1 = 0.0D0; RCR2 = 0.0D0; RCR3 = 0.0D0
+      RCR4 = 0.0D0; RCR5 = 0.0D0
+
       ADDRUN = 0.0
-      EXWAT2 = 0.0
-      EXWAT3 = 0.0
-      EXWAT4 = 0.0
-      EXWAT5 = 0.0
-      EXWAT6 = 0.0
+
+      EXWAT2 = 0.0; EXWAT3 = 0.0; EXWAT4 = 0.0
+      EXWAT5 = 0.0; EXWAT6 = 0.0
+
 C     QDRN1 = 0.0D0
 C     QDRN2 = 0.0D0
 C     QDRN3 = 0.0D0
@@ -343,29 +334,29 @@ C     THY3 = 0.0D0
 C     THY4 = 0.0D0
 C     THY5 = 0.0D0
 C     THY6 = 0.0D0
+
       CALL INITIA
+
       IDA = 0
       ND = 365
+
  1060 CONTINUE
-C
-C  INITIALIZE COEFFICIENTS FOR THE HYDRO-17 SNOWMELT CALCULATIONS
-C
+
+      ! Initialize coefficients for the HYDRO-17 snowmelt calculations.
       CALL SNOCOEF
-C
-C    INITIALIZES TIME STEPS AND RESETS VALUES AFTER INITIALIZATION YEAR
-C
+
+      ! Initializes time steps and resets values after
+      ! initialization year.
       CALL SETUPS (SWULL, BALT, BALY, EXWAT2, EXWAT3, EXWAT4,
-     1  EXWAT5, EXWAT6)
-C
-C    PRINTS SOIL CHARACTERISTICS AND DESIGN INFORMATION.
-C
+     &             EXWAT5, EXWAT6)
+
+      ! Print soil characteristics and design information.
       IF (IPRE .GE. 2) THEN
          CALL OUTDAT (SWULL, fpath_precip, fpath_tasavg, fpath_solrad,
-     1                fpath_output, IU8)
+     &                fpath_output, IU8)
       END IF
-C
-C   INITIALIZING VARIABLES
-C
+
+      ! Initializing variables.
       OSWULE = 0.0
       DO J = 1, NSEG
         OSWULE = OSWULE + DSWUL(J)
@@ -376,208 +367,94 @@ C
       END DO
       PSW = SWULE/EDEPTH
       DSW = SWULE/EDEPTH
+
       IMO = 0
       IDA = 1
-      PRC1A1 = 0.0
-      PRC2A1 = 0.0
-      PRC3A1 = 0.0
-      PRC4A1 = 0.0
-      PRC5A1 = 0.0
-      PRC6A1 = 0.0
-      DRN1A1 = 0.0
-      DRN2A1 = 0.0
-      DRN3A1 = 0.0
-      DRN4A1 = 0.0
-      DRN5A1 = 0.0
-      RCR1A1 = 0.0
-      RCR2A1 = 0.0
-      RCR3A1 = 0.0
-      RCR4A1 = 0.0
-      RCR5A1 = 0.0
-      HED1A1 = 0.0
-      HED2A1 = 0.0
-      HED3A1 = 0.0
-      HED4A1 = 0.0
-      HED5A1 = 0.0
-      RUNA1 = 0.0
-      PREA1 = 0.0
-      ETA1 = 0.0
-      STOR1 = 0.0
-      PRC1A2 = 0.0
-      PRC2A2 = 0.0
-      PRC3A2 = 0.0
-      PRC4A2 = 0.0
-      PRC5A2 = 0.0
-      PRC6A2 = 0.0
-      DRN1A2 = 0.0
-      DRN2A2 = 0.0
-      DRN3A2 = 0.0
-      DRN4A2 = 0.0
-      DRN5A2 = 0.0
-      RCR1A2 = 0.0
-      RCR2A2 = 0.0
-      RCR3A2 = 0.0
-      RCR4A2 = 0.0
-      RCR5A2 = 0.0
-      HED1A2 = 0.0
-      HED2A2 = 0.0
-      HED3A2 = 0.0
-      HED4A2 = 0.0
-      HED5A2 = 0.0
-      RUNA2 = 0.0
-      PREA2 = 0.0
-      ETA2  = 0.0
-      STOR2 = 0.0
-      DO K = 1, 20
-        RCRIA(K) = 0.0
-        RCRIA1(K) = 0.0
-        RCRIA2(K) = 0.0
-        SUBINA(K) = 0.0
-      END DO
-      PPRC1 = 0.0
-      PPRC2 = 0.0
-      PPRC3 = 0.0
-      PPRC4 = 0.0
-      PPRC5 = 0.0
-      PPRC6 = 0.0
-      PDRN1 = 0.0
-      PDRN2 = 0.0
-      PDRN3 = 0.0
-      PDRN4 = 0.0
-      PDRN5 = 0.0
-      PRCR1 = 0.0
-      PRCR2 = 0.0
-      PRCR3 = 0.0
-      PRCR4 = 0.0
-      PRCR5 = 0.0
-      PRUN = 0.0
-      PPRE = 0.0
-      PSNO = 0.0
-      PHED1 = 0.0
-      PHED2 = 0.0
-      PHED3 = 0.0
-      PHED4 = 0.0
-      PHED5 = 0.0
-      DO I = 1, MAXMO
-        PREM1(I)  = 0.0
-        RUNM1(I)  = 0.0
-        ETM1(I)   = 0.0
-        DRN1M1(I) = 0.0
-        DRN2M1(I) = 0.0
-        DRN3M1(I) = 0.0
-        DRN4M1(I) = 0.0
-        DRN5M1(I) = 0.0
-        RCR1M1(I) = 0.0
-        RCR2M1(I) = 0.0
-        RCR3M1(I) = 0.0
-        RCR4M1(I) = 0.0
-        RCR5M1(I) = 0.0
-        HED1M1(I) = 0.0
-        HED2M1(I) = 0.0
-        HED3M1(I) = 0.0
-        HED4M1(I) = 0.0
-        HED5M1(I) = 0.0
-        PRC1M1(I) = 0.0
-        PRC2M1(I) = 0.0
-        PRC3M1(I) = 0.0
-        PRC4M1(I) = 0.0
-        PRC5M1(I) = 0.0
-        PRC6M1(I) = 0.0
-        DO K = 1, 20
-          RCRIM1(K,I) = 0.0
-          RCRIM(K,I) = 0.0
-          SUBINM(K,I) = 0.0
-          RCRIM2(K,I) = 0.0
-        END DO
-        PREM2(I)  = 0.0
-        RUNM2(I)  = 0.0
-        ETM2(I)   = 0.0
-        DRN1M2(I) = 0.0
-        DRN2M2(I) = 0.0
-        DRN3M2(I) = 0.0
-        DRN4M2(I) = 0.0
-        DRN5M2(I) = 0.0
-        RCR1M2(I) = 0.0
-        RCR2M2(I) = 0.0
-        RCR3M2(I) = 0.0
-        RCR4M2(I) = 0.0
-        RCR5M2(I) = 0.0
-        HED1M2(I) = 0.0
-        HED2M2(I) = 0.0
-        HED3M2(I) = 0.0
-        HED4M2(I) = 0.0
-        HED5M2(I) = 0.0
-        PRC1M2(I) = 0.0
-        PRC2M2(I) = 0.0
-        PRC3M2(I) = 0.0
-        PRC4M2(I) = 0.0
-        PRC5M2(I) = 0.0
-        PRC6M2(I) = 0.0
-      END DO
-C
-C    START YEARLY LOOP FOR SIMULATION. IYR IS THE NUMBER
-C    OF THE YEAR.
-C
-      DO 1090 IYR = 1, LMYR
-        PRC1A = 0.0
-        PRC2A = 0.0
-        PRC3A = 0.0
-        PRC4A = 0.0
-        PRC5A = 0.0
-        PRC6A = 0.0
-        DRN1A = 0.0
-        DRN2A = 0.0
-        DRN3A = 0.0
-        DRN4A = 0.0
-        DRN5A = 0.0
-        RCR1A = 0.0
-        RCR2A = 0.0
-        RCR3A = 0.0
-        RCR4A = 0.0
-        RCR5A = 0.0
-        HED1A = 0.0
-        HED2A = 0.0
-        HED3A = 0.0
-        HED4A = 0.0
-        HED5A = 0.0
-        RUNA  = 0.0
-        PREA  = 0.0
-        ETA   = 0.0
-        BAL   = 0.0
-        STOR  = 0.0
 
-      DO I = 1, 12
-        HED1M(I) = 0.0
-        HED2M(I) = 0.0
-        HED3M(I) = 0.0
-        HED4M(I) = 0.0
-        HED5M(I) = 0.0
-        PRC1M(I) = 0.0
-        PRC2M(I) = 0.0
-        PRC3M(I) = 0.0
-        PRC4M(I) = 0.0
-        PRC5M(I) = 0.0
-        PRC6M(I) = 0.0
-        RCR1M(I) = 0.0
-        RCR2M(I) = 0.0
-        RCR3M(I) = 0.0
-        RCR4M(I) = 0.0
-        RCR5M(I) = 0.0
-        DO K = 1, 20
-          RCRIM(K,I) = 0.0
-        END DO
-        DRN1M(I) = 0.0
-        DRN2M(I) = 0.0
-        DRN3M(I) = 0.0
-        DRN4M(I) = 0.0
-        DRN5M(I) = 0.0
-        RUNM(I) = 0.0
-        PREM(I) = 0.0
-        ETM(I) = 0.0
-      END DO
-      DO K = 1, 20
-        RCRIA(K) = 0.0
-      END DO
+      PRC1A1 = 0.0; PRC2A1 = 0.0; PRC3A1 = 0.0
+      PRC4A1 = 0.0; PRC5A1 = 0.0; PRC6A1 = 0.0
+      DRN1A1 = 0.0; DRN2A1 = 0.0; DRN3A1 = 0.0
+      DRN4A1 = 0.0; DRN5A1 = 0.0
+      RCR1A1 = 0.0; RCR2A1 = 0.0; RCR3A1 = 0.0
+      RCR4A1 = 0.0; RCR5A1 = 0.0
+      HED1A1 = 0.0; HED2A1 = 0.0; HED3A1 = 0.0
+      HED4A1 = 0.0; HED5A1 = 0.0
+      RUNA1 = 0.0; PREA1 = 0.0; ETA1 = 0.0; STOR1 = 0.0
+
+      PRC1A2 = 0.0; PRC2A2 = 0.0; PRC3A2 = 0.0
+      PRC4A2 = 0.0; PRC5A2 = 0.0; PRC6A2 = 0.0
+      DRN1A2 = 0.0; DRN2A2 = 0.0; DRN3A2 = 0.0
+      DRN4A2 = 0.0; DRN5A2 = 0.0
+      RCR1A2 = 0.0; RCR2A2 = 0.0; RCR3A2 = 0.0
+      RCR4A2 = 0.0; RCR5A2 = 0.0
+      HED1A2 = 0.0; HED2A2 = 0.0; HED3A2 = 0.0
+      HED4A2 = 0.0; HED5A2 = 0.0
+      RUNA2 = 0.0; PREA2 = 0.0; ETA2  = 0.0; STOR2 = 0.0
+
+      RCRIA = 0.0; RCRIA1 = 0.0; RCRIA2 = 0.0;
+      SUBINA = 0.0
+
+      PPRC1 = 0.0; PPRC2 = 0.0; PPRC3 = 0.0
+      PPRC4 = 0.0; PPRC5 = 0.0; PPRC6 = 0.0
+      PDRN1 = 0.0; PDRN2 = 0.0; PDRN3 = 0.0
+      PDRN4 = 0.0; PDRN5 = 0.0
+      PRCR1 = 0.0; PRCR2 = 0.0; PRCR3 = 0.0
+      PRCR4 = 0.0; PRCR5 = 0.0
+
+      PRUN = 0.0; PPRE = 0.0; PSNO = 0.0
+
+      PHED1 = 0.0; PHED2 = 0.0; PHED3 = 0.0
+      PHED4 = 0.0; PHED5 = 0.0
+
+      PREM1 = 0.0; RUNM1 = 0.0; ETM1 = 0.0
+      DRN1M1 = 0.0; DRN2M1 = 0.0; DRN3M1 = 0.0
+      DRN4M1 = 0.0; DRN5M1 = 0.0
+      RCR1M1 = 0.0; RCR2M1 = 0.0; RCR3M1 = 0.0
+      RCR4M1 = 0.0; RCR5M1 = 0.0
+      HED1M1 = 0.0; HED2M1 = 0.0; HED3M1 = 0.0
+      HED4M1 = 0.0; HED5M1 = 0.0
+      PRC1M1 = 0.0; PRC2M1 = 0.0; PRC3M1 = 0.0
+      PRC4M1 = 0.0; PRC5M1 = 0.0; PRC6M1 = 0.0
+      RCRIM1 = 0.0; RCRIM = 0.0; SUBINM = 0.0; RCRIM2 = 0.0
+
+      PREM2 = 0.0; RUNM2 = 0.0; ETM2 = 0.0
+      DRN1M2 = 0.0; DRN2M2 = 0.0; DRN3M2 = 0.0
+      DRN4M2 = 0.0; DRN5M2 = 0.0
+      RCR1M2 = 0.0; RCR2M2 = 0.0; RCR3M2 = 0.0
+      RCR4M2 = 0.0; RCR5M2 = 0.0
+      HED1M2 = 0.0; HED2M2 = 0.0; HED3M2 = 0.0
+      HED4M2 = 0.0; HED5M2 = 0.0
+      PRC1M2 = 0.0; PRC2M2 = 0.0; PRC3M2 = 0.0
+      PRC4M2 = 0.0; PRC5M2 = 0.0; PRC6M2 = 0.0
+
+      ! Start yearly loop for simulation.
+      ! IYR is the number of the year.
+      DO 1090 IYR = 1, LMYR
+        PRC1A = 0.0; PRC2A = 0.0; PRC3A = 0.0; PRC4A = 0.0
+        PRC5A = 0.0; PRC6A = 0.0
+        DRN1A = 0.0; DRN2A = 0.0; DRN3A = 0.0; DRN4A = 0.0
+        DRN5A = 0.0
+        RCR1A = 0.0; RCR2A = 0.0; RCR3A = 0.0; RCR4A = 0.0
+        RCR5A = 0.0
+        HED1A = 0.0; HED2A = 0.0; HED3A = 0.0; HED4A = 0.0
+        HED5A = 0.0
+
+        RUNA = 0.0; PREA  = 0.0; ETA   = 0.0
+        BAL = 0.0
+        STOR = 0.0
+
+        HED1M = 0.0; HED2M = 0.0; HED3M = 0.0; HED4M = 0.0
+        HED5M = 0.0
+        PRC1M = 0.0; PRC2M = 0.0; PRC3M = 0.0; PRC4M = 0.0
+        PRC5M = 0.0; PRC6M = 0.0
+        RCR1M = 0.0; RCR2M = 0.0; RCR3M = 0.0; RCR4M = 0.0
+        RCR5M = 0.0
+        DRN1M = 0.0; DRN2M = 0.0; DRN3M = 0.0; DRN4M = 0.0
+        DRN5M = 0.0
+
+        RUNM = 0.0; PREM = 0.0; ETM = 0.0
+
+        RCRIM = 0.0; RCRIA = 0.0
 
         ! IMO is the number of the month.
         ! MO1 is the number of the month of the year.
@@ -636,31 +513,29 @@ C
          ! Computes surface and soil evaporation and potential plant
          ! Transpiration.
           CALL EVAPOT
-          DO 1120 J = 1, 19
+          DO J = 1, 19
             IF (DABS (BALT(J)) .LT. 1.E-08) BALT(J) = 0.0
- 1120     CONTINUE
-C
-C    COMPUTES DAILY LEAF AREA INDEX , PLANT TRANSPIRATION
-C    WHEN SOIL WATER CONTENT LIMITS
-C    PLANT TRANSPIRATION AND DISTRIBUTES EVAPOTRANSPIRATION
-C    AMONG TOP SEGMENTS.
-C
+          END DO
+
+          ! Computes daily leaf area index, plant transpiration
+          ! when soil water content limits
+          ! plant transpiration and distributes evapotranspiration
+          ! among top segments.
           CALL CRPMOD
-C
-C    COMPUTES LATERAL AND VERTICAL WATER ROUTING IN THE TOP
-C    SUBPROFILE.
-C
+
+          ! Computes lateral and vertical water routing in the top
+          ! subprofile.
           ADDRUN = 0.0
           NPROF = 1
           CALL DRAIN (PINF, DRN1, PRC1, HED1, BALY, BALT, ADDRUN,
-     1       NPROF, NSEG1B, NSEG1E, LAY1B, LAY1E, DRIN, SWULY)
-C
-C    ACCOUNTING IS PERFORMED.
-C
-          IF (HED1 .GT. PHED1) PHED1 = HED1
+     &                NPROF, NSEG1B, NSEG1E, LAY1B, LAY1E, DRIN,
+     &                SWULY)
+
+          ! Accounting is performed.
+          IF (HED1 > PHED1) PHED1 = HED1
           SWULE = 0.0
           EXET = 0.0
-          DO 1130 J = 1, 7
+          DO J = 1, 7
             IF ((DSWUL(J) + (BALT(J)/2.0D0)) .LT. DWPUL(J)) THEN
               EXET2 = EXET + DWPUL(J) - DSWUL(J) - (BALT(J)/2.0D0)
               IF (EXET .LE. ETT) THEN
@@ -670,13 +545,14 @@ C
               END IF
             END IF
             SWULE = SWULE + DSWUL(J) + BALT(J)/2.0D0
- 1130     CONTINUE
+          END DO
+
           SWE = SWULE/EDEPTH
           IF (SWE .LT. DSW) DSW = SWE
           IF (SWE .GT. PSW) PSW = SWE
-C
-C    EXCESS WATER ADDED TO THE TOP SEGMENT IS DIVERTED TO RUNOFF.
-C
+
+          ! Excess water added to the top segment is
+          ! diverted to runoff.
           RUN = RUN + ADDRUN*FRUNOF
           ADDRUN = ADDRUN*(1.0 - FRUNOF)
           IF (SNO .GT. 0.0) THEN
@@ -686,9 +562,9 @@ C
             ADDRUN = 0.0
           END IF
 
-          DO 1140 J = 1, NSEG1D
+          DO J = 1, NSEG1D
             SWUL(J) = DSWUL(J)
- 1140     CONTINUE
+          END DO
 C
 C     PERFORM ACCOUNTING OF MONTHLY AND ANNUAL TOTALS AND
 C     PEAK VALUES FOR THE TOP SUBPROFILE.
