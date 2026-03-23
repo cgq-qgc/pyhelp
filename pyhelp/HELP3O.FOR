@@ -1,9 +1,8 @@
-C    IDA IS THE DAY OF THE YEAR OF SIMULATION
-C    IYR IS THE NUMBER OF THE YEAR
-C    LMYR IS THE NUMBER OF YEARS OF SIMULATION
-C    OSNO IS THE INITIAL SNOW WATER
-C    AREA IS AREA PROJECTED ON HORIZONTAL PLANE
-C
+! IDA is the day of the year of simulation
+! IYR is the number of the year
+! LMYR is the number of years of simulation
+! OSNO is the initial snow water
+! AREA is area projected on horizontal plane
 
 !=======================================================================
 !     SUBROUTINE: run_simulation
@@ -586,67 +585,59 @@ C
       DO K = 1, 20
         RCRIA(K) = 0.0
       END DO
-C
-C    IMO IS THE NUMBER OF THE MONTH.
-C    MO1 IS THE NUMBER OF THE MONTH OF THE YEAR.
-C
+
+        ! IMO is the number of the month.
+        ! MO1 is the number of the month of the year.
         IDAMO = 0
         MO1 = 1
         IMO = 0
         IMO = IMO + 1
-C
-C    READS AND PRINTS WEATHER DATA FOR YEAR OF SIMULATION.
-C
+
+        ! Read and print weather data for year of simulation.
         CALL READCD (NYEAR, ND, NT)
         JYEAR(IYR) = NYEAR
-C
-C    START DAILY LOOP FOR SIMULATION.
-C    IDA IS THE DAY OF THE YEAR OF SIMULATION.
-C
+
+        ! Start daily loop for simulation.
+        ! IDA is the day of the year of simulation.
         DO 1100 IDA = 1, ND
-C
-C    COMPUTES THE MONTH OF YEAR FOR THE DAY OF SIMULATION, MO
-C    1OMPARES IT WITH YESTERDAY'S MONTH, MO1 AND INCREMENTS
-C    IMO IF DIFFERENT.
-C
-C
-C
+          ! Compute the month of year for the day of simulation (MO),
+          ! compare it with yesterday's month (MO1) and increment
+          ! IMO if different.
           IDAMO = IDAMO + 1
           MO = MONTH (IDA, NT)
-          IF (MO .NE. MO1) IMO = IMO + 1
-          IF (MO .NE. MO1) IDAMO = 1
+          IF (MO /= MO1) THEN
+             IMO = IMO + 1
+             IDAMO = 1
+          END IF
           MO1 = MO
           PREM(IMO) = PREM(IMO) + PRE(IDA)
           PREA = PREA + PRE(IDA)
-          IF (PRE(IDA) .GT. PPRE) PPRE = PRE(IDA)
-C
-C    DETERMINES IF SOIL IS FROZEN
-C
+          IF (PRE(IDA) > PPRE) THEN
+            PPRE = PRE(IDA)
+          END IF
+
+          ! Determine if soil is frozen
           CALL FRZCHK (TFSOIL)
-C
-C    SSTAR INDICATES FROZEN SOIL
-C
+
+          ! SSTAR indicates frozen soil
           SSTAR = ISTAR(2)
           IF (IFREZ .EQ. 1) SSTAR = ISTAR(1)
-C
-C    COMPUTES SNOWFALL AND SNOWMELT AND ADJUSTS RAIN
-C    ACCORDINGLY.
-C
+
+          ! Compute snowfall and snowmelt and adjusts rain accordingly.
           CALL SNOW (IT)
-          IF (SNO .GT. PSNO) PSNO = SNO
-C
-C    ASTAR INDICATES FREEZING TEMPERATURES.
-C
+          IF (SNO > PSNO) THEN
+            PSNO = SNO
+          END IF
+
+          ! ASTAR indicates freezing temperatures.
           ASTAR = ISTAR(IT)
-C
-C    COMPUTES RUNOFF.
-C
+
+          ! Compute runoff.
           SMX = SMXN
           IF (IFREZ .GT. 0) SMX = SMXF
           CALL RUNOFF
-C
-C   COMPUTES SOIL TEMPERATURE AT BOTTOM OF EACH SEGMENT
-C
+
+          ! Compute soil temperature at bottom of each segment.
           CALL SOLT
 C
 C    COMPUTES SURFACE AND SOIL EVAPORATION AND POTENTIAL PLANT
@@ -702,6 +693,7 @@ C
             XLIQW = XLIQW + ADDRUN * 25.4
             ADDRUN = 0.0
           END IF
+
           DO 1140 J = 1, NSEG1D
             SWUL(J) = DSWUL(J)
  1140     CONTINUE
@@ -734,7 +726,6 @@ C
           IF (NSEG2 .LE. 0) GO TO 1150
 C
 C     SETS INFLOW EQUAL TO PERCOLATION FROM TOP SUBPROFILE.
-C
 C
 C     CONTROLS SIMULATION OF SECOND SUBPROFILE FROM THE TOP.
 C
@@ -1019,9 +1010,9 @@ C
         ! Initializes variables for the next year.
         OSWULE = PSWULE
         OLDSNO = SSNO
-C
-C     END OF YEARLY LOOP.
-C
+
+        ! End of yearly loop.
+
         IF (IPRE .LT. 2) THEN
           IPRE = IPRE + 2
           DO 1139 INSEG = 1, NSEG
@@ -1615,7 +1606,7 @@ C
 C
 C    INITIALIZES THE MOISTURE CONTENTS OF THE LAYERS TO NEAR STEADY-
 C    STATE WHEN USER REQUESTS PROGRAM TO INITIALIZE SOIL MOISTURES.
-C    1W OF FML's = 0.0  AND  SW OF BARRIER LINER = POROSITY
+C    SW OF FML's = 0.0  AND  SW OF BARRIER LINER = POROSITY
 C
 C    ALSO SUMS TOTAL ANNUAL SUBSURFACE INFLOW  (SUBINF)
 C
@@ -6611,7 +6602,7 @@ C
       MDAY(11) = 30
       MDAY(12) = 31
 
-      ! Determines if the year is a leap year.
+      ! Determine if the year is a leap year.
       MND = LEAP (JYEAR(IYR), NT)
 
       WRITE (8, 6012) JYEAR (IYR)
