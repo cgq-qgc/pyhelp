@@ -2587,10 +2587,10 @@ C     COMPILER CORRECTIONS ABOVE
       DM = XLAI*100.
       ABD = 0.
       SWS = 0.
-      DO 1020 I = 1, 7
       Z = 0.0
 
-         ! Accumulating thicknesses of each layer
+      DO I = 1, 7
+         ! Accumulating thicknesses of each layer.
          ! Z = depth from surface to bottom of segment I
          IF (I == 1) THEN
             ZSEG = 0.
