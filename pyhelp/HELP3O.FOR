@@ -6437,12 +6437,14 @@ C
  6176 FORMAT(1X/1X,89('*'))
       RETURN
       END SUBROUTINE OUTDAY
-C
-C
-C     ************************ OUTMO *************************
-C
-C     SUBROUTINE OUTMO PRINTS MONTHLY TOTALS.
-C
+
+
+      !=================================================================
+      ! SUBROUTINE: OUTMO
+      !
+      ! Accumulate monthly totals for computing averages and
+      ! standard deviations and print monthly totals.
+      !=================================================================
       SUBROUTINE OUTMO (IOM, IOS)
 
       INTEGER, INTENT(IN) :: IOM
@@ -6549,12 +6551,14 @@ C
       RETURN
       END SUBROUTINE OUTMO
 
-C     ************************ OUTMO2 *************************
-C
-C     SUBROUTINE OUTMO PRINTS MONTHLY TOTALS in MM and CM.
-C
+
+      !=================================================================
+      ! SUBROUTINE: OUTMO2
+      !
+      ! Print monthly totals for the simulation in mm and cm.
+      !=================================================================
       SUBROUTINE OUTMO2
-C
+
       PARAMETER (MXYR = 100)
       DOUBLE PRECISION RC(20)
       COMMON /BLK3/ PORO (20), FC (20), WP (20), RC, SW (20),
@@ -6655,11 +6659,11 @@ C
       END SUBROUTINE OUTMO2
 
 
-C      ************************* OUTYR ************************
-C
-C     SUBROUTINE OUTYR PRINTS THE ANNUAL TOTALS
-C     FOR A YEAR OF SIMULATION RESULTS.
-
+      !=================================================================
+      ! SUBROUTINE: OUTYR
+      !
+      ! Print the annual totals for a year of simulation results.
+      !=================================================================
       SUBROUTINE OUTYR (IOA, IOS, IU8)
 
       INTEGER, INTENT(IN) :: IOA
@@ -6667,7 +6671,7 @@ C     FOR A YEAR OF SIMULATION RESULTS.
       INTEGER, INTENT(IN) :: IU8
 
       PARAMETER (MXYR = 100)
-C
+
       COMMON /BLK1/ IT4, IT7, IT13, IU4, IU7, IU13, IU11, IU10
       DOUBLE PRECISION RC(20)
       COMMON /BLK3/ PORO (20), FC (20), WP (20), RC, SW (20),
