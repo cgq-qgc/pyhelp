@@ -513,15 +513,15 @@ C     THY6 = 0.0D0
          ! Computes surface and soil evaporation and potential plant
          ! Transpiration.
           CALL EVAPOT
-          DO 1120 J = 1, 19
+          DO J = 1, 19
             IF (DABS (BALT(J)) .LT. 1.E-08) BALT(J) = 0.0
- 1120     CONTINUE
 C
 C    COMPUTES DAILY LEAF AREA INDEX , PLANT TRANSPIRATION
 C    WHEN SOIL WATER CONTENT LIMITS
 C    PLANT TRANSPIRATION AND DISTRIBUTES EVAPOTRANSPIRATION
 C    AMONG TOP SEGMENTS.
 C
+          END DO
           CALL CRPMOD
 C
 C    COMPUTES LATERAL AND VERTICAL WATER ROUTING IN THE TOP
