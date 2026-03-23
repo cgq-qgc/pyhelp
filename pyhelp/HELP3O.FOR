@@ -2525,44 +2525,48 @@ C     COMPILER CORRECTIONS ABOVE
  1040 CONTINUE
       RETURN
       END
-C
-C   ***************************** INITIA ************************
-C
-C     SUBROUTINE INITIA INITIALIZES VARIABLES USED IN SUBROUTINES
-C     SOLT AND CRPMOD
-C
+
+
+      !=================================================================
+      ! SUBROUTINE: INITIA
+      !
+      ! Initializes variables used in subroutines SOLT and CRPMOD
+      !=================================================================
       SUBROUTINE INITIA
-C
+
       COMMON /BLK6/ ULAI, WIND, RH (366), OSNO, ULAT
       COMMON /BLK7/ STHICK(67), UL(67), FCUL(67), WPUL(67), SWUL(67),
-     1  RCUL(67), RSUL(67), XLAMBU(67), CONUL(67), BUBUL(67),
-     2  SUBINS(67), SWULI(67)
+     &  RCUL(67), RSUL(67), XLAMBU(67), CONUL(67), BUBUL(67),
+     &  SUBINS(67), SWULI(67)
       COMMON /BLK11/ ETO, XLAI, STAGE1, CONA, RAIN, RUN, ABST, EAJ, TS2
       COMMON /BLK18/ RM (12), TM (12), RLAT
       COMMON /BLK19/ IPL, IHV, IPRE, IRUN, ITSOIL, IVEG
       COMMON /BLK20/ TSEG (7), Z (7), FCS (7), ST (7)
       COMMON /BLK21/ TB, TO, TS, AVT, AMP, ABD, PHU, GS, CV,
-     1  RSD, DM, WFT (12), DD, DLAI
-C     DIMENSION TC(12)
-C******SETTING BASE TEMP, TB=0 DEG. C; AND OPTIMAL TEMP, TO=20 DEG. C.
+     &  RSD, DM, WFT (12), DD, DLAI
+
+      ! Setting base Temp, TB=0 degC; and optimal Temp, TO=20 degC.
       TB = 5.
       TO = 20.
-C******COMPUTING AVERAGE YEARLY TEMP, AVT; AMPLITUDE, AMP; AND WFT
+
+      ! Computing average yearly Temp, AVT; amplitude, AMP; and WFT.
       AVT = 0.
       TBB = 0.
       TS = 200.
-      DO 1000 I = 1, 12
+      DO I = 1, 12
          IF (TM (I) .GT. TBB) TBB = TM (I)
          IF (TM (I) .LT. TS) TS = TM (I)
          AVT = AVT + TM (I)
-C        WFT (I) = PWD (I)/(1. - PWW (I) + PWD (I))
+         ! WFT (I) = PWD (I)/(1. - PWW (I) + PWD (I))
          WFT (I) = 0.2 /(1. - 0.4 + 0.2)
- 1000 CONTINUE
-C.....DEFINING AVT & AMP IN DEG. C.
+      END DO
+
+      ! Defining AVT & AMP in degC.
       AVT = AVT/12.
       AMP = (TBB - TS)/2.0
-C******CHECKING PLANTING AND HARVEST DATES (IN JULIAN DATES)
-C      TO COMPUTE PHU - POTENTIAL HEAT UNITS
+
+      ! Checking planting and harvest dates (in julian dates)
+      ! to compute PHU - POTENTIAL HEAT UNITS
       CALL DATFIT(12,TM,A1,A2,A3)
       PHUX = 0.
       IF (IPL .GE. IHV) THEN
@@ -2573,7 +2577,8 @@ C      TO COMPUTE PHU - POTENTIAL HEAT UNITS
          PHU = AHU (IPL, IHV, A1, A2, A3)
       END IF
       IF (PHU .LT. 30.) PHU = 30.
-C******INITIALIZING VARIABLES
+
+      ! Initializing variables.
       XLAI = (PHUX/PHU)*ULAI
       DLAI = XLAI
       GS = PHUX/PHU
@@ -2582,31 +2587,31 @@ C******INITIALIZING VARIABLES
       DM = XLAI*100.
       ABD = 0.
       SWS = 0.
-      DO 1010 I = 1, 7
+      DO I = 1, 7
          Z (I) = 0.0
- 1010 CONTINUE
+      END DO
+
       DO 1020 I = 1, 7
-C
-C    ACCUMULATING THICKNESSES OF EACH LAYER
-C      Z  = DEPTH FROM SURFACE TO BOTTOM OF SEGMENT I
-C
+
+         ! Accumulating thicknesses of each layer
+         ! Z = depth from surface to bottom of segment I
          IF (I .EQ. 1) THEN
             ZSEG = 0.
          ELSE
             ZSEG = Z (I - 1)
          END IF
          Z (I) = ZSEG + STHICK (I)*25.4
-C*****DETERMINE DRAINAGE COEFS FOR EACH SOIL SEGMENT.
+
+         ! Determine drainage coefs for each soil segment.
          XZ = UL (I)*25.4*10.
          ABD = ABD + XZ
          FCS (I) = (FCUL (I) - WPUL (I))*25.4
          ST (I) = (SWUL (I) - WPUL (I))*25.4
          SWS = SWS + ST (I)
          ST(I) = ST (I)/25.4
- 1020 CONTINUE
-C
-C  **** DETERMINING DD *****
-C
+      END DO
+
+      ! Determining DD.
       ABD = ABD/(10.*Z (7))
       F = ABD/(ABD + 686.*EXP ( - 5.63*ABD))
       DP = 1000. + 2500.*F
@@ -2615,9 +2620,10 @@ C
       WC = SWS/(WW*Z (7))
       F = EXP (B*((1. - WC)/(1. + WC))**2)
       DD = F*DP
+
       RETURN
-      END
-C
+      END SUBROUTINE INITIA
+
 C
 C   ************************** AHU *******************************
 C
