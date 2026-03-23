@@ -1,9 +1,8 @@
-C    IDA IS THE DAY OF THE YEAR OF SIMULATION
-C    IYR IS THE NUMBER OF THE YEAR
-C    LMYR IS THE NUMBER OF YEARS OF SIMULATION
-C    OSNO IS THE INITIAL SNOW WATER
-C    AREA IS AREA PROJECTED ON HORIZONTAL PLANE
-C
+! IDA is the day of the year of simulation
+! IYR is the number of the year
+! LMYR is the number of years of simulation
+! OSNO is the initial snow water
+! AREA is area projected on horizontal plane
 
 !=======================================================================
 !     SUBROUTINE: run_simulation
@@ -194,48 +193,41 @@ C
       IF (IERR /= 0) THEN
          RETURN
       END IF
-C
-C    SETS CONTROLS FOR SUBPROFILES AND OUTPUT.
-C
+
+      ! Sets controls for subprofiles and output.
       CALL CNTRLD
-C
-C    ASSIGNS THICKNESSES AND SOIL CHARACTERISTICS TO SEGMENTS.
-C
+
+      ! Assigns thicknesses and soil characteristics to segments.
       CALL SGMNT
-C
-C    COMPUTES MAXIMUM STORAGE RETENTION PARMETER.
-C
+
+      ! Computes maximum storage retention parameter.
       C2 = CN2*CN2
       C3 = CN2*C2
       C4 = CN2*C3
       CN1 = 0.3750701*CN2 + 2.756779E-03*C2 - 1.638951E-05*C3 +
-     1  5.142644E-07*C4
+     &  5.142644E-07*C4
       SMXN = (1000./CN1) - 10.0
-C
-C   SMX FOR FROZEN SOIL CONDITIONS
-C
+
+      ! SMX for frozen soil conditions.
       CN22 = 95.0
       IF (CN2 .GE. 80) CN22 = 98.0
       C22 = CN22*CN22
       C33 = CN22*C22
       C44 = CN22*C33
       CN11 = 0.3750701*CN22 + 2.756779E-03*C22 - 1.638951E-05*C33 +
-     1  5.142644E-07*C44
+     &  5.142644E-07*C44
       SMXF = (1000./CN11) - 10.
-C
-C    COMPUTES SOIL CHARACTERISTICS OF THE EVAPORATIVE ZONE.
-C
+
+      ! Computes soil characteristics of the evaporative zone.
       ULE = 0.0
-      DO 1000 J = 1, 7
+      DO J = 1, 7
         ULE = ULE + UL(J)
- 1000 CONTINUE
-C
-C    COMPUTES SOIL EVAPORATION COEFFICIENT.
-C
+      END DO
+
+      ! Computes soil evaporation coefficient.
       CALL ETCOEF
-C
-C    INITIALIZES ACCOUNTING VARIABLES.
-C
+
+      ! Initializes accounting variables.
       SWULE = 0.0
       DO J = 1, 7
         SWULE = SWULE + SWUL(J)
@@ -586,72 +578,63 @@ C
       DO K = 1, 20
         RCRIA(K) = 0.0
       END DO
-C
-C    IMO IS THE NUMBER OF THE MONTH.
-C    MO1 IS THE NUMBER OF THE MONTH OF THE YEAR.
-C
+
+        ! IMO is the number of the month.
+        ! MO1 is the number of the month of the year.
         IDAMO = 0
         MO1 = 1
         IMO = 0
         IMO = IMO + 1
-C
-C    READS AND PRINTS WEATHER DATA FOR YEAR OF SIMULATION.
-C
+
+        ! Read and print weather data for year of simulation.
         CALL READCD (NYEAR, ND, NT)
         JYEAR(IYR) = NYEAR
-C
-C    START DAILY LOOP FOR SIMULATION.
-C    IDA IS THE DAY OF THE YEAR OF SIMULATION.
-C
+
+        ! Start daily loop for simulation.
+        ! IDA is the day of the year of simulation.
         DO 1100 IDA = 1, ND
-C
-C    COMPUTES THE MONTH OF YEAR FOR THE DAY OF SIMULATION, MO
-C    1OMPARES IT WITH YESTERDAY'S MONTH, MO1 AND INCREMENTS
-C    IMO IF DIFFERENT.
-C
-C
-C
+          ! Compute the month of year for the day of simulation (MO),
+          ! compare it with yesterday's month (MO1) and increment
+          ! IMO if different.
           IDAMO = IDAMO + 1
           MO = MONTH (IDA, NT)
-          IF (MO .NE. MO1) IMO = IMO + 1
-          IF (MO .NE. MO1) IDAMO = 1
+          IF (MO /= MO1) THEN
+             IMO = IMO + 1
+             IDAMO = 1
+          END IF
           MO1 = MO
           PREM(IMO) = PREM(IMO) + PRE(IDA)
           PREA = PREA + PRE(IDA)
-          IF (PRE(IDA) .GT. PPRE) PPRE = PRE(IDA)
-C
-C    DETERMINES IF SOIL IS FROZEN
-C
+          IF (PRE(IDA) > PPRE) THEN
+            PPRE = PRE(IDA)
+          END IF
+
+          ! Determine if soil is frozen
           CALL FRZCHK (TFSOIL)
-C
-C    SSTAR INDICATES FROZEN SOIL
-C
+
+          ! SSTAR indicates frozen soil
           SSTAR = ISTAR(2)
           IF (IFREZ .EQ. 1) SSTAR = ISTAR(1)
-C
-C    COMPUTES SNOWFALL AND SNOWMELT AND ADJUSTS RAIN
-C    ACCORDINGLY.
-C
+
+          ! Compute snowfall and snowmelt and adjusts rain accordingly.
           CALL SNOW (IT)
-          IF (SNO .GT. PSNO) PSNO = SNO
-C
-C    ASTAR INDICATES FREEZING TEMPERATURES.
-C
+          IF (SNO > PSNO) THEN
+            PSNO = SNO
+          END IF
+
+          ! ASTAR indicates freezing temperatures.
           ASTAR = ISTAR(IT)
-C
-C    COMPUTES RUNOFF.
-C
+
+          ! Compute runoff.
           SMX = SMXN
           IF (IFREZ .GT. 0) SMX = SMXF
           CALL RUNOFF
-C
-C   COMPUTES SOIL TEMPERATURE AT BOTTOM OF EACH SEGMENT
-C
+
+          ! Compute soil temperature at bottom of each segment.
           CALL SOLT
-C
-C    COMPUTES SURFACE AND SOIL EVAPORATION AND POTENTIAL PLANT
-C    TRANSPIRATION.
-C
+
+         ! Computes surface and soil evaporation and potential plant
+         ! Transpiration.
           CALL EVAPOT
           DO 1120 J = 1, 19
             IF (DABS (BALT(J)) .LT. 1.E-08) BALT(J) = 0.0
@@ -702,6 +685,7 @@ C
             XLIQW = XLIQW + ADDRUN * 25.4
             ADDRUN = 0.0
           END IF
+
           DO 1140 J = 1, NSEG1D
             SWUL(J) = DSWUL(J)
  1140     CONTINUE
@@ -734,7 +718,6 @@ C
           IF (NSEG2 .LE. 0) GO TO 1150
 C
 C     SETS INFLOW EQUAL TO PERCOLATION FROM TOP SUBPROFILE.
-C
 C
 C     CONTROLS SIMULATION OF SECOND SUBPROFILE FROM THE TOP.
 C
@@ -1019,9 +1002,9 @@ C
         ! Initializes variables for the next year.
         OSWULE = PSWULE
         OLDSNO = SSNO
-C
-C     END OF YEARLY LOOP.
-C
+
+        ! End of yearly loop.
+
         IF (IPRE .LT. 2) THEN
           IPRE = IPRE + 2
           DO 1139 INSEG = 1, NSEG
@@ -1615,7 +1598,7 @@ C
 C
 C    INITIALIZES THE MOISTURE CONTENTS OF THE LAYERS TO NEAR STEADY-
 C    STATE WHEN USER REQUESTS PROGRAM TO INITIALIZE SOIL MOISTURES.
-C    1W OF FML's = 0.0  AND  SW OF BARRIER LINER = POROSITY
+C    SW OF FML's = 0.0  AND  SW OF BARRIER LINER = POROSITY
 C
 C    ALSO SUMS TOTAL ANNUAL SUBSURFACE INFLOW  (SUBINF)
 C
@@ -3667,34 +3650,38 @@ C     GS = GS + TMPC/PHU
  1060 IF (XLAI .LT. 0.0) XLAI = 0.0
       RETURN
       END
-C
-C ****************************** SOLT **************************
-C
+
+
+      !=================================================================
+      ! SUBROUTINE: SOLT
+      !
+      ! Estimates daily average temperature at the bottom
+      ! of each soil layer
+      !=================================================================
       SUBROUTINE SOLT
-C     THIS SUBROUTINE ESTIMATES DAILY AVERAGE TEMPERATURE AT THE BOTTOM
-C     OF EACH SOIL LAYER
-C
+
       COMMON /BLK8/ PRE (370), TMPF (366), RAD (366)
       COMMON /BLK9/ PINF, ES1T, SMELT, GMRO, ADDRUN, OLDSNO, SNO, WF(7),
-     1  SSNO
+     &  SSNO
       COMMON /BLK16/ LD(5), LP(6), LPQ(5), LCASE(5), IYR, IDA, MO,
-     1  NSTEP(6), ND
+     &  NSTEP(6), ND
       COMMON /BLK20/ TSEG (7), Z (7), FCS (7), ST (7)
       COMMON /BLK21/ TB, TO, TS, AVT, AMP, ABD, PHU, GS, CV,
-     1   RSD, DM, WFT (12), DD, DLAI
-C
-C*****DETERMINING BCV
-C
+     &   RSD, DM, WFT (12), DD, DLAI
+
+      ! DetermininG BCV.
       IF(CV.LT.0.0)CV=0.0
       IF(CV.GT.20000.)CV=20000.
-      BCV = CV/(CV + EXP (7.563 - (0.0001297*CV)))
-      IF ((SNO*25.4) .GT. 120.) THEN
+
+      BCV = CV / (CV + EXP (7.563 - (0.0001297*CV)))
+
+      IF ((SNO*25.4) > 120.) THEN
          BCV = AMAX1 (1., BCV)
-      ELSE IF (SNO .GT. 0.0) THEN
+      ELSE IF (SNO > 0.0) THEN
          XX = (SNO*25.4)/(SNO*25.4 + EXP (6.055 - (.3002*SNO*25.4)))
          BCV = AMAX1 (XX, BCV)
       END IF
-C
+
       XI = IDA
       ALX = (XI - 200.)/58.13
       TMPC = (TMPF (IDA) - 32.)/1.8
@@ -3703,19 +3690,22 @@ C
       ELSE
          ST0 = WFT (MO)*5. + TMPC - 5.
       END IF
+
       XX = BCV*TO + (1. - BCV)*ST0
       DT = XX - (AVT + AMP*COS (ALX))
-      DO 1000 K = 1, 7
+      DO K = 1, 7
          ZD = - Z (K)/DD
-         IF(ABS(ZD).LT.37.)THEN
+         IF(ABS(ZD) < 37.) THEN
             TSEG (K) = AVT + (AMP*COS (ALX + ZD) + DT)*EXP (ZD)
          ELSE
             TSEG(K) = AVT
          END IF
- 1000 CONTINUE
+      END DO
+
       RETURN
       END SUBROUTINE SOLT
-C
+
+
 C *************************** TSTR **************************
 C
 C      SUBROUTINE TSTR APPLIES A TEMPERATURE STRESS FACTOR TO CROPS
@@ -3918,10 +3908,11 @@ C
 C     ADOPTED FROM THE NWS HYDRO-17 CODE WHICH WAS INITIALLY
 C     WRITTEN BY ERIC ANDERSON   MAY 1980
 C.......................................
-C
-C     COMMON BLOCKS
+
+      INTEGER, INTENT(OUT) :: IT
+
       PARAMETER (MXYR = 100)
-C
+
       COMMON /BLK6/ ULAI, WIND, RH(366), OSNO, ULAT
       COMMON /BLK8/ PRE (370), TMPF (366), RAD (366)
       COMMON /BLK9/ PINF, ES1T, SMELT, GMRO, ADDRUN, OLDSNO, SNO, WF(7),
@@ -6453,12 +6444,14 @@ C
  6176 FORMAT(1X/1X,89('*'))
       RETURN
       END SUBROUTINE OUTDAY
-C
-C
-C     ************************ OUTMO *************************
-C
-C     SUBROUTINE OUTMO PRINTS MONTHLY TOTALS.
-C
+
+
+      !=================================================================
+      ! SUBROUTINE: OUTMO
+      !
+      ! Accumulate monthly totals for computing averages and
+      ! standard deviations and print monthly totals.
+      !=================================================================
       SUBROUTINE OUTMO (IOM, IOS)
 
       INTEGER, INTENT(IN) :: IOM
@@ -6549,6 +6542,7 @@ C
         END DO
       END IF
 
+      ! If flag for monthly output is False.
       IF (IOM .EQ. 0) RETURN
 
       ! Print heading for monthly results and print
@@ -6564,12 +6558,14 @@ C
       RETURN
       END SUBROUTINE OUTMO
 
-C     ************************ OUTMO2 *************************
-C
-C     SUBROUTINE OUTMO PRINTS MONTHLY TOTALS in MM and CM.
-C
+
+      !=================================================================
+      ! SUBROUTINE: OUTMO2
+      !
+      ! Print monthly totals for the simulation in mm and cm.
+      !=================================================================
       SUBROUTINE OUTMO2
-C
+
       PARAMETER (MXYR = 100)
       DOUBLE PRECISION RC(20)
       COMMON /BLK3/ PORO (20), FC (20), WP (20), RC, SW (20),
@@ -6590,29 +6586,6 @@ C
       COMMON /BLK32/ SHED1 (12), SHED2 (12), SHED3 (12), SHED4 (12),
      1  SHED5 (12)
       COMMON /BLK33/ JYEAR (MXYR)
-      DIMENSION MDAY(12)
-C
-C     ACCUMULATES MONTHLY TOTALS FOR COMPUTING AVERAGES AND
-C       STANDARD DEVIATIONS.
-C
-C     PRINTS HEADING FOR MONTHLY RESULTS AND PRINTS
-C     MONTHLY PRECIPITATION, RUNOFF AND EVAPOTRANSPIRATION.
-C
-      MDAY(1) = 31
-      MDAY(2) = 28
-      MDAY(3) = 31
-      MDAY(4) = 30
-      MDAY(5) = 31
-      MDAY(6) = 30
-      MDAY(7) = 31
-      MDAY(8) = 31
-      MDAY(9) = 30
-      MDAY(10) = 31
-      MDAY(11) = 30
-      MDAY(12) = 31
-
-      ! Determines if the year is a leap year.
-      MND = LEAP (JYEAR(IYR), NT)
 
       WRITE (8, 6012) JYEAR (IYR)
       WRITE (8, 6020)
@@ -6623,11 +6596,6 @@ C
      &  5X, 'APR', 5X, 'MAY', 5X, 'JUN', 5X, 'JUL',
      &  5X, 'AUG', 5X, 'SEP', 5X, 'OCT', 5X, 'NOV',
      &  5X, 'DEC', /31X, 12(1X, '-------'))
-
-      MONTHE = 12
-      MONTHB = MONTHE - 11
-      MONTH6 = MONTHE - 6
-      MONTH7 = MONTHE - 5
 
       WRITE (8, 6032) (PREM (J) * 25.4, J = 1, 12)
       WRITE (8, 6042) (RUNM (J) * 25.4, J = 1, 12)
@@ -6698,11 +6666,11 @@ C
       END SUBROUTINE OUTMO2
 
 
-C      ************************* OUTYR ************************
-C
-C     SUBROUTINE OUTYR PRINTS THE ANNUAL TOTALS
-C     FOR A YEAR OF SIMULATION RESULTS.
-
+      !=================================================================
+      ! SUBROUTINE: OUTYR
+      !
+      ! Print the annual totals for a year of simulation results.
+      !=================================================================
       SUBROUTINE OUTYR (IOA, IOS, IU8)
 
       INTEGER, INTENT(IN) :: IOA
@@ -6710,7 +6678,7 @@ C     FOR A YEAR OF SIMULATION RESULTS.
       INTEGER, INTENT(IN) :: IU8
 
       PARAMETER (MXYR = 100)
-C
+
       COMMON /BLK1/ IT4, IT7, IT13, IU4, IU7, IU13, IU11, IU10
       DOUBLE PRECISION RC(20)
       COMMON /BLK3/ PORO (20), FC (20), WP (20), RC, SW (20),
