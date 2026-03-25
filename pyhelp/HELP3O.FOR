@@ -74,6 +74,7 @@
       INTEGER, INTENT(OUT) :: IERR
 
       INTEGER :: IU8
+      INTEGER :: IOF  ! Flag to write Output to file (1=Yes, 0=No).
 
       DOUBLE PRECISION BALY, BALT, DRIN, SWULY, DUMMY1, DUMMY2
 C    1  QDRN1, QDRN2, QDRN3, QDRN4, QDRN5,
@@ -168,6 +169,13 @@ C
       DIMENSION  BALY(67), BALT(67), SWULL(20), HED1S(31), HED2S(31),
      1  HED3S(31), HED4S(31), HED5S(31), DRIN(68), SWULY(67)
       DATA ISTAR/'*', ' '/
+
+      ! Determine if file output is enabled based on fpath_output.
+      IF (LEN_TRIM(fpath_output) == 0) THEN
+         IOF = 0  ! Path is empty, disable file writing
+      ELSE
+         IOF = 1  ! Path is provided, enable file writing
+      END IF
 
       ! Initialize error flag to success.
       IERR = 0
