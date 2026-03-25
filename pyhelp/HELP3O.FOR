@@ -198,7 +198,9 @@ C
       WF(6) = 0.054
       WF(7) = 0.033
 
-      OPEN (8, FILE = fpath_output, STATUS = 'UNKNOWN')
+      IF (IOF == 1) THEN
+        OPEN (8, FILE = fpath_output, STATUS = 'UNKNOWN')
+      END IF
 
       ! Read climatic input and soil characteristics and
       ! design information.
@@ -367,9 +369,24 @@ C     THY6 = 0.0D0
      &             EXWAT5, EXWAT6)
 
       ! Print soil characteristics and design information.
-      IF (IPRE .GE. 2) THEN
-         CALL OUTDAT (SWULL, fpath_precip, fpath_tasavg, fpath_solrad,
-     &                fpath_output, IU8)
+      IF (IPRE >= 2) THEN
+        IF (IOF == 1) THEN
+          CALL OUTDAT (SWULL, fpath_precip, fpath_tasavg,
+     &                 fpath_solrad, fpath_output, IU8)
+        END IF
+
+        ! Rewind weather files to the beginning, then skip their
+        ! 4-line headers so the next read starts at the daily data.
+        REWIND 4
+        REWIND 7
+        REWIND 13
+
+        DO I = 1, 4
+          READ (4, *)
+          READ (7, *)
+          READ (13, *)
+        END DO
+
       END IF
 
       ! Initializing variables.
@@ -482,6 +499,11 @@ C     THY6 = 0.0D0
         ! Read and print weather data for year of simulation.
         CALL READCD (NYEAR, ND, NT)
         JYEAR(IYR) = NYEAR
+
+        ! Pass back the first year of simulation to the Python wrapper.
+        IF (IYR == 1) THEN
+          PY_JYEAR1 = NYEAR
+        END IF
 
         ! Start daily loop for simulation.
         ! IDA is the day of the year of simulation.
@@ -882,12 +904,20 @@ C
         END IF
 
         ! Calls subroutine OUTMO if monthly output is desired.
-        IF (IPRE >= 2 .AND. (IOM == 1 .OR. IOS == 1)) THEN
+        IF (IPRE >= 2
+     &      .AND. (IOM == 1 .OR. IOS == 1)
+     &      .AND. IOF == 1) THEN
           CALL OUTMO(IOM, IOS)
         END IF
 
+        IF (IPRE >= 2) THEN
+          CALL FILL_PY_OUTMO(LMYR, PY_OUTMO)
+        END IF
+
         ! Calls subroutine OUTYR to print annual totals.
-        IF (IPRE >= 2 .AND. (IOA == 1 .OR. IOS == 1)) THEN
+        IF (IPRE >= 2
+     &      .AND. (IOA == 1 .OR. IOS == 1)
+     &      .AND. IOF == 1) THEN
           CALL OUTYR(IOA, IOS, IU8)
         END IF
 
@@ -926,29 +956,33 @@ C     Do subprofiles exist? (NSEGnB not initialized, use NSEGn)
       IF (NSEG5 .GT. 0) DSWUL(NSEG5B) = DSWUL(NSEG5B) +  EXWAT5
       IF (NSEG6 .GT. 0) DSWUL(NSEG6B) = DSWUL(NSEG6B) +  EXWAT6
 C     COMPILER CORRECTIONS ABOVE
+
       EXWAT2 = 0.0
       EXWAT3 = 0.0
       EXWAT4 = 0.0
       EXWAT5 = 0.0
       EXWAT6 = 0.0
-C
-C     CALLS SUBROUTINE OUTAV TO PRINT AVERAGE
-C     RESULTS FOR THE SIMULATION PERIOD.
-C
-      IF (IOS .EQ. 1) CALL OUTAV(LMYR, IU8)
-C
-C     CALLS SUBROUTINE OUTPEK TO PRINT PEAK
-C     RESULTS FOR THE SIMULATION PERIOD.
-C
-      IF (IOS .EQ. 1) CALL OUTPEK(LMYR, IU8)
-      CALL OUTSW (LMYR, IU8)
-C
-      CLOSE (8)
-C
-C
+
+      ! Calls subroutine OUTAV to print average
+      ! results for the simulation period.
+      IF (IOS == 1 .AND. IOF == 1) THEN
+        CALL OUTAV(LMYR, IU8)
+      END IF
+
+      ! Calls subroutine OUTPEK to print peak
+      ! results for the simulation period.
+      IF (IOS == 1 .AND. IOF == 1) THEN
+        CALL OUTPEK(LMYR, IU8)
+      END IF
+
+      IF (IOF == 1) THEN
+        CALL OUTSW (LMYR, IU8)
+        CLOSE (8)
+      END IF
+
       END SUBROUTINE run_simulation
-C
-C
+
+
 C        *********************** LEAP ************************
 C
 C
@@ -5506,7 +5540,6 @@ C
       CHARACTER(len=260), INTENT(IN) :: fpath_output
       INTEGER, INTENT(IN) :: IU8
 
-      CHARACTER*2 DUMMY1, DUMMY2, DUMMY3, DUMMY4
       CHARACTER*40 CITY4, CITY7, CITY13
       CHARACTER*60 TITLE
       INTEGER :: DATTIM(8)
@@ -5982,26 +6015,11 @@ C
 
  6258 FORMAT(///10X,'NOTE:  SOLAR RADIATION DATA FOR     ',A40)
  6262 FORMAT(20X,' AND STATION LATITUDE  = ',F6.2,' DEGREES'///)
-C
-C
-      REWIND 4
-      REWIND 7
-      REWIND 13
-      READ(4,6300) DUMMY1,DUMMY2,DUMMY3,DUMMY4
-      DUMMY2 = DUMMY1
-      READ(7,6300) DUMMY1,DUMMY2,DUMMY3,DUMMY4
-      DUMMY4 = DUMMY3
-      READ(13,6300) DUMMY1,DUMMY2,DUMMY3,DUMMY4
-      DUMMY1 = DUMMY2
-      DUMMY2 = DUMMY4
- 6300 FORMAT(A2/A2/A2/A2)
 
-C
-C
       RETURN
       END SUBROUTINE OUTDAT
-C
-C
+
+
 C      ******************************* OUTDAY ******************
 C
 C     SUBROUTINE OUTDAY PRINTS DAILY RESULTS OF THE SIMULATION.
