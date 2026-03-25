@@ -369,7 +369,7 @@ class HelpManager(object):
         sf_cn : float, optional
             Global scale factor for the Curve Number (applied to
             the whole grid). The default is 1.
-        write_help_output_files: bool
+        write_help_input_files: bool
             If True, writes the generated HELP input files (D10 and D11) to
             disk before running the simulation. While these files are no longer
             required for the HELP model to run internally (after
