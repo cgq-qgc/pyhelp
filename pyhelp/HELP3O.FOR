@@ -1,50 +1,51 @@
-! IDA is the day of the year of simulation
-! IYR is the number of the year
-! LMYR is the number of years of simulation
-! OSNO is the initial snow water
-! AREA is area projected on horizontal plane
-
-!=======================================================================
-!     SUBROUTINE: run_simulation
-!
-!     DESCRIPTION:
-!     Main entry point for running the HELP3O simulation from Python.
-!     Directs the simulation steps, handles accounting of water routing,
-!     and generates output reports.
-!
-!     INPUT ARGUMENTS (INTENT IN):
-!     fpath_precip : CHARACTER(len=260) - File path to the daily
-!                    precipitation data file (Unit 4).
-!     fpath_tasavg : CHARACTER(len=260) - File path to the daily
-!                    average temperature data file (Unit 7).
-!     fpath_solrad : CHARACTER(len=260) - File path to the daily
-!                    solar radiation data file (Unit 13).
-!     d11_input    : CHARACTER(len=80) Array(3) - Array containing 3
-!                    lines of surface condition (evapotranspiration)
-!                    data.
-!     d10_nlines   : INTEGER - The number of lines contained in the
-!                    d10_input array.
-!     d10_input    : CHARACTER(len=80) Array(d10_nlines) - Array
-!                    containing soil and design layout data.
-!     fpath_output : CHARACTER(len=260) - File path where the
-!                    simulation output report will be saved (Unit 8).
-!     IOD          : INTEGER - Flag for Daily Output (1=Yes, 0=No).
-!     IOM          : INTEGER - Flag for Monthly Output (1=Yes, 0=No).
-!     IOA          : INTEGER - Flag for Annual Output (1=Yes, 0=No).
-!     IOS          : INTEGER - Flag for Summary Output (1=Yes, 0=No).
-!     LMYR         : INTEGER - Total number of years to simulate.
-!     TFSOIL       : REAL - Average air temperature (in Fahrenheit)
-!                    below which the soil is assumed to be freezing.
-!
-!     OUTPUT ARGUMENTS (INTENT OUT):
-!     IERR         : INTEGER - Error code flag. Returns 0 on success.
-!                    Values 1-15 indicate file I/O or parsing errors
-!                    during the initialization/read step.
-!=======================================================================
+      !=======================================================================
+      !     SUBROUTINE: run_simulation
+      !
+      !     DESCRIPTION:
+      !     Main entry point for running the HELP3O simulation from Python.
+      !     Directs the simulation steps, handles accounting of water routing,
+      !     and generates output reports.
+      !
+      !     INPUT ARGUMENTS (INTENT IN):
+      !     fpath_precip : CHARACTER(len=260) - File path to the daily
+      !                    precipitation data file (Unit 4).
+      !     fpath_tasavg : CHARACTER(len=260) - File path to the daily
+      !                    average temperature data file (Unit 7).
+      !     fpath_solrad : CHARACTER(len=260) - File path to the daily
+      !                    solar radiation data file (Unit 13).
+      !     d11_input    : CHARACTER(len=80) Array(3) - Array containing 3
+      !                    lines of surface condition (evapotranspiration)
+      !                    data.
+      !     d10_nlines   : INTEGER - The number of lines contained in the
+      !                    d10_input array.
+      !     d10_input    : CHARACTER(len=80) Array(d10_nlines) - Array
+      !                    containing soil and design layout data.
+      !     fpath_output : CHARACTER(len=260) - File path where the
+      !                    simulation output report will be saved (Unit 8).
+      !                    If left empty (''), file output is disabled.
+      !     IOD          : INTEGER - Flag for Daily Output (1=Yes, 0=No).
+      !     IOM          : INTEGER - Flag for Monthly Output (1=Yes, 0=No).
+      !     IOA          : INTEGER - Flag for Annual Output (1=Yes, 0=No).
+      !     IOS          : INTEGER - Flag for Summary Output (1=Yes, 0=No).
+      !     LMYR         : INTEGER - Total number of years to simulate.
+      !     TFSOIL       : REAL - Average air temperature (in Fahrenheit)
+      !                    below which the soil is assumed to be freezing.
+      !
+      !     OUTPUT ARGUMENTS (INTENT OUT):
+      !     PY_OUTMO     : REAL Array(LMYR, 14, 13) - 3D array containing
+      !                    the monthly water routing totals in millimeters,
+      !                    packaged for direct return to Python.
+      !     PY_JYEAR1    : INTEGER - The starting calendar year of the
+      !                    simulation read from the weather files.
+      !     IERR         : INTEGER - Error code flag. Returns 0 on success.
+      !                    Values 1-15 indicate file I/O or parsing errors
+      !                    during the initialization/read step.
+      !=======================================================================
 
       SUBROUTINE run_simulation (fpath_precip, fpath_tasavg,
      &  fpath_solrad, d11_input, d10_nlines, d10_input, fpath_output,
-     &  IOD, IOM, IOA, IOS, LMYR, TFSOIL, IERR
+     &  IOD, IOM, IOA, IOS,
+     &  LMYR, TFSOIL, PY_OUTMO, PY_JYEAR1, IERR
      &  )
 
       PARAMETER (MXYR = 100)
@@ -59,16 +60,21 @@
       CHARACTER(len=260), INTENT(IN) :: fpath_tasavg
       CHARACTER(len=260), INTENT(IN) :: fpath_solrad
       CHARACTER(len=260), INTENT(IN) :: fpath_output
+
       INTEGER, INTENT(IN) :: IOD
       INTEGER, INTENT(IN) :: IOM
       INTEGER, INTENT(IN) :: IOA
       INTEGER, INTENT(IN) :: IOS
+
       INTEGER, INTENT(IN) :: LMYR
       REAL, INTENT(IN) :: TFSOIL
 
+      REAL, INTENT(OUT) :: PY_OUTMO(LMYR, 14, 13)
+      INTEGER, INTENT(OUT) :: PY_JYEAR1
       INTEGER, INTENT(OUT) :: IERR
 
       INTEGER :: IU8
+      INTEGER :: IOF  ! Flag to write Output to file (1=Yes, 0=No).
 
       DOUBLE PRECISION BALY, BALT, DRIN, SWULY, DUMMY1, DUMMY2
 C    1  QDRN1, QDRN2, QDRN3, QDRN4, QDRN5,
@@ -164,6 +170,16 @@ C
      1  HED3S(31), HED4S(31), HED5S(31), DRIN(68), SWULY(67)
       DATA ISTAR/'*', ' '/
 
+      ! Determine if file output is enabled based on fpath_output.
+      IF (LEN_TRIM(fpath_output) == 0) THEN
+         IOF = 0  ! Path is empty, disable file writing
+      ELSE
+         IOF = 1  ! Path is provided, enable file writing
+      END IF
+
+      ! Initialize the monthly output array to zero.
+      PY_OUTMO = 0.0
+
       ! Initialize error flag to success.
       IERR = 0
 
@@ -182,7 +198,9 @@ C
       WF(6) = 0.054
       WF(7) = 0.033
 
-      OPEN (8, FILE = fpath_output, STATUS = 'UNKNOWN')
+      IF (IOF == 1) THEN
+        OPEN (8, FILE = fpath_output, STATUS = 'UNKNOWN')
+      END IF
 
       ! Read climatic input and soil characteristics and
       ! design information.
@@ -351,9 +369,24 @@ C     THY6 = 0.0D0
      &             EXWAT5, EXWAT6)
 
       ! Print soil characteristics and design information.
-      IF (IPRE .GE. 2) THEN
-         CALL OUTDAT (SWULL, fpath_precip, fpath_tasavg, fpath_solrad,
-     &                fpath_output, IU8)
+      IF (IPRE >= 2) THEN
+        IF (IOF == 1) THEN
+          CALL OUTDAT (SWULL, fpath_precip, fpath_tasavg,
+     &                 fpath_solrad, fpath_output, IU8)
+        END IF
+
+        ! Rewind weather files to the beginning, then skip their
+        ! 4-line headers so the next read starts at the daily data.
+        REWIND 4
+        REWIND 7
+        REWIND 13
+
+        DO I = 1, 4
+          READ (4, *)
+          READ (7, *)
+          READ (13, *)
+        END DO
+
       END IF
 
       ! Initializing variables.
@@ -466,6 +499,11 @@ C     THY6 = 0.0D0
         ! Read and print weather data for year of simulation.
         CALL READCD (NYEAR, ND, NT)
         JYEAR(IYR) = NYEAR
+
+        ! Pass back the first year of simulation to the Python wrapper.
+        IF (IYR == 1) THEN
+          PY_JYEAR1 = NYEAR
+        END IF
 
         ! Start daily loop for simulation.
         ! IDA is the day of the year of simulation.
@@ -866,12 +904,20 @@ C
         END IF
 
         ! Calls subroutine OUTMO if monthly output is desired.
-        IF (IPRE >= 2 .AND. (IOM == 1 .OR. IOS == 1)) THEN
+        IF (IPRE >= 2
+     &      .AND. (IOM == 1 .OR. IOS == 1)
+     &      .AND. IOF == 1) THEN
           CALL OUTMO(IOM, IOS)
         END IF
 
+        IF (IPRE >= 2) THEN
+          CALL FILL_PY_OUTMO(LMYR, PY_OUTMO)
+        END IF
+
         ! Calls subroutine OUTYR to print annual totals.
-        IF (IPRE >= 2 .AND. (IOA == 1 .OR. IOS == 1)) THEN
+        IF (IPRE >= 2
+     &      .AND. (IOA == 1 .OR. IOS == 1)
+     &      .AND. IOF == 1) THEN
           CALL OUTYR(IOA, IOS, IU8)
         END IF
 
@@ -910,29 +956,33 @@ C     Do subprofiles exist? (NSEGnB not initialized, use NSEGn)
       IF (NSEG5 .GT. 0) DSWUL(NSEG5B) = DSWUL(NSEG5B) +  EXWAT5
       IF (NSEG6 .GT. 0) DSWUL(NSEG6B) = DSWUL(NSEG6B) +  EXWAT6
 C     COMPILER CORRECTIONS ABOVE
+
       EXWAT2 = 0.0
       EXWAT3 = 0.0
       EXWAT4 = 0.0
       EXWAT5 = 0.0
       EXWAT6 = 0.0
-C
-C     CALLS SUBROUTINE OUTAV TO PRINT AVERAGE
-C     RESULTS FOR THE SIMULATION PERIOD.
-C
-      IF (IOS .EQ. 1) CALL OUTAV(LMYR, IU8)
-C
-C     CALLS SUBROUTINE OUTPEK TO PRINT PEAK
-C     RESULTS FOR THE SIMULATION PERIOD.
-C
-      IF (IOS .EQ. 1) CALL OUTPEK(LMYR, IU8)
-      CALL OUTSW (LMYR, IU8)
-C
-      CLOSE (8)
-C
-C
+
+      ! Calls subroutine OUTAV to print average
+      ! results for the simulation period.
+      IF (IOS == 1 .AND. IOF == 1) THEN
+        CALL OUTAV(LMYR, IU8)
+      END IF
+
+      ! Calls subroutine OUTPEK to print peak
+      ! results for the simulation period.
+      IF (IOS == 1 .AND. IOF == 1) THEN
+        CALL OUTPEK(LMYR, IU8)
+      END IF
+
+      IF (IOF == 1) THEN
+        CALL OUTSW (LMYR, IU8)
+        CLOSE (8)
+      END IF
+
       END SUBROUTINE run_simulation
-C
-C
+
+
 C        *********************** LEAP ************************
 C
 C
@@ -5490,7 +5540,6 @@ C
       CHARACTER(len=260), INTENT(IN) :: fpath_output
       INTEGER, INTENT(IN) :: IU8
 
-      CHARACTER*2 DUMMY1, DUMMY2, DUMMY3, DUMMY4
       CHARACTER*40 CITY4, CITY7, CITY13
       CHARACTER*60 TITLE
       INTEGER :: DATTIM(8)
@@ -5966,26 +6015,11 @@ C
 
  6258 FORMAT(///10X,'NOTE:  SOLAR RADIATION DATA FOR     ',A40)
  6262 FORMAT(20X,' AND STATION LATITUDE  = ',F6.2,' DEGREES'///)
-C
-C
-      REWIND 4
-      REWIND 7
-      REWIND 13
-      READ(4,6300) DUMMY1,DUMMY2,DUMMY3,DUMMY4
-      DUMMY2 = DUMMY1
-      READ(7,6300) DUMMY1,DUMMY2,DUMMY3,DUMMY4
-      DUMMY4 = DUMMY3
-      READ(13,6300) DUMMY1,DUMMY2,DUMMY3,DUMMY4
-      DUMMY1 = DUMMY2
-      DUMMY2 = DUMMY4
- 6300 FORMAT(A2/A2/A2/A2)
 
-C
-C
       RETURN
       END SUBROUTINE OUTDAT
-C
-C
+
+
 C      ******************************* OUTDAY ******************
 C
 C     SUBROUTINE OUTDAY PRINTS DAILY RESULTS OF THE SIMULATION.
@@ -6550,6 +6584,105 @@ C
       RETURN
       END SUBROUTINE OUTMO2
 
+      !=================================================================
+      ! SUBROUTINE: FILL_PY_OUTMO
+      !
+      ! Packages the monthly simulation results into a 3D array
+      ! (PY_OUTMO) to be returned to Python via f2py.
+      !
+      ! All water routing values (precipitation, runoff, ET, drainage,
+      ! and percolation) are converted from inches to millimeters.
+      !
+      ! Array Structure: PY_OUTMO(IYR, ROW, COL)
+      !   - IYR: The current year of the simulation.
+      !   - COL 1: Indicates the physical layer number associated
+      !            with the data (0 for surface/climatic data, -1
+      !            if unused/inactive).
+      !   - COL 2-13: The monthly totals (Jan to Dec) in mm.
+      !=================================================================
+      SUBROUTINE FILL_PY_OUTMO(LMYR, PY_OUTMO)
+
+      INTEGER, INTENT(IN) :: LMYR
+      REAL, INTENT(INOUT) :: PY_OUTMO(LMYR, 14, 13)
+
+      COMMON /BLK12/ PRC1M (12), PRC2M (12), PRC3M (12),
+     &  PRC4M (12), PRC5M (12), PRC6M (12), DRN1M (12),
+     &  DRN2M (12), DRN3M (12), DRN4M (12), DRN5M (12),
+     &  PREM (12), RUNM (12), ETM (12), HED1M (12),
+     &  HED2M (12), HED3M (12), HED4M (12), HED5M (12),
+     &  RCRIM (20,12), SUBINM (20,12), RCR1M (12),
+     &  RCR2M (12), RCR3M (12), RCR4M (12), RCR5M (12)
+      COMMON /BLK16/ LD(5), LP(6), LPQ(5), LCASE(5), IYR, IDA, MO,
+     &  NSTEP(6), ND
+
+      PY_OUTMO(IYR, :, 1) = -1.0
+
+      ! Write monthly outputs for climatic data and ground surface.
+      PY_OUTMO(IYR, 1, 1) = 0.0
+      PY_OUTMO(IYR, 1, 2:13) = PREM * 25.4
+
+      PY_OUTMO(IYR, 2, 1) = 0.0
+      PY_OUTMO(IYR, 2, 2:13) = RUNM * 25.4
+
+      PY_OUTMO(IYR, 3, 1) = 0.0
+      PY_OUTMO(IYR, 3, 2:13) = ETM  * 25.4
+
+      ! Write monthly outputs for FIRST subprofile.
+      IF (LD(1) > 0) THEN
+        PY_OUTMO(IYR, 4, 1) = LD(1)
+        PY_OUTMO(IYR, 4, 2:13) = DRN1M * 25.4
+      END IF
+      PY_OUTMO(IYR, 5, 1) = LP(1)
+      PY_OUTMO(IYR, 5, 2:13) = PRC1M * 25.4
+
+      ! Write monthly outputs for SECOND subprofile.
+      IF (LP(2) > 0) THEN
+        IF (LD(2) > 0) THEN
+          PY_OUTMO(IYR, 6, 1) = LD(2)
+          PY_OUTMO(IYR, 6, 2:13) = DRN2M * 25.4
+        END IF
+        PY_OUTMO(IYR, 7, 1) = LP(2)
+        PY_OUTMO(IYR, 7, 2:13) = PRC2M * 25.4
+      END IF
+
+      ! Write monthly outputs for THIRD subprofile.
+      IF (LP(3) > 0) THEN
+        IF (LD(3) > 0) THEN
+          PY_OUTMO(IYR, 8, 1) = LD(3)
+          PY_OUTMO(IYR, 8, 2:13) = DRN3M * 25.4
+        END IF
+        PY_OUTMO(IYR, 9, 1) = LP(3)
+        PY_OUTMO(IYR, 9, 2:13) = PRC3M * 25.4
+      END IF
+
+      ! Write monthly outputs for FOURTH subprofile.
+      IF (LP(4) > 0) THEN
+        IF (LD(4) > 0) THEN
+          PY_OUTMO(IYR, 10, 1) = LD(4)
+          PY_OUTMO(IYR, 10, 2:13) = DRN4M * 25.4
+        END IF
+        PY_OUTMO(IYR, 11, 1) = LP(4)
+        PY_OUTMO(IYR, 11, 2:13) = PRC4M * 25.4
+      END IF
+
+      ! Write monthly outputs for FIFTH subprofile.
+      IF (LP(5) > 0) THEN
+        IF (LD(5) > 0) THEN
+          PY_OUTMO(IYR, 12, 1) = LD(5)
+          PY_OUTMO(IYR, 12, 2:13) = DRN5M * 25.4
+        END IF
+        PY_OUTMO(IYR, 13, 1) = LP(5)
+        PY_OUTMO(IYR, 13, 2:13) = PRC5M * 25.4
+      END IF
+
+      ! Write monthly outputs for SIXTH subprofile.
+      IF (LP(6) > 0) THEN
+        PY_OUTMO(IYR, 14, 1) = LP(6)
+        PY_OUTMO(IYR, 14, 2:13) = PRC6M * 25.4
+      END IF
+
+      RETURN
+      END SUBROUTINE FILL_PY_OUTMO
 
       !=================================================================
       ! SUBROUTINE: OUTYR

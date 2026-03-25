@@ -27,7 +27,8 @@ INPUT_FILES = {
     'airtemp': osp.join(EXAMPLE_FOLDER, 'airtemp_input_data.csv'),
     'precip': osp.join(EXAMPLE_FOLDER, 'precip_input_data.csv'),
     'solrad': osp.join(EXAMPLE_FOLDER, 'solrad_input_data.csv'),
-    'grid': osp.join(EXAMPLE_FOLDER, 'input_grid.csv')}
+    'grid': osp.join(EXAMPLE_FOLDER, 'input_grid.csv')
+    }
 
 
 # =============================================================================
@@ -63,18 +64,27 @@ def test_read_input_grid(helpm, output_file):
     assert is_string_dtype(helpm.grid['cid'])
 
 
-@pytest.mark.parametrize('write_input_files', [True, False])
-def test_calc_help_cells(helpm, output_file, write_input_files):
+@pytest.mark.parametrize(
+    'write_help_input_files, write_help_output_files',
+    [(True, True), (False, False)]
+    )
+def test_calc_help_cells(
+        helpm, output_file, write_help_input_files, write_help_output_files
+        ):
     """Test that the HelpManager is able to run water budget calculation."""
     cellnames = helpm.cellnames[:100]
 
-    helpm.calc_help_cells(output_file, cellnames, tfsoil=-3,
-                          build_help_input_files=write_input_files)
+    helpm.calc_help_cells(
+        output_file, cellnames, tfsoil=-3,
+        write_help_input_files=write_help_input_files,
+        write_help_output_files=write_help_output_files
+        )
+
     assert osp.exists(output_file)
 
     inputdir = osp.join(helpm.inputdir, 'd10d11_input_files')
-    assert osp.exists(inputdir) == write_input_files
-    if write_input_files:
+    assert osp.exists(inputdir) == write_help_input_files
+    if write_help_input_files:
         assert len(os.listdir(inputdir)) == 98 * 2
 
     inputdir = osp.join(helpm.inputdir, 'D4_input_files')
@@ -83,6 +93,11 @@ def test_calc_help_cells(helpm, output_file, write_input_files):
     assert len(os.listdir(inputdir)) == 2
     inputdir = osp.join(helpm.inputdir, 'D13_input_files')
     assert len(os.listdir(inputdir)) == 1
+
+    outputdir = osp.join(helpm.inputdir, 'HELP30_output_files')
+    assert osp.exists(outputdir) == write_help_output_files
+    if write_help_output_files:
+        assert len(os.listdir(outputdir)) == 98
 
     # Assert that the results are as expected.
     output = HelpOutput(output_file)
