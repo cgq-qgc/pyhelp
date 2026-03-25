@@ -44,7 +44,8 @@
 
       SUBROUTINE run_simulation (fpath_precip, fpath_tasavg,
      &  fpath_solrad, d11_input, d10_nlines, d10_input, fpath_output,
-     &  IOD, IOM, IOA, IOS, LMYR, TFSOIL, IERR
+     &  IOD, IOM, IOA, IOS,
+     &  LMYR, TFSOIL, PY_OUTMO, PY_JYEAR1, IERR
      &  )
 
       PARAMETER (MXYR = 100)
@@ -59,13 +60,17 @@
       CHARACTER(len=260), INTENT(IN) :: fpath_tasavg
       CHARACTER(len=260), INTENT(IN) :: fpath_solrad
       CHARACTER(len=260), INTENT(IN) :: fpath_output
+
       INTEGER, INTENT(IN) :: IOD
       INTEGER, INTENT(IN) :: IOM
       INTEGER, INTENT(IN) :: IOA
       INTEGER, INTENT(IN) :: IOS
+
       INTEGER, INTENT(IN) :: LMYR
       REAL, INTENT(IN) :: TFSOIL
 
+      REAL, INTENT(OUT) :: PY_OUTMO(LMYR, 14, 13)
+      INTEGER, INTENT(OUT) :: PY_JYEAR1
       INTEGER, INTENT(OUT) :: IERR
 
       INTEGER :: IU8
