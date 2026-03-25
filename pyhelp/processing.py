@@ -22,8 +22,6 @@ import numpy as np
 # ---- Local Libraries Imports
 from pyhelp import HELP3O
 
-DEL_TEMPFILES = True
-
 
 # ---- Run HELP
 
@@ -31,16 +29,58 @@ def run_help_singlecell(item):
     """Run HELP for a single cell."""
     cellname, outparam = item
 
-    error_code = HELP3O.run_simulation(*outparam)
+    outmo, yr0, error_code = HELP3O.run_simulation(*outparam)
     if error_code != 0:
         raise RuntimeError(
             f"Run simulation for cell {cellname} failed "
             f"with error code {error_code}."
             )
 
-    results = read_monthly_help_output(outparam[5])
-    if DEL_TEMPFILES:
-        os.remove(outparam[5])
+    dec = 3
+    nyears = outmo.shape[0]
+
+    results = {}
+    results['years'] = np.arange(nyears, dtype=int) + yr0
+    results['precip'] = np.round(outmo[:, 0, 1:], dec)
+    results['runoff'] = np.round(outmo[:, 1, 1:], dec)
+    results['evapo'] = np.round(outmo[:, 2, 1:], dec)
+
+    # Process shallow subsurface lateral drainage (in first subprofile).
+    lay = outmo[0, 3, 0]
+    if lay != -1:
+        assert np.all(outmo[:, 3, 0] == lay)
+        subrun1 = np.round(outmo[:, 3, 1:], dec)
+    else:
+        subrun1 = np.zeros((nyears, 12), dtype=outmo.dtype)
+
+    # Process deep subsurface lateral drainage (below first subprofile).
+    subrun2 = np.zeros((nyears, 12), dtype=outmo.dtype)
+    for row_idx in [5, 7, 9, 11]:
+        lay = outmo[0, row_idx, 0]
+        if lay == -1:
+            continue
+        assert np.all(outmo[:, row_idx, 0] == lay)
+        subrun2 += np.round(outmo[:, row_idx, 1:], dec)
+
+    # Process percolation (vertical flow in/out of first subprofile).
+    percol = np.round(outmo[:, 4, 1:], dec)
+
+    lay = outmo[0, 4, 0]
+    assert np.all(outmo[:, 4, 0] == lay)
+
+    # Find deep recharge row (vertical flow out of last subprofile).
+    for row_idx in [12, 10, 8, 6, 4]:
+        lay = outmo[0, row_idx, 0]
+        if lay != -1:
+            assert np.all(outmo[:, row_idx, 0] == lay)
+            rechg = np.round(outmo[:, row_idx, 1:], dec)
+            break
+
+    results['subrun1'] = subrun1
+    results['subrun2'] = subrun2
+    results['perco'] = percol
+    results['rechg'] = rechg
+
     return (cellname, results)
 
 
