@@ -6566,6 +6566,105 @@ C
       RETURN
       END SUBROUTINE OUTMO2
 
+      !=================================================================
+      ! SUBROUTINE: FILL_PY_OUTMO
+      !
+      ! Packages the monthly simulation results into a 3D array
+      ! (PY_OUTMO) to be returned to Python via f2py.
+      !
+      ! All water routing values (precipitation, runoff, ET, drainage,
+      ! and percolation) are converted from inches to millimeters.
+      !
+      ! Array Structure: PY_OUTMO(IYR, ROW, COL)
+      !   - IYR: The current year of the simulation.
+      !   - COL 1: Indicates the physical layer number associated
+      !            with the data (0 for surface/climatic data, -1
+      !            if unused/inactive).
+      !   - COL 2-13: The monthly totals (Jan to Dec) in mm.
+      !=================================================================
+      SUBROUTINE FILL_PY_OUTMO(LMYR, PY_OUTMO)
+
+      INTEGER, INTENT(IN) :: LMYR
+      REAL, INTENT(INOUT) :: PY_OUTMO(LMYR, 14, 13)
+
+      COMMON /BLK12/ PRC1M (12), PRC2M (12), PRC3M (12),
+     &  PRC4M (12), PRC5M (12), PRC6M (12), DRN1M (12),
+     &  DRN2M (12), DRN3M (12), DRN4M (12), DRN5M (12),
+     &  PREM (12), RUNM (12), ETM (12), HED1M (12),
+     &  HED2M (12), HED3M (12), HED4M (12), HED5M (12),
+     &  RCRIM (20,12), SUBINM (20,12), RCR1M (12),
+     &  RCR2M (12), RCR3M (12), RCR4M (12), RCR5M (12)
+      COMMON /BLK16/ LD(5), LP(6), LPQ(5), LCASE(5), IYR, IDA, MO,
+     &  NSTEP(6), ND
+
+      PY_OUTMO(IYR, :, 1) = -1.0
+
+      ! Write monthly outputs for climatic data and ground surface.
+      PY_OUTMO(IYR, 1, 1) = 0.0
+      PY_OUTMO(IYR, 1, 2:13) = PREM * 25.4
+
+      PY_OUTMO(IYR, 2, 1) = 0.0
+      PY_OUTMO(IYR, 2, 2:13) = RUNM * 25.4
+
+      PY_OUTMO(IYR, 3, 1) = 0.0
+      PY_OUTMO(IYR, 3, 2:13) = ETM  * 25.4
+
+      ! Write monthly outputs for FIRST subprofile.
+      IF (LD(1) > 0) THEN
+        PY_OUTMO(IYR, 4, 1) = LD(1)
+        PY_OUTMO(IYR, 4, 2:13) = DRN1M * 25.4
+      END IF
+      PY_OUTMO(IYR, 5, 1) = LP(1)
+      PY_OUTMO(IYR, 5, 2:13) = PRC1M * 25.4
+
+      ! Write monthly outputs for SECOND subprofile.
+      IF (LP(2) > 0) THEN
+        IF (LD(2) > 0) THEN
+          PY_OUTMO(IYR, 6, 1) = LD(2)
+          PY_OUTMO(IYR, 6, 2:13) = DRN2M * 25.4
+        END IF
+        PY_OUTMO(IYR, 7, 1) = LP(2)
+        PY_OUTMO(IYR, 7, 2:13) = PRC2M * 25.4
+      END IF
+
+      ! Write monthly outputs for THIRD subprofile.
+      IF (LP(3) > 0) THEN
+        IF (LD(3) > 0) THEN
+          PY_OUTMO(IYR, 8, 1) = LD(3)
+          PY_OUTMO(IYR, 8, 2:13) = DRN3M * 25.4
+        END IF
+        PY_OUTMO(IYR, 9, 1) = LP(3)
+        PY_OUTMO(IYR, 9, 2:13) = PRC3M * 25.4
+      END IF
+
+      ! Write monthly outputs for FOURTH subprofile.
+      IF (LP(4) > 0) THEN
+        IF (LD(4) > 0) THEN
+          PY_OUTMO(IYR, 10, 1) = LD(4)
+          PY_OUTMO(IYR, 10, 2:13) = DRN4M * 25.4
+        END IF
+        PY_OUTMO(IYR, 11, 1) = LP(4)
+        PY_OUTMO(IYR, 11, 2:13) = PRC4M * 25.4
+      END IF
+
+      ! Write monthly outputs for FIFTH subprofile.
+      IF (LP(5) > 0) THEN
+        IF (LD(5) > 0) THEN
+          PY_OUTMO(IYR, 12, 1) = LD(5)
+          PY_OUTMO(IYR, 12, 2:13) = DRN5M * 25.4
+        END IF
+        PY_OUTMO(IYR, 13, 1) = LP(5)
+        PY_OUTMO(IYR, 13, 2:13) = PRC5M * 25.4
+      END IF
+
+      ! Write monthly outputs for SIXTH subprofile.
+      IF (LP(6) > 0) THEN
+        PY_OUTMO(IYR, 14, 1) = LP(6)
+        PY_OUTMO(IYR, 14, 2:13) = PRC6M * 25.4
+      END IF
+
+      RETURN
+      END SUBROUTINE FILL_PY_OUTMO
 
       !=================================================================
       ! SUBROUTINE: OUTYR
