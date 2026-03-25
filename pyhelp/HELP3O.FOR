@@ -1,46 +1,46 @@
-! IDA is the day of the year of simulation
-! IYR is the number of the year
-! LMYR is the number of years of simulation
-! OSNO is the initial snow water
-! AREA is area projected on horizontal plane
-
-!=======================================================================
-!     SUBROUTINE: run_simulation
-!
-!     DESCRIPTION:
-!     Main entry point for running the HELP3O simulation from Python.
-!     Directs the simulation steps, handles accounting of water routing,
-!     and generates output reports.
-!
-!     INPUT ARGUMENTS (INTENT IN):
-!     fpath_precip : CHARACTER(len=260) - File path to the daily
-!                    precipitation data file (Unit 4).
-!     fpath_tasavg : CHARACTER(len=260) - File path to the daily
-!                    average temperature data file (Unit 7).
-!     fpath_solrad : CHARACTER(len=260) - File path to the daily
-!                    solar radiation data file (Unit 13).
-!     d11_input    : CHARACTER(len=80) Array(3) - Array containing 3
-!                    lines of surface condition (evapotranspiration)
-!                    data.
-!     d10_nlines   : INTEGER - The number of lines contained in the
-!                    d10_input array.
-!     d10_input    : CHARACTER(len=80) Array(d10_nlines) - Array
-!                    containing soil and design layout data.
-!     fpath_output : CHARACTER(len=260) - File path where the
-!                    simulation output report will be saved (Unit 8).
-!     IOD          : INTEGER - Flag for Daily Output (1=Yes, 0=No).
-!     IOM          : INTEGER - Flag for Monthly Output (1=Yes, 0=No).
-!     IOA          : INTEGER - Flag for Annual Output (1=Yes, 0=No).
-!     IOS          : INTEGER - Flag for Summary Output (1=Yes, 0=No).
-!     LMYR         : INTEGER - Total number of years to simulate.
-!     TFSOIL       : REAL - Average air temperature (in Fahrenheit)
-!                    below which the soil is assumed to be freezing.
-!
-!     OUTPUT ARGUMENTS (INTENT OUT):
-!     IERR         : INTEGER - Error code flag. Returns 0 on success.
-!                    Values 1-15 indicate file I/O or parsing errors
-!                    during the initialization/read step.
-!=======================================================================
+      !=======================================================================
+      !     SUBROUTINE: run_simulation
+      !
+      !     DESCRIPTION:
+      !     Main entry point for running the HELP3O simulation from Python.
+      !     Directs the simulation steps, handles accounting of water routing,
+      !     and generates output reports.
+      !
+      !     INPUT ARGUMENTS (INTENT IN):
+      !     fpath_precip : CHARACTER(len=260) - File path to the daily
+      !                    precipitation data file (Unit 4).
+      !     fpath_tasavg : CHARACTER(len=260) - File path to the daily
+      !                    average temperature data file (Unit 7).
+      !     fpath_solrad : CHARACTER(len=260) - File path to the daily
+      !                    solar radiation data file (Unit 13).
+      !     d11_input    : CHARACTER(len=80) Array(3) - Array containing 3
+      !                    lines of surface condition (evapotranspiration)
+      !                    data.
+      !     d10_nlines   : INTEGER - The number of lines contained in the
+      !                    d10_input array.
+      !     d10_input    : CHARACTER(len=80) Array(d10_nlines) - Array
+      !                    containing soil and design layout data.
+      !     fpath_output : CHARACTER(len=260) - File path where the
+      !                    simulation output report will be saved (Unit 8).
+      !                    If left empty (''), file output is disabled.
+      !     IOD          : INTEGER - Flag for Daily Output (1=Yes, 0=No).
+      !     IOM          : INTEGER - Flag for Monthly Output (1=Yes, 0=No).
+      !     IOA          : INTEGER - Flag for Annual Output (1=Yes, 0=No).
+      !     IOS          : INTEGER - Flag for Summary Output (1=Yes, 0=No).
+      !     LMYR         : INTEGER - Total number of years to simulate.
+      !     TFSOIL       : REAL - Average air temperature (in Fahrenheit)
+      !                    below which the soil is assumed to be freezing.
+      !
+      !     OUTPUT ARGUMENTS (INTENT OUT):
+      !     PY_OUTMO     : REAL Array(LMYR, 14, 13) - 3D array containing
+      !                    the monthly water routing totals in millimeters,
+      !                    packaged for direct return to Python.
+      !     PY_JYEAR1    : INTEGER - The starting calendar year of the
+      !                    simulation read from the weather files.
+      !     IERR         : INTEGER - Error code flag. Returns 0 on success.
+      !                    Values 1-15 indicate file I/O or parsing errors
+      !                    during the initialization/read step.
+      !=======================================================================
 
       SUBROUTINE run_simulation (fpath_precip, fpath_tasavg,
      &  fpath_solrad, d11_input, d10_nlines, d10_input, fpath_output,
