@@ -342,7 +342,9 @@ class HelpManager(object):
     def calc_help_cells(self, path_to_hdf5=None, cellnames=None, tfsoil=0,
                         sf_edepth: float = 1, sf_ulai: float = 1,
                         sf_cn: float = 1,
-                        build_help_input_files: bool = False) -> HelpOutput:
+                        write_help_input_files: bool = False,
+                        write_help_output_files: bool = False
+                        ) -> HelpOutput:
         """
         Calcul the water budget for all eligible cells with HELP.
 
@@ -366,13 +368,21 @@ class HelpManager(object):
         sf_cn : float, optional
             Global scale factor for the Curve Number (applied to
             the whole grid). The default is 1.
-        build_help_input_files: bool
-            A flag to indicate whether to generate the basic D10 and D11 HELP
-            input files before running the simulation. These files are not
-            used by the HELP model after cgq-qgc/pyhelp#109, but these files
-            can still be usefull for debugging purposes. On the other hand,
-            input weather data files (D4, D7, and D13) are always generated
-            before the start of a new simulation run.
+        write_help_output_files: bool
+            If True, writes the generated HELP input files (D10 and D11) to
+            disk before running the simulation. While these files are no longer
+            required for the HELP model to run internally (after
+            cgq-qgc/pyhelp#109), saving them can be useful for debugging or
+            for external review of the input data. Weather input files
+            (D4, D7, and D13) are always created at the start of each
+            simulation run, regardless of this setting.
+        write_help_output_files: bool
+            If True, instructs the HELP model to write its raw output files
+            to disk for each cell during simulation. This is useful for
+            advanced analysis, external post-processing, or debugging the
+            underlying HELP engine outputs. By default, this is False; the
+            results are processed in-memory and output files are not written,
+            which save disk space and speed up large runs.
         """
         self.clear_cache()
 
@@ -381,14 +391,14 @@ class HelpManager(object):
 
         # Format D10 and D11 data.
         d10data, d11data = self._generate_d10d11_input_data(
-            cellnames, sf_edepth, sf_ulai, sf_cn, build_help_input_files)
+            cellnames, sf_edepth, sf_ulai, sf_cn, write_help_input_files)
 
         # Convert from Celcius to Farenheight.
         tfsoil = (tfsoil * 1.8) + 32
 
-        tempdir = osp.join(self.inputdir, ".temp")
-        if not osp.exists(tempdir):
-            os.makedirs(tempdir)
+        if write_help_output_files:
+            outdir = Path(self.inputdir) / "HELP30_output_files"
+            outdir.mkdir(parents=True, exist_ok=True)
 
         run_cellnames = self.get_run_cellnames(cellnames)
         cellparams = {}
@@ -401,7 +411,10 @@ class HelpManager(object):
             d10_input = d10data.get(cellname, None)
             d11_input = d11data.get(cellname, None)
 
-            fpath_out = osp.abspath(osp.join(tempdir, str(cellname) + '.OUT'))
+            if write_help_output_files:
+                fpath_out = str((outdir / f"{cellname}.OUT").resolve())
+            else:
+                fpath_out = ''
 
             if d10_input is None or d11_input is None:
                 skipped_cells.append(cellname)
@@ -422,8 +435,8 @@ class HelpManager(object):
             cellparams[cellname] = (
                 fpath_d4, fpath_d7, fpath_d13,
                 d11_input, d10_input,
-                fpath_out, daily_out,
-                monthly_out, yearly_out, summary_out,
+                fpath_out,
+                daily_out, monthly_out, yearly_out, summary_out,
                 simu_nyear, tfsoil
                 )
 
