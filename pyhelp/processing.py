@@ -36,6 +36,10 @@ def run_help_singlecell(item):
             f"with error code {error_code}."
             )
 
+    # Note that we are rounding of the output data intentionally to
+    # preserve the raw computational precision in the original Fortran code.
+    # See cgq-qgc/pyhelp#115.
+
     dec = 3
     nyears = outmo.shape[0]
 
