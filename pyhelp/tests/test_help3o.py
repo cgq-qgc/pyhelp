@@ -11,6 +11,7 @@
 # ---- Standard Library Imports
 import os
 import os.path as osp
+import copy
 
 
 # ---- Third party imports
@@ -47,7 +48,7 @@ def rca_params(rca_folder, tmp_path):
         raw_lines = f.read().splitlines()
     d11_input = np.char.ljust(raw_lines, 80).astype('S80')
 
-    return (osp.join(rca_folder, 'RCRA.D4'),
+    return [osp.join(rca_folder, 'RCRA.D4'),
             osp.join(rca_folder, 'RCRA.D7'),
             osp.join(rca_folder, 'RCRA.D13'),
             d11_input,
@@ -58,7 +59,7 @@ def rca_params(rca_folder, tmp_path):
             yearly_out,
             summary_out,
             simu_nyear,
-            tfsoil)
+            tfsoil]
 
 
 # ---- Tests
@@ -66,9 +67,10 @@ def test_run_help3o(rca_params):
     """
     Test that the HELP3O extension run and create an output file as expected.
     """
-    error_flag = HELP3O.run_simulation(*rca_params)
+    results, yr0, error_flag = HELP3O.run_simulation(*rca_params)
     assert error_flag == 0
     assert osp.exists(rca_params[5])
+    assert yr0 == 1
 
 
 def test_run_help_singlecell(rca_params):
@@ -77,7 +79,7 @@ def test_run_help_singlecell(rca_params):
     results are as expected.
     """
     cellname, results = run_help_singlecell(('rca', rca_params))
-    assert not osp.exists(rca_params[5]), rca_params[5]
+    assert osp.exists(rca_params[5]), rca_params[5]
     assert cellname == 'rca'
 
     # Simulation results are in mm, but the expected values (from legacy HELP
