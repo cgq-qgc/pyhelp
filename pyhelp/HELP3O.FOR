@@ -177,6 +177,9 @@ C
          IOF = 1  ! Path is provided, enable file writing
       END IF
 
+      ! Initialize the monthly output array to zero.
+      PY_OUTMO = 0.0
+
       ! Initialize error flag to success.
       IERR = 0
 
