@@ -344,7 +344,8 @@ class HelpManager(object):
                         sf_edepth: float = 1, sf_ulai: float = 1,
                         sf_cn: float = 1,
                         write_help_input_files: bool = False,
-                        write_help_output_files: bool = False
+                        write_help_output_files: bool = False,
+                        help_output_kwargs: dict = None
                         ) -> HelpOutput:
         """
         Calcul the water budget for all eligible cells with HELP.
@@ -384,6 +385,27 @@ class HelpManager(object):
             underlying HELP engine outputs. By default, this is False; the
             results are processed in-memory and output files are not written,
             which save disk space and speed up large runs.
+        help_output_kwargs : dict, optional
+            A dictionary of advanced keyword arguments for controlling which
+            types of HELP output are generated for each cell.
+            Possible keys include:
+            - 'IOD': int (default=0)
+                  Flag to control the output of daily results (1 Yes, 0 No).
+            - 'IOM': int (default=1)
+                  Flag to control the output of monthly results (1 Yes, 0 No).
+            - 'IOA': int (default=0)
+                  Flag to control the output of annual results (1 Yes, 0 No).
+            - 'IOS': int (default=0)
+                  Flag to control the output of summary results (1 Yes, 0 No).
+            These flags are passed to the HELP model configuration to
+            customize simulation output. If omitted, default values for these
+            flags are used.
+
+        Returns
+        -------
+        HelpOutput
+            An object containing the HELP simulation results. Results are also
+            saved to a HDF5 file if the 'path_to_hdf5' argument is provided.
         """
         self.clear_cache()
 
@@ -424,10 +446,13 @@ class HelpManager(object):
             d10_input = np.char.ljust(d10_input, 80).astype('S80')
             d11_input = np.char.ljust(d11_input, 80).astype('S80')
 
-            daily_out = 0
-            monthly_out = 1
-            yearly_out = 0
-            summary_out = 0
+            if help_output_kwargs is None:
+                help_output_kwargs = {}
+
+            daily_out = help_output_kwargs.get('IOD', 0)
+            monthly_out = help_output_kwargs.get('IOM', 1)
+            yearly_out = help_output_kwargs.get('IOA', 0)
+            summary_out = help_output_kwargs.get('IOS', 0)
 
             year_start = self.precip_data.index.year.min()
             year_end = self.precip_data.index.year.max()
