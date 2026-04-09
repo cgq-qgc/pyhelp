@@ -374,7 +374,8 @@ class HelpManager(object):
     def calc_help_cells(self, path_to_hdf5=None, cellnames=None, tfsoil=0,
                         sf_edepth: float = 1, sf_ulai: float = 1,
                         sf_cn: float = 1,
-                        build_help_input_files: bool = True) -> HelpOutput:
+                        build_help_input_files: bool = True,
+                        ncores: int | None) -> HelpOutput:
         """
         Calcul the water budget for all eligible cells with HELP.
 
@@ -401,6 +402,8 @@ class HelpManager(object):
         build_help_input_files: bool
             A flag to indicate whether to generate the basic HELP input
             files before running the simulation.
+        ncores : int or None
+            number of cores dedicated to the computation. The default is None.
         """
         if build_help_input_files:
             self.build_help_input_files(cellnames, sf_edepth, sf_ulai, sf_cn)
@@ -453,7 +456,7 @@ class HelpManager(object):
             print(msg)
             print('-' * 25)
 
-        output_data = run_help_allcells(cellparams)
+        output_data = run_help_allcells(cellparams,ncores)
         output_data = self._post_process_output(output_data)
         help_output = HelpOutput(output_data)
         if path_to_hdf5:
