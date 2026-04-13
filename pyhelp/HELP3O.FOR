@@ -318,7 +318,6 @@ C
       BALY = 0.0D0
       ET = 0.0
 
-      IODAY = 0
       RUN = 0.0
       ES1T = 0.0
       TS2 = 0.0
@@ -828,16 +827,19 @@ C
           PRC6M(IMO) = PRC6M(IMO) + PRC6
           PRC6A = PRC6A + PRC6
           IF (PRC6 .GT. PPRC6) PPRC6 = PRC6
-C
-C     CALLS SUBROUTINE OUTDAY IF DAILY OUTPUT IS DESIRED.
-C
+
+
  1150     CONTINUE
+
           CALL RECIRC (IMO)
-          IF (IOD .EQ. 1 .AND. IPRE .GE. 2) CALL OUTDAY (SWE,
-     1       IODAY, ASTAR, SSTAR, NVAR, IU8)
-C
-C     END OF DAILY LOOP.
-C
+
+          ! Call subroutine outday if daily output is desired.
+          IF (IOD == 1 .AND. IPRE >= 2) THEN
+            CALL OUTDAY (SWE, ASTAR, SSTAR, NVAR)
+          END IF
+
+          ! End of daily loop.
+
           IF (IDA .EQ. ND) GO TO 1210
           IDAP1 = IDA + 1
           MO = MONTH (IDAP1, NT)
