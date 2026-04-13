@@ -219,7 +219,7 @@ C
       ! Assign thicknesses and soil characteristics to segments.
       CALL SGMNT
 
-      ! Determine the number of output variables (NVAR) for OUTDAY
+      ! Determine the number of output variables (NVAR) for OUTDAY.
       NVAR = 0
       IF(LP(1) > 0) NVAR = 7
       IF(LP(2) > 0) NVAR = 10
@@ -6030,20 +6030,22 @@ C
       END SUBROUTINE OUTDAT
 
 
-C      ******************************* OUTDAY ******************
-C
-C     SUBROUTINE OUTDAY PRINTS DAILY RESULTS OF THE SIMULATION.
-C
-      SUBROUTINE OUTDAY (SWE, IODAY, ASTAR, SSTAR, NVAR, IU8)
-C
+      !=================================================================
+      ! SUBROUTINE: OUTDAY
+      !
+      ! Print daily results of the simulation.
+      !=================================================================
+      SUBROUTINE OUTDAY (SWE, ASTAR, SSTAR, NVAR)
+
       PARAMETER (MXYR = 100)
-      INTEGER, INTENT(IN) :: IU8
-C
-      CHARACTER*1 ASTAR, SSTAR
+
+      CHARACTER(len=1), INTENT(IN) :: ASTAR, SSTAR
+      INTEGER, INTENT(IN) :: NVAR
+
       DOUBLE PRECISION PRC1, PRC2, PRC3, PRC4, PRC5, PRC6,
      1  DRN1, DRN2, DRN3, DRN4, DRN5, HED1, HED2, HED3, HED4, HED5,
      2  RCR1, RCR2, RCR3, RCR4, RCR5, RCRI, VAR, VARD
-C
+
       COMMON /BLK1/ IT4, IT7, IT13, IU4, IU7, IU13, IU11, IU10
       COMMON /BLK4/ LAYER (21), LAYR (20), IPQ (20), ISOIL (20), LAY,
      1  LAYSEG (67, 2), LSEG (67), LSEGS (20, 2), LRIN(20), LSIN(20)
@@ -6057,71 +6059,38 @@ C
      1  NSTEP(6), ND
       COMMON /BLK33/ JYEAR (MXYR)
       COMMON /BLK34/  VAR (13), VARD (7,366)
-C
-      VAR (1)  = PRE (IDA)
-      VAR (2)  = RUN
-      VAR (3)  = ETT
+
+      VAR (1)  = PRE(IDA) * 25.4
+      VAR (2)  = RUN * 25.4
+      VAR (3)  = ETT * 25.4
       VAR (4)  = SWE
-      VAR (5)  = HED1
-      VAR (6)  = DRN1 + RCR1
-      VAR (7)  = PRC1
-      VAR (8)  = HED2
-      VAR (9)  = DRN2 + RCR2
-      VAR (10) = PRC2
-      VAR (11) = HED3
-      VAR (12) = DRN3 + RCR3
-      VAR (13) = PRC3
-      IF (LP(4) .GT. 0) THEN
-        VARD (1,IDA) = HED4
-        VARD (2,IDA) = DRN4 + RCR4
-        VARD (3,IDA) = PRC4
-        VARD (4,IDA) = HED5
-        VARD (5,IDA) = DRN5 + RCR5
-        VARD (6,IDA) = PRC5
-        VARD (7,IDA) = PRC6
+      VAR (5)  = HED1 * 2.54
+      VAR (6)  = (DRN1 + RCR1) * 25.4
+      VAR (7)  = PRC1 * 25.4
+      VAR (8)  = HED2 * 2.54
+      VAR (9)  = (DRN2 + RCR2) * 25.4
+      VAR (10) = PRC2 * 25.4
+      VAR (11) = HED3 * 2.54
+      VAR (12) = (DRN3 + RCR3) * 25.4
+      VAR (13) = PRC3 * 25.4
+      IF (LP(4) > 0) THEN
+        VARD (1, IDA) = HED4 * 2.54
+        VARD (2, IDA) = (DRN4 + RCR4) * 25.4
+        VARD (3, IDA) = PRC4 * 25.4
+        VARD (4, IDA) = HED5 * 2.54
+        VARD (5, IDA) = (DRN5 + RCR5) * 25.4
+        VARD (6, IDA) = PRC5 * 25.4
+        VARD (7, IDA) = PRC6 * 25.4
       END IF
-      IF (IU8 .NE. 1) THEN
-        VAR (1)  = PRE(IDA) * 25.4
-        VAR (2)  = RUN * 25.4
-        VAR (3)  = ETT * 25.4
-        VAR (4)  = SWE
-        VAR (5)  = HED1 * 2.54
-        VAR (6)  = (DRN1 + RCR1) * 25.4
-        VAR (7)  = PRC1 * 25.4
-        VAR (8)  = HED2 * 2.54
-        VAR (9)  = (DRN2 + RCR2) * 25.4
-        VAR (10) = PRC2 * 25.4
-        VAR (11) = HED3 * 2.54
-        VAR (12) = (DRN3 + RCR3) * 25.4
-        VAR (13) = PRC3 * 25.4
-        IF (LP(4) .GT. 0) THEN
-          VARD (1,IDA) = HED4 * 2.54
-          VARD (2,IDA) = (DRN4 + RCR4) * 25.4
-          VARD (3,IDA) = PRC4 * 25.4
-          VARD (4,IDA) = HED5 * 2.54
-          VARD (5,IDA) = (DRN5 + RCR5) * 25.4
-          VARD (6,IDA) = PRC5 * 25.4
-          VARD (7,IDA) = PRC6 * 25.4
-        END IF
-      END IF
+
+      ! Print heading
       IF (IDA .EQ. 1) THEN
-        IF (IODAY .EQ. 0) THEN
-          IODAY = 1
-          IF(LP(1) .GT. 0) NVAR = 7
-          IF(LP(2) .GT. 0) NVAR = 10
-          IF(LP(3) .GT. 0) NVAR = 13
-          IF(LP(4) .GT. 0) NVAR = 16
-          IF(LP(5) .GT. 0) NVAR = 19
-          IF(LP(6) .GT. 0) NVAR = 20
-        END IF
-C
-C     PRINTS HEADING
-C
         WRITE (8, 6110)
-        DO 1010 K = 1, 5
-          IF (LP(K) .GT. 0) THEN
-            IF (LAYER(LP(K)) .GT. 2) THEN
-              IF (LAYER(LP(K)-1) .LE. 2) THEN
+
+        DO K = 1, 5
+          IF (LP(K) > 0) THEN
+            IF (LAYER(LP(K)) > 2) THEN
+              IF (LAYER(LP(K)-1) <= 2) THEN
                 WRITE (8, 6121) K, LP(K), K, LP(K)-1
               ELSE
                 WRITE (8, 6121) K, LP(K)-1, K, LP(K)-2
@@ -6129,50 +6098,26 @@ C
             END IF
             WRITE (8, 6131) K, LP(K)
           END IF
- 1010   CONTINUE
+        END DO
+
         K = 6
-        IF (LP(6) .GT. 0) WRITE (8, 6131) K, LP(6)
-        IF (NVAR .GE. 13) THEN
-          IF (IU8 .EQ. 1) THEN
-            WRITE (8, 6141) JYEAR (IYR)
-          ELSE
-            WRITE (8, 6142) JYEAR (IYR)
-          END IF
-        ELSE IF (NVAR .GE. 10) THEN
-          IF (IU8 .EQ. 1) THEN
-            WRITE (8, 6151) JYEAR (IYR)
-          ELSE
-            WRITE (8, 6152) JYEAR (IYR)
-          END IF
+        IF (LP(6) > 0) WRITE (8, 6131) K, LP(6)
+
+        IF (NVAR >= 13) THEN
+          WRITE (8, 6142) JYEAR (IYR)
+        ELSE IF (NVAR >= 10) THEN
+          WRITE (8, 6152) JYEAR (IYR)
         ELSE
-          IF (IU8 .EQ. 1) THEN
-            WRITE (8, 6161) JYEAR (IYR)
-          ELSE
-            WRITE (8, 6162) JYEAR (IYR)
-          END IF
+          WRITE (8, 6162) JYEAR (IYR)
         END IF
       END IF
-C
+
  6110 FORMAT(///)
  6121 FORMAT(4X,'HEAD  #',I1,':  AVERAGE HEAD ON TOP OF LAYER',I3/4X,
      1 'DRAIN #',I1,':  LATERAL DRAINAGE FROM LAYER',
      2 I3,' (RECIRCULATION AND COLLECTION)')
  6131 FORMAT(4X,'LEAK  #',I1,
      1 ':  PERCOLATION OR LEAKAGE THROUGH LAYER',I3)
- 6141 FORMAT(1X/1X,130('*')//52X,'DAILY OUTPUT FOR YEAR',I5/
-     1 2X,128('-')/'          S'/
-     2 '  DAY  A  O  RAIN  RUNOFF   ET   E. ZONE   HEAD      DRAIN  ',
-     3 '   LEAK      HEAD      DRAIN     LEAK      HEAD      DRAIN  ',
-     4 '   LEAK '/
-     5 '       I  I                       WATER     #1        #1    ',
-     6 '    #1        #2        #2        #2        #3        #3    ',
-     7 '    #3  '/
-     8 '       R  L   IN.    IN.    IN.  IN./IN.    IN.       IN.   ',
-     9 '    IN.       IN.       IN.       IN.       IN.       IN.   ',
-     A '    IN. '/
-     B '  ---  -  -  ----- ------ ------ ------- --------- ---------',
-     C ' --------- --------- --------- --------- --------- ---------',
-     D ' ---------'/)
  6142 FORMAT(1X/1X,130('*')//52X,'DAILY OUTPUT FOR YEAR',I5/
      1 2X,128('-')/'          S'/
      2 '  DAY  A  O  RAIN  RUNOFF   ET   E. ZONE   HEAD      DRAIN  ',
@@ -6187,16 +6132,6 @@ C
      B '  ---  -  -  ----- ------ ------ ------- --------- ---------',
      C ' --------- --------- --------- --------- --------- ---------',
      D ' ---------'/)
- 6151 FORMAT(1X/1X,100('*')//37X,'DAILY OUTPUT FOR YEAR',I5/
-     1 2X, 98('-')/'          S'/
-     2 '  DAY  A  O  RAIN  RUNOFF   ET   E. ZONE   HEAD      DRAIN  ',
-     3 '   LEAK      HEAD      DRAIN     LEAK   '/
-     5 '       I  I                       WATER     #1        #1    ',
-     6 '    #1        #2        #2        #2    '/
-     8 '       R  L   IN.    IN.    IN.  IN./IN.    IN.       IN.   ',
-     9 '    IN.       IN.       IN.       IN.   '/
-     B '  ---  -  -  ----- ------ ------ ------- --------- ---------',
-     C ' --------- --------- --------- ---------'/)
  6152 FORMAT(1X/1X,100('*')//37X,'DAILY OUTPUT FOR YEAR',I5/
      1 2X, 98('-')/'          S'/
      2 '  DAY  A  O  RAIN  RUNOFF   ET   E. ZONE   HEAD      DRAIN  ',
@@ -6207,16 +6142,6 @@ C
      9 '    MM        CM        MM        MM    '/
      B '  ---  -  -  ----- ------ ------ ------- --------- ---------',
      C ' --------- --------- --------- ---------'/)
- 6161 FORMAT(1X/1X,70('*')//22X,'DAILY OUTPUT FOR YEAR',I5/
-     1 2X, 68('-')/'          S'/
-     2 '  DAY  A  O  RAIN  RUNOFF   ET   E. ZONE   HEAD      DRAIN  ',
-     3 '   LEAK   '/
-     5 '       I  I                       WATER     #1        #1    ',
-     6 '    #1    '/
-     8 '       R  L   IN.    IN.    IN.  IN./IN.    IN.       IN.   ',
-     9 '    IN.   '/
-     B '  ---  -  -  ----- ------ ------ ------- --------- ---------',
-     C ' ---------'/)
  6162 FORMAT(1X/1X,100('*')//37X,'DAILY OUTPUT FOR YEAR',I5/
      1 2X, 98('-')/'          S'/
      2 '  DAY  A  O  RAIN  RUNOFF   ET   E. ZONE   HEAD      DRAIN  ',
@@ -6227,101 +6152,51 @@ C
      9 '    MM    '/
      B '  ---  -  -  ----- ------ ------ ------- --------- ---------',
      C ' ---------'/)
-C
-C
-C     PRINTS DAILY RESULTS, * INDICATES FREEZING
-C          TEMPERATURES OR FROZEN SOIL
-C
-C   WRITES THE DAILY VARIABLES
-C
-      IF (NVAR .GE. 13) THEN
-        IF (IU8 .EQ. 1) THEN
-          WRITE (8, 7001) IDA, ASTAR, SSTAR, (VAR (J), J = 1, 13)
-        ELSE
-          WRITE (8, 7002) IDA, ASTAR, SSTAR, (VAR (J), J = 1, 13)
-        END IF
-      ELSE IF (NVAR .GE. 10) THEN
-        IF (IU8 .EQ. 1) THEN
-          WRITE (8, 7001) IDA, ASTAR, SSTAR, (VAR (J), J = 1, 10)
-        ELSE
-          WRITE (8, 7002) IDA, ASTAR, SSTAR, (VAR (J), J = 1, 10)
-        END IF
+
+     ! Prints daily results, * indicates freezing
+     ! temperatures or frozen soil
+
+      ! Write the daily variables.
+      IF (NVAR >= 13) THEN
+        WRITE (8, 7002) IDA, ASTAR, SSTAR, (VAR (J), J = 1, 13)
+      ELSE IF (NVAR >= 10) THEN
+        WRITE (8, 7002) IDA, ASTAR, SSTAR, (VAR (J), J = 1, 10)
       ELSE
-        IF (IU8 .EQ. 1) THEN
-          WRITE (8, 7001) IDA, ASTAR, SSTAR, (VAR (J), J = 1, 7)
-        ELSE
-          WRITE (8, 7002) IDA, ASTAR, SSTAR, (VAR (J), J = 1, 7)
-        END IF
+        WRITE (8, 7002) IDA, ASTAR, SSTAR, (VAR (J), J = 1, 7)
       END IF
-C
-C
- 7001 FORMAT(2X,I3,2X,A1,2X,A1,2X,F5.2,F7.3,F7.3,F8.4,1X,3(F9.4,1X,
-     1  2(G9.4,1X)))
+
  7002 FORMAT(2X,I3,2X,A1,2X,A1,2X,F5.1,F7.2,F7.2,F8.4,1X,3(F9.4,1X,
      1  2(G9.4,1X)))
- 7011 FORMAT(2X,I3,3X,2(F9.4,3X,G9.4,3X,G9.4,3X),G9.4)
  7012 FORMAT(2X,I3,3X,2(F9.4,3X,G9.4,3X,G9.4,3X),G9.4)
-C
-C
-      IF (IDA .EQ. ND) THEN
-        IF (NVAR .GT. 19) THEN
-          IF (IU8 .EQ. 1) THEN
-            WRITE (8, 6241) JYEAR (IYR)
-              DO 3001 I = 1, ND
-                WRITE (8, 7011) I, (VARD (J,I), J = 1, 7)
- 3001         CONTINUE
-          ELSE
-            WRITE (8, 6242) JYEAR (IYR)
-              DO 3002 I = 1, ND
-                WRITE (8, 7012) I, (VARD (J,I), J = 1, 7)
- 3002         CONTINUE
-          END IF
+
+      IF (IDA == ND) THEN
+        IF (NVAR > 19) THEN
+          WRITE (8, 6242) JYEAR (IYR)
+            DO I = 1, ND
+              WRITE (8, 7012) I, (VARD (J,I), J = 1, 7)
+          END DO
           WRITE (8, 6176)
-        ELSE IF (NVAR .GT. 16) THEN
-          IF (IU8 .EQ. 1) THEN
-            WRITE (8, 6251) JYEAR (IYR)
-              DO 3003 I = 1, ND
-                WRITE (8, 7011) I, (VARD (J,I), J = 1, 6)
- 3003         CONTINUE
-          ELSE
-            WRITE (8, 6252) JYEAR (IYR)
-              DO 3004 I = 1, ND
-                WRITE (8, 7012) I, (VARD (J,I), J = 1, 6)
- 3004         CONTINUE
-          END IF
+        ELSE IF (NVAR > 16) THEN
+          WRITE (8, 6252) JYEAR (IYR)
+            DO I = 1, ND
+              WRITE (8, 7012) I, (VARD (J,I), J = 1, 6)
+            END DO
           WRITE (8, 6175)
-        ELSE IF (NVAR .GT. 13) THEN
-          IF (IU8 .EQ. 1) THEN
-            WRITE (8, 6261) JYEAR (IYR)
-              DO 3005 I = 1, ND
-                WRITE (8, 7011) I, (VARD (J,I), J = 1, 3)
- 3005         CONTINUE
-          ELSE
-            WRITE (8, 6262) JYEAR (IYR)
-              DO 3006 I = 1, ND
-                WRITE (8, 7012) I, (VARD (J,I), J = 1, 3)
- 3006         CONTINUE
-          END IF
+        ELSE IF (NVAR > 13) THEN
+          WRITE (8, 6262) JYEAR (IYR)
+            DO I = 1, ND
+              WRITE (8, 7012) I, (VARD (J,I), J = 1, 3)
+            END DO
           WRITE (8, 6174)
-        ELSE IF (NVAR .GT. 10) THEN
+        ELSE IF (NVAR > 10) THEN
           WRITE (8, 6173)
-        ELSE IF (NVAR .GT. 7) THEN
+        ELSE IF (NVAR > 7) THEN
           WRITE (8, 6172)
         ELSE
           WRITE (8, 6171)
         END IF
       END IF
-C
- 6241 FORMAT(1X/1X,130('-')////1X,89('-')//
-     1 32X,'DAILY OUTPUT FOR YEAR',I5//
-     1 '  DAY     HEAD        DRAIN       LEAK   ',
-     2 '     HEAD        DRAIN       LEAK        LEAK '/
-     3 '           #4          #4          #4    ',
-     4 '      #5          #5          #5          #6  '/
-     5 '           IN.         IN.         IN.   ',
-     6 '      IN.         IN.         IN.         IN. '/
-     7 '  ---   ---------   ---------   ---------',
-     8 '   ---------   ---------   ---------   ---------'/)
+
  6242 FORMAT(1X/1X,130('-')////1X,89('-')//
      1 32X,'DAILY OUTPUT FOR YEAR',I5//
      1 '  DAY     HEAD        DRAIN       LEAK   ',
@@ -6332,16 +6207,6 @@ C
      6 '      CM          MM          MM          MM  '/
      7 '  ---   ---------   ---------   ---------',
      8 '   ---------   ---------   ---------   ---------'/)
- 6251 FORMAT(1X/1X,130('-')////1X,77('-')//
-     1 26X,'DAILY OUTPUT FOR YEAR',I5//
-     1 '  DAY     HEAD        DRAIN       LEAK   ',
-     2 '     HEAD        DRAIN       LEAK   '/
-     3 '           #4          #4          #4    ',
-     4 '      #5          #5          #5    '/
-     5 '           IN.         IN.         IN.   ',
-     6 '      IN.         IN.         IN.   '/
-     7 '  ---   ---------   ---------   ---------',
-     8 '   ---------   ---------   ---------'/)
  6252 FORMAT(1X/1X,130('-')////1X,77('-')//
      1 26X,'DAILY OUTPUT FOR YEAR',I5//
      1 '  DAY     HEAD        DRAIN       LEAK   ',
@@ -6352,25 +6217,20 @@ C
      6 '      CM          MM          MM    '/
      7 '  ---   ---------   ---------   ---------',
      8 '   ---------   ---------   ---------'/)
- 6261 FORMAT(1X/1X,130('-')////1X,41('-')//
-     1 8X,'DAILY OUTPUT FOR YEAR',I5//
-     1 '  DAY     HEAD        DRAIN       LEAK   '/
-     2 '           #4          #4          #4    '/
-     3 '           IN.         IN.         IN.   '/
-     4 '  ---   ---------   ---------   ---------'/)
  6262 FORMAT(1X/1X,130('-')////1X,41('-')//
      1 8X,'DAILY OUTPUT FOR YEAR',I5//
      1 '  DAY     HEAD        DRAIN       LEAK   '/
      2 '           #4          #4          #4    '/
      3 '           CM          MM          MM    '/
      4 '  ---   ---------   ---------   ---------'/)
-C
+
  6171 FORMAT(1X/1X,70('*'))
  6172 FORMAT(1X/1X,100('*'))
  6173 FORMAT(1X/1X,130('*'))
  6174 FORMAT(1X/1X,41('*'))
  6175 FORMAT(1X/1X,77('*'))
  6176 FORMAT(1X/1X,89('*'))
+
       RETURN
       END SUBROUTINE OUTDAY
 
