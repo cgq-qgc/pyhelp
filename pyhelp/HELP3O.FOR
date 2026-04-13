@@ -74,7 +74,8 @@
       INTEGER, INTENT(OUT) :: IERR
 
       INTEGER :: IU8
-      INTEGER :: IOF  ! Flag to write Output to file (1=Yes, 0=No).
+      INTEGER :: IOF   ! Flag to write Output to file (1=Yes, 0=No)
+      INTEGER :: NVAR  ! Number of output variables for OUTDAY
 
       DOUBLE PRECISION BALY, BALT, DRIN, SWULY, DUMMY1, DUMMY2
 C    1  QDRN1, QDRN2, QDRN3, QDRN4, QDRN5,
@@ -212,11 +213,20 @@ C
          RETURN
       END IF
 
-      ! Sets controls for subprofiles and output.
+      ! Determine the drainage and percolation layers for output.
       CALL CNTRLD
 
-      ! Assigns thicknesses and soil characteristics to segments.
+      ! Assign thicknesses and soil characteristics to segments.
       CALL SGMNT
+
+      ! Determine the number of output variables (NVAR) for OUTDAY
+      NVAR = 0
+      IF(LP(1) > 0) NVAR = 7
+      IF(LP(2) > 0) NVAR = 10
+      IF(LP(3) > 0) NVAR = 13
+      IF(LP(4) > 0) NVAR = 16
+      IF(LP(5) > 0) NVAR = 19
+      IF(LP(6) > 0) NVAR = 20
 
       ! Computes maximum storage retention parameter.
       C2 = CN2*CN2
