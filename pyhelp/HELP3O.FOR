@@ -89,10 +89,11 @@ C
 C
       DOUBLE PRECISION DSWUL, DTHICK, DRCUL, DBUBUL,
      1  DWPUL, DLAMUL, DRSUL, DUL, DFCUL, DSUBIN, DCHG, DRCRS
-C
-      CHARACTER*1 ISTAR(2), ASTAR, SSTAR
-      CHARACTER*60 TITLE
-C
+
+      CHARACTER(len=1) :: ISTAR(2) = ['*', ' ']
+      CHARACTER(len=1) :: ASTAR, SSTAR
+      CHARACTER(len=60) TITLE
+
       COMMON /BLK0/ TITLE
       COMMON /BLK1/ IT4, IT7, IT13, IU4, IU7, IU13, IU11, IU10
       DOUBLE PRECISION RC(20)
@@ -169,7 +170,6 @@ C
 
       DIMENSION  BALY(67), BALT(67), SWULL(20), HED1S(31), HED2S(31),
      1  HED3S(31), HED4S(31), HED5S(31), DRIN(68), SWULY(67)
-      DATA ISTAR/'*', ' '/
 
       ! Determine if file output is enabled based on fpath_output.
       IF (LEN_TRIM(fpath_output) == 0) THEN
