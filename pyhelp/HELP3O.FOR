@@ -6045,20 +6045,20 @@ C
       INTEGER, INTENT(IN) :: NVAR
 
       DOUBLE PRECISION PRC1, PRC2, PRC3, PRC4, PRC5, PRC6,
-     1  DRN1, DRN2, DRN3, DRN4, DRN5, HED1, HED2, HED3, HED4, HED5,
-     2  RCR1, RCR2, RCR3, RCR4, RCR5, RCRI, VAR, VARD
+     &  DRN1, DRN2, DRN3, DRN4, DRN5, HED1, HED2, HED3, HED4, HED5,
+     &  RCR1, RCR2, RCR3, RCR4, RCR5, RCRI, VAR, VARD
 
       COMMON /BLK1/ IT4, IT7, IT13, IU4, IU7, IU13, IU11, IU10
       COMMON /BLK4/ LAYER (21), LAYR (20), IPQ (20), ISOIL (20), LAY,
-     1  LAYSEG (67, 2), LSEG (67), LSEGS (20, 2), LRIN(20), LSIN(20)
+     &  LAYSEG (67, 2), LSEG (67), LSEGS (20, 2), LRIN(20), LSIN(20)
       COMMON /BLK8/ PRE (370), TMPF (366), RAD (366)
       COMMON /BLK10/ ETT, ESS, EP, ES, ET (67)
       COMMON /BLK11/ ETO, XLAI, STAGE1, CONA, RAIN, RUN, ABST, EAJ, TS2
       COMMON /BLK15/ PRC1, PRC2, PRC3, PRC4, PRC5, PRC6, DRN1, DRN2,
-     1  DRN3, DRN4, DRN5, HED1, HED2, HED3, HED4, HED5,
-     2  RCR1, RCR2, RCR3, RCR4, RCR5, RCRI(20)
+     &  DRN3, DRN4, DRN5, HED1, HED2, HED3, HED4, HED5,
+     &  RCR1, RCR2, RCR3, RCR4, RCR5, RCRI(20)
       COMMON /BLK16/ LD(5), LP(6), LPQ(5), LCASE(5), IYR, IDA, MO,
-     1  NSTEP(6), ND
+     &  NSTEP(6), ND
       COMMON /BLK33/ JYEAR (MXYR)
       COMMON /BLK34/  VAR (13), VARD (7,366)
 
@@ -6116,47 +6116,47 @@ C
 
  6110 FORMAT(///)
  6121 FORMAT(4X,'HEAD  #',I1,':  AVERAGE HEAD ON TOP OF LAYER',I3/4X,
-     1 'DRAIN #',I1,':  LATERAL DRAINAGE FROM LAYER',
-     2 I3,' (RECIRCULATION AND COLLECTION)')
+     & 'DRAIN #',I1,':  LATERAL DRAINAGE FROM LAYER',
+     & I3,' (RECIRCULATION AND COLLECTION)')
  6131 FORMAT(4X,'LEAK  #',I1,
-     1 ':  PERCOLATION OR LEAKAGE THROUGH LAYER',I3)
+     & ':  PERCOLATION OR LEAKAGE THROUGH LAYER',I3)
  6142 FORMAT(1X/1X,130('*')//52X,'DAILY OUTPUT FOR YEAR',I5/
-     1 2X,128('-')/'          S'/
-     2 '  DAY  A  O  RAIN  RUNOFF   ET   E. ZONE   HEAD      DRAIN  ',
-     3 '   LEAK      HEAD      DRAIN     LEAK      HEAD      DRAIN  ',
-     4 '   LEAK '/
-     5 '       I  I                       WATER     #1        #1    ',
-     6 '    #1        #2        #2        #2        #3        #3    ',
-     7 '    #3  '/
-     8 '       R  L   MM     MM     MM    CM/CM     CM        MM    ',
-     9 '    MM        CM        MM        MM        CM        MM    ',
-     A '    MM  '/
-     B '  ---  -  -  ----- ------ ------ ------- --------- ---------',
-     C ' --------- --------- --------- --------- --------- ---------',
-     D ' ---------'/)
+     & 2X,128('-')/'          S'/
+     & '  DAY  A  O  RAIN  RUNOFF   ET   E. ZONE   HEAD      DRAIN  ',
+     & '   LEAK      HEAD      DRAIN     LEAK      HEAD      DRAIN  ',
+     & '   LEAK '/
+     & '       I  I                       WATER     #1        #1    ',
+     & '    #1        #2        #2        #2        #3        #3    ',
+     & '    #3  '/
+     & '       R  L   MM     MM     MM    CM/CM     CM        MM    ',
+     & '    MM        CM        MM        MM        CM        MM    ',
+     & '    MM  '/
+     & '  ---  -  -  ----- ------ ------ ------- --------- ---------',
+     & ' --------- --------- --------- --------- --------- ---------',
+     & ' ---------'/)
  6152 FORMAT(1X/1X,100('*')//37X,'DAILY OUTPUT FOR YEAR',I5/
-     1 2X, 98('-')/'          S'/
-     2 '  DAY  A  O  RAIN  RUNOFF   ET   E. ZONE   HEAD      DRAIN  ',
-     3 '   LEAK      HEAD      DRAIN     LEAK   '/
-     5 '       I  I                       WATER     #1        #1    ',
-     6 '    #1        #2        #2        #2    '/
-     8 '       R  L   MM     MM     MM    CM/CM     CM        MM    ',
-     9 '    MM        CM        MM        MM    '/
-     B '  ---  -  -  ----- ------ ------ ------- --------- ---------',
-     C ' --------- --------- --------- ---------'/)
+     & 2X, 98('-')/'          S'/
+     & '  DAY  A  O  RAIN  RUNOFF   ET   E. ZONE   HEAD      DRAIN  ',
+     & '   LEAK      HEAD      DRAIN     LEAK   '/
+     & '       I  I                       WATER     #1        #1    ',
+     & '    #1        #2        #2        #2    '/
+     & '       R  L   MM     MM     MM    CM/CM     CM        MM    ',
+     & '    MM        CM        MM        MM    '/
+     & '  ---  -  -  ----- ------ ------ ------- --------- ---------',
+     & ' --------- --------- --------- ---------'/)
  6162 FORMAT(1X/1X,100('*')//37X,'DAILY OUTPUT FOR YEAR',I5/
-     1 2X, 98('-')/'          S'/
-     2 '  DAY  A  O  RAIN  RUNOFF   ET   E. ZONE   HEAD      DRAIN  ',
-     3 '   LEAK   '/
-     5 '       I  I                       WATER     #1        #1    ',
-     6 '    #1    '/
-     8 '       R  L   MM     MM     MM    CM/CM     CM        MM    ',
-     9 '    MM    '/
-     B '  ---  -  -  ----- ------ ------ ------- --------- ---------',
-     C ' ---------'/)
+     & 2X, 98('-')/'          S'/
+     & '  DAY  A  O  RAIN  RUNOFF   ET   E. ZONE   HEAD      DRAIN  ',
+     & '   LEAK   '/
+     & '       I  I                       WATER     #1        #1    ',
+     & '    #1    '/
+     & '       R  L   MM     MM     MM    CM/CM     CM        MM    ',
+     & '    MM    '/
+     & '  ---  -  -  ----- ------ ------ ------- --------- ---------',
+     & ' ---------'/)
 
-     ! Prints daily results, * indicates freezing
-     ! temperatures or frozen soil
+      ! Prints daily results, * indicates freezing
+      ! temperatures or frozen soil
 
       ! Write the daily variables.
       IF (NVAR >= 13) THEN
@@ -6168,7 +6168,7 @@ C
       END IF
 
  7002 FORMAT(2X,I3,2X,A1,2X,A1,2X,F5.1,F7.2,F7.2,F8.4,1X,3(F9.4,1X,
-     1  2(G9.4,1X)))
+     &  2(G9.4,1X)))
  7012 FORMAT(2X,I3,3X,2(F9.4,3X,G9.4,3X,G9.4,3X),G9.4)
 
       IF (IDA == ND) THEN
@@ -6200,31 +6200,31 @@ C
       END IF
 
  6242 FORMAT(1X/1X,130('-')////1X,89('-')//
-     1 32X,'DAILY OUTPUT FOR YEAR',I5//
-     1 '  DAY     HEAD        DRAIN       LEAK   ',
-     2 '     HEAD        DRAIN       LEAK        LEAK '/
-     3 '           #4          #4          #4    ',
-     4 '      #5          #5          #5          #6  '/
-     5 '           CM          MM          MM    ',
-     6 '      CM          MM          MM          MM  '/
-     7 '  ---   ---------   ---------   ---------',
-     8 '   ---------   ---------   ---------   ---------'/)
+     & 32X,'DAILY OUTPUT FOR YEAR',I5//
+     & '  DAY     HEAD        DRAIN       LEAK   ',
+     & '     HEAD        DRAIN       LEAK        LEAK '/
+     & '           #4          #4          #4    ',
+     & '      #5          #5          #5          #6  '/
+     & '           CM          MM          MM    ',
+     & '      CM          MM          MM          MM  '/
+     & '  ---   ---------   ---------   ---------',
+     & '   ---------   ---------   ---------   ---------'/)
  6252 FORMAT(1X/1X,130('-')////1X,77('-')//
-     1 26X,'DAILY OUTPUT FOR YEAR',I5//
-     1 '  DAY     HEAD        DRAIN       LEAK   ',
-     2 '     HEAD        DRAIN       LEAK   '/
-     3 '           #4          #4          #4    ',
-     4 '      #5          #5          #5    '/
-     5 '           CM          MM          MM    ',
-     6 '      CM          MM          MM    '/
-     7 '  ---   ---------   ---------   ---------',
-     8 '   ---------   ---------   ---------'/)
+     & 26X,'DAILY OUTPUT FOR YEAR',I5//
+     & '  DAY     HEAD        DRAIN       LEAK   ',
+     & '     HEAD        DRAIN       LEAK   '/
+     & '           #4          #4          #4    ',
+     & '      #5          #5          #5    '/
+     & '           CM          MM          MM    ',
+     & '      CM          MM          MM    '/
+     & '  ---   ---------   ---------   ---------',
+     & '   ---------   ---------   ---------'/)
  6262 FORMAT(1X/1X,130('-')////1X,41('-')//
-     1 8X,'DAILY OUTPUT FOR YEAR',I5//
-     1 '  DAY     HEAD        DRAIN       LEAK   '/
-     2 '           #4          #4          #4    '/
-     3 '           CM          MM          MM    '/
-     4 '  ---   ---------   ---------   ---------'/)
+     & 8X,'DAILY OUTPUT FOR YEAR',I5//
+     & '  DAY     HEAD        DRAIN       LEAK   '/
+     & '           #4          #4          #4    '/
+     & '           CM          MM          MM    '/
+     & '  ---   ---------   ---------   ---------'/)
 
  6171 FORMAT(1X/1X,70('*'))
  6172 FORMAT(1X/1X,100('*'))
