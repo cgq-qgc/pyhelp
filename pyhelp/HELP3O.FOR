@@ -6264,6 +6264,21 @@ C
 
 
       !=================================================================
+      ! SUBROUTINE: FILL_PY_OUTDAY
+      !
+      ! Packages the daily simulation results into a 3D array
+      ! (PY_OUTDAY) to be returned to Python via f2py.
+      !=================================================================
+      SUBROUTINE FILL_PY_OUTDAY(LMYR, SWE, ASTAR, SSTAR, PY_OUTDAY)
+
+      CHARACTER(len=1), INTENT(IN) :: ASTAR, SSTAR
+      REAL, INTENT(INOUT) :: PY_OUTDAY(:, :, :)
+
+      RETURN
+      END SUBROUTINE FILL_PY_OUTDAY
+
+
+      !=================================================================
       ! SUBROUTINE: OUTMO
       !
       ! Accumulate monthly totals for computing averages and
