@@ -916,10 +916,8 @@ C
         END IF
 
         ! Calls subroutine OUTMO if monthly output is desired.
-        IF (IPRE >= 2
-     &      .AND. (IOM == 1 .OR. IOS == 1)
-     &      .AND. IOF == 1) THEN
-          CALL OUTMO(IOM, IOS)
+        IF (IPRE >= 2 .AND. IOM == 1 .AND. IOF == 1) THEN
+          CALL OUTMO
         END IF
 
         IF (IPRE >= 2) THEN
@@ -6228,104 +6226,10 @@ C
       !=================================================================
       ! SUBROUTINE: OUTMO
       !
-      ! Accumulate monthly totals for computing averages and
-      ! standard deviations and print monthly totals.
-      !=================================================================
-      SUBROUTINE OUTMO (IOM, IOS)
-
-      INTEGER, INTENT(IN) :: IOM
-      INTEGER, INTENT(IN) :: IOS
-
-      PARAMETER (MXYR = 100)
-      COMMON /BLK1/ IT4, IT7, IT13, IU4, IU7, IU13, IU11, IU10
-      COMMON /BLK12/ PRC1M (12), PRC2M (12), PRC3M (12),
-     1  PRC4M (12), PRC5M (12), PRC6M (12), DRN1M (12),
-     2  DRN2M (12), DRN3M (12), DRN4M (12), DRN5M (12),
-     3  PREM (12), RUNM (12), ETM (12), HED1M (12),
-     4  HED2M (12), HED3M (12), HED4M (12), HED5M (12),
-     5  RCRIM (20,12), SUBINM (20,12), RCR1M (12),
-     6  RCR2M (12), RCR3M (12), RCR4M (12), RCR5M (12)
-      COMMON /BLK22/ PRC1M2 (12), PRC2M2 (12), PRC3M2 (12),
-     1  PRC4M2 (12), PRC5M2 (12), PRC6M2 (12), DRN1M2 (12),
-     2  DRN2M2 (12), DRN3M2 (12), DRN4M2 (12), DRN5M2 (12),
-     3  PREM2 (12), RUNM2 (12), ETM2 (12), HED1M2 (12),
-     4  HED2M2 (12), HED3M2 (12), HED4M2 (12), HED5M2 (12),
-     5  RCRIM2 (20,12), RCR1M2 (12), RCR2M2 (12),
-     6  RCR3M2 (12), RCR4M2 (12), RCR5M2 (12)
-      COMMON /BLK23/ PRC1M1 (12), PRC2M1 (12), PRC3M1 (12),
-     1  PRC4M1 (12), PRC5M1 (12), PRC6M1 (12), DRN1M1 (12),
-     2  DRN2M1 (12), DRN3M1 (12), DRN4M1 (12), DRN5M1 (12),
-     3  PREM1 (12), RUNM1 (12), ETM1 (12), HED1M1 (12),
-     4  HED2M1 (12), HED3M1 (12), HED4M1 (12), HED5M1 (12),
-     5  RCRIM1 (20,12), RCR1M1 (12), RCR2M1 (12),
-     6  RCR3M1 (12), RCR4M1 (12), RCR5M1 (12)
-
-      ! Accumulate monthly totals for computing averages and
-      ! standard deviations.
-      IF (IOS .EQ. 1) THEN
-        DO I = 1, 12
-          PREM1(I)  =  PREM1(I)  +  PREM(I)
-          RUNM1(I)  =  RUNM1(I)  +  RUNM(I)
-          ETM1(I)   =  ETM1(I)   +  ETM(I)
-          DRN1M1(I) =  DRN1M1(I) +  DRN1M(I)
-          DRN2M1(I) =  DRN2M1(I) +  DRN2M(I)
-          DRN3M1(I) =  DRN3M1(I) +  DRN3M(I)
-          DRN4M1(I) =  DRN4M1(I) +  DRN4M(I)
-          DRN5M1(I) =  DRN5M1(I) +  DRN5M(I)
-          RCR1M1(I) =  RCR1M1(I) +  RCR1M(I)
-          RCR2M1(I) =  RCR2M1(I) +  RCR2M(I)
-          RCR3M1(I) =  RCR3M1(I) +  RCR3M(I)
-          RCR4M1(I) =  RCR4M1(I) +  RCR4M(I)
-          RCR5M1(I) =  RCR5M1(I) +  RCR5M(I)
-          HED1M1(I) =  HED1M1(I) +  HED1M(I)
-          HED2M1(I) =  HED2M1(I) +  HED2M(I)
-          HED3M1(I) =  HED3M1(I) +  HED3M(I)
-          HED4M1(I) =  HED4M1(I) +  HED4M(I)
-          HED5M1(I) =  HED5M1(I) +  HED5M(I)
-          PRC1M1(I) =  PRC1M1(I) +  PRC1M(I)
-          PRC2M1(I) =  PRC2M1(I) +  PRC2M(I)
-          PRC3M1(I) =  PRC3M1(I) +  PRC3M(I)
-          PRC4M1(I) =  PRC4M1(I) +  PRC4M(I)
-          PRC5M1(I) =  PRC5M1(I) +  PRC5M(I)
-          PRC6M1(I) =  PRC6M1(I) +  PRC6M(I)
-          DO K = 1, 20
-            RCRIM1(K,I) =  RCRIM1(K,I) +  RCRIM(K,I)
-          END DO
-          PREM2(I)  =  PREM2(I)  +  PREM(I)  * PREM(I)
-          RUNM2(I)  =  RUNM2(I)  +  RUNM(I)  * RUNM(I)
-          ETM2(I)   =  ETM2(I)   +  ETM(I)   * ETM(I)
-          DRN1M2(I) =  DRN1M2(I) +  DRN1M(I) * DRN1M(I)
-          DRN2M2(I) =  DRN2M2(I) +  DRN2M(I) * DRN2M(I)
-          DRN3M2(I) =  DRN3M2(I) +  DRN3M(I) * DRN3M(I)
-          DRN4M2(I) =  DRN4M2(I) +  DRN4M(I) * DRN4M(I)
-          DRN5M2(I) =  DRN5M2(I) +  DRN5M(I) * DRN5M(I)
-          RCR1M2(I) =  RCR1M2(I) +  RCR1M(I) * RCR1M(I)
-          RCR2M2(I) =  RCR2M2(I) +  RCR2M(I) * RCR2M(I)
-          RCR3M2(I) =  RCR3M2(I) +  RCR3M(I) * RCR3M(I)
-          RCR4M2(I) =  RCR4M2(I) +  RCR4M(I) * RCR4M(I)
-          RCR5M2(I) =  RCR5M2(I) +  RCR5M(I) * RCR5M(I)
-          HED1M2(I) =  HED1M2(I) +  HED1M(I) * HED1M(I)
-          HED2M2(I) =  HED2M2(I) +  HED2M(I) * HED2M(I)
-          HED3M2(I) =  HED3M2(I) +  HED3M(I) * HED3M(I)
-          HED4M2(I) =  HED4M2(I) +  HED4M(I) * HED4M(I)
-          HED5M2(I) =  HED5M2(I) +  HED5M(I) * HED5M(I)
-          PRC1M2(I) =  PRC1M2(I) +  PRC1M(I) * PRC1M(I)
-          PRC2M2(I) =  PRC2M2(I) +  PRC2M(I) * PRC2M(I)
-          PRC3M2(I) =  PRC3M2(I) +  PRC3M(I) * PRC3M(I)
-          PRC4M2(I) =  PRC4M2(I) +  PRC4M(I) * PRC4M(I)
-          PRC5M2(I) =  PRC5M2(I) +  PRC5M(I) * PRC5M(I)
-          PRC6M2(I) =  PRC6M2(I) +  PRC6M(I) * PRC6M(I)
-          DO K = 1, 20
-            RCRIM2(K,I) =  RCRIM2(K,I) +  RCRIM(K,I) * RCRIM(K,I)
-          END DO
-        END DO
-      END IF
-
-      ! If flag for monthly output is False.
-      IF (IOM .EQ. 0) RETURN
-
       ! Print heading for monthly results and print
       ! monthly precipitation, runoff and evapotranspiration.
+      !=================================================================
+      SUBROUTINE OUTMO
 
       WRITE (8, '(1X, /, 1X, 79("*"))')
       CALL OUTMO2
