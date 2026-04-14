@@ -220,13 +220,21 @@ C
       CALL SGMNT
 
       ! Determine the number of output variables (NVAR) for OUTDAY.
-      NVAR = 0
-      IF(LP(1) > 0) NVAR = 7
-      IF(LP(2) > 0) NVAR = 10
-      IF(LP(3) > 0) NVAR = 13
-      IF(LP(4) > 0) NVAR = 16
-      IF(LP(5) > 0) NVAR = 19
-      IF(LP(6) > 0) NVAR = 20
+      IF (LP(6) > 0) THEN
+        NVAR = 20
+      ELSE IF (LP(5) > 0) THEN
+        NVAR = 19
+      ELSE IF (LP(4) > 0) THEN
+        NVAR = 16
+      ELSE IF (LP(3) > 0) THEN
+        NVAR = 13
+      ELSE IF (LP(2) > 0) THEN
+        NVAR = 10
+      ELSE IF (LP(1) > 0) THEN
+        NVAR = 7
+      ELSE
+        NVAR = 0
+      END IF
 
       ! Computes maximum storage retention parameter.
       C2 = CN2*CN2
