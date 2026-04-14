@@ -925,10 +925,8 @@ C
         END IF
 
         ! Calls subroutine OUTYR to print annual totals.
-        IF (IPRE >= 2
-     &      .AND. (IOA == 1 .OR. IOS == 1)
-     &      .AND. IOF == 1) THEN
-          CALL OUTYR(IOA, IOS, IU8)
+        IF (IPRE >= 2 .AND. IOA == 1 .AND. IOF == 1) THEN
+          CALL OUTYR(IU8)
         END IF
 
         ! Initializes variables for the next year.
@@ -6635,10 +6633,8 @@ C
       !
       ! Print the annual totals for a year of simulation results.
       !=================================================================
-      SUBROUTINE OUTYR (IOA, IOS, IU8)
+      SUBROUTINE OUTYR (IU8)
 
-      INTEGER, INTENT(IN) :: IOA
-      INTEGER, INTENT(IN) :: IOS
       INTEGER, INTENT(IN) :: IU8
 
       PARAMETER (MXYR = 100)
@@ -6696,65 +6692,7 @@ C
       HED3A =  HED3A / 12.0
       HED4A =  HED4A / 12.0
       HED5A =  HED5A / 12.0
-      IF (IOS .EQ. 1) THEN
-        PREA1  =  PREA1  +  PREA
-        RUNA1  =  RUNA1  +  RUNA
-        ETA1   =  ETA1   +  ETA
-        DRN1A1 =  DRN1A1 +  DRN1A
-        DRN2A1 =  DRN2A1 +  DRN2A
-        DRN3A1 =  DRN3A1 +  DRN3A
-        DRN4A1 =  DRN4A1 +  DRN4A
-        DRN5A1 =  DRN5A1 +  DRN5A
-        RCR1A1 =  RCR1A1 +  RCR1A
-        RCR2A1 =  RCR2A1 +  RCR2A
-        RCR3A1 =  RCR3A1 +  RCR3A
-        RCR4A1 =  RCR4A1 +  RCR4A
-        RCR5A1 =  RCR5A1 +  RCR5A
-        HED1A1 =  HED1A1 +  HED1A
-        HED2A1 =  HED2A1 +  HED2A
-        HED3A1 =  HED3A1 +  HED3A
-        HED4A1 =  HED4A1 +  HED4A
-        HED5A1 =  HED5A1 +  HED5A
-        PRC1A1 =  PRC1A1 +  PRC1A
-        PRC2A1 =  PRC2A1 +  PRC2A
-        PRC3A1 =  PRC3A1 +  PRC3A
-        PRC4A1 =  PRC4A1 +  PRC4A
-        PRC5A1 =  PRC5A1 +  PRC5A
-        PRC6A1 =  PRC6A1 +  PRC6A
-        STOR1  =  STOR1  +  STOR
-        DO 1020 K = 1, 20
-          RCRIA1(K) =  RCRIA1(K) +  RCRIA(K)
- 1020   CONTINUE
-        PREA2  =  PREA2  +  PREA  * PREA
-        RUNA2  =  RUNA2  +  RUNA  * RUNA
-        ETA2   =  ETA2   +  ETA   * ETA
-        DRN1A2 =  DRN1A2 +  DRN1A * DRN1A
-        DRN2A2 =  DRN2A2 +  DRN2A * DRN2A
-        DRN3A2 =  DRN3A2 +  DRN3A * DRN3A
-        DRN4A2 =  DRN4A2 +  DRN4A * DRN4A
-        DRN5A2 =  DRN5A2 +  DRN5A * DRN5A
-        RCR1A2 =  RCR1A2 +  RCR1A * RCR1A
-        RCR2A2 =  RCR2A2 +  RCR2A * RCR2A
-        RCR3A2 =  RCR3A2 +  RCR3A * RCR3A
-        RCR4A2 =  RCR4A2 +  RCR4A * RCR4A
-        RCR5A2 =  RCR5A2 +  RCR5A * RCR5A
-        HED1A2 =  HED1A2 +  HED1A * HED1A
-        HED2A2 =  HED2A2 +  HED2A * HED2A
-        HED3A2 =  HED3A2 +  HED3A * HED3A
-        HED4A2 =  HED4A2 +  HED4A * HED4A
-        HED5A2 =  HED5A2 +  HED5A * HED5A
-        PRC1A2 =  PRC1A2 +  PRC1A * PRC1A
-        PRC2A2 =  PRC2A2 +  PRC2A * PRC2A
-        PRC3A2 =  PRC3A2 +  PRC3A * PRC3A
-        PRC4A2 =  PRC4A2 +  PRC4A * PRC4A
-        PRC5A2 =  PRC5A2 +  PRC5A * PRC5A
-        PRC6A2 =  PRC6A2 +  PRC6A * PRC6A
-        STOR2  =  STOR2  +  STOR  * STOR
-        DO 1030 K = 1, 20
-          RCRIA2(K) =  RCRIA2(K) +  RCRIA(K) * RCRIA(K)
- 1030   CONTINUE
-      END IF
-      IF (IOA .EQ. 0) RETURN
+
 C
 C     CONVERTS RESULTS FROM INCHES TO CU. FT. AND TO
 C     PERCENT OF THE ANNUAL PRECIPITATION AND PRINTS
