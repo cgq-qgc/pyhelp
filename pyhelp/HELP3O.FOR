@@ -44,8 +44,9 @@
 
       SUBROUTINE run_simulation (fpath_precip, fpath_tasavg,
      &  fpath_solrad, d11_input, d10_nlines, d10_input, fpath_output,
-     &  IOD, IOM, IOA, IOS,
-     &  LMYR, TFSOIL, PY_OUTMO, PY_JYEAR1, IERR
+     &  return_outday,
+     &  IOD, IOM, IOA, IOS, LMYR, TFSOIL,
+     &  PY_OUTMO, PY_JYEAR1, IERR, PY_OUTDAY
      &  )
 
       PARAMETER (MXYR = 100)
@@ -60,6 +61,7 @@
       CHARACTER(len=260), INTENT(IN) :: fpath_tasavg
       CHARACTER(len=260), INTENT(IN) :: fpath_solrad
       CHARACTER(len=260), INTENT(IN) :: fpath_output
+      INTEGER, INTENT(IN) :: return_outday
 
       INTEGER, INTENT(IN) :: IOD
       INTEGER, INTENT(IN) :: IOM
@@ -72,6 +74,7 @@
       REAL, INTENT(OUT) :: PY_OUTMO(LMYR, 14, 13)
       INTEGER, INTENT(OUT) :: PY_JYEAR1
       INTEGER, INTENT(OUT) :: IERR
+      REAL, ALLOCATABLE, INTENT(OUT), OPTIONAL :: PY_OUTDAY(:, :, :)
 
       INTEGER :: IU8
       INTEGER :: IOF   ! Flag to write Output to file (1=Yes, 0=No)
@@ -236,6 +239,12 @@ C
       ELSE
         NVAR = 0
       END IF
+
+      ! Initialize the daily output array if applicable.
+      if (return_outday == 1) THEN
+        allocate(PY_OUTDAY(LMYR, 367, NVAR))
+        PY_OUTDAY = -999.0
+      end if
 
       ! Computes maximum storage retention parameter.
       C2 = CN2*CN2
