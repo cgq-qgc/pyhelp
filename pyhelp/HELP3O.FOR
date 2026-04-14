@@ -26,7 +26,6 @@
       !     IOD          : INTEGER - Flag for Daily Output (1=Yes, 0=No).
       !     IOM          : INTEGER - Flag for Monthly Output (1=Yes, 0=No).
       !     IOA          : INTEGER - Flag for Annual Output (1=Yes, 0=No).
-      !     IOS          : INTEGER - Flag for Summary Output (1=Yes, 0=No).
       !     LMYR         : INTEGER - Total number of years to simulate.
       !     TFSOIL       : REAL - Average air temperature (in Fahrenheit)
       !                    below which the soil is assumed to be freezing.
@@ -44,7 +43,7 @@
 
       SUBROUTINE run_simulation (fpath_precip, fpath_tasavg,
      &  fpath_solrad, d11_input, d10_nlines, d10_input, fpath_output,
-     &  IOD, IOM, IOA, IOS,
+     &  IOD, IOM, IOA,
      &  LMYR, TFSOIL, PY_OUTMO, PY_JYEAR1, IERR
      &  )
 
@@ -64,7 +63,6 @@
       INTEGER, INTENT(IN) :: IOD
       INTEGER, INTENT(IN) :: IOM
       INTEGER, INTENT(IN) :: IOA
-      INTEGER, INTENT(IN) :: IOS
 
       INTEGER, INTENT(IN) :: LMYR
       REAL, INTENT(IN) :: TFSOIL
