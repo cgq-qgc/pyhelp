@@ -133,13 +133,6 @@ C
      1  NSTEP(6), ND
       COMMON /BLK17/ NSEG1, NSEG2, NSEG3, NSEG4, NSEG5, NSEG6, NSEG
       COMMON /BLK19/ IPL, IHV, IPRE, IRUN, ITSOIL, IVEG
-      COMMON /BLK22/ PRC1M2 (12), PRC2M2 (12), PRC3M2 (12),
-     1  PRC4M2 (12), PRC5M2 (12), PRC6M2 (12), DRN1M2 (12),
-     2  DRN2M2 (12), DRN3M2 (12), DRN4M2 (12), DRN5M2 (12),
-     3  PREM2 (12), RUNM2 (12), ETM2 (12), HED1M2 (12),
-     4  HED2M2 (12), HED3M2 (12), HED4M2 (12), HED5M2 (12),
-     5  RCRIM2 (20,12), RCR1M2 (12), RCR2M2 (12),
-     6  RCR3M2 (12), RCR4M2 (12), RCR5M2 (12)
       COMMON /BLK23/ PRC1M1 (12), PRC2M1 (12), PRC3M1 (12),
      1  PRC4M1 (12), PRC5M1 (12), PRC6M1 (12), DRN1M1 (12),
      2  DRN2M1 (12), DRN3M1 (12), DRN4M1 (12), DRN5M1 (12),
@@ -456,16 +449,6 @@ C     THY6 = 0.0D0
       PRC1M1 = 0.0; PRC2M1 = 0.0; PRC3M1 = 0.0
       PRC4M1 = 0.0; PRC5M1 = 0.0; PRC6M1 = 0.0
       RCRIM1 = 0.0; RCRIM = 0.0; SUBINM = 0.0; RCRIM2 = 0.0
-
-      PREM2 = 0.0; RUNM2 = 0.0; ETM2 = 0.0
-      DRN1M2 = 0.0; DRN2M2 = 0.0; DRN3M2 = 0.0
-      DRN4M2 = 0.0; DRN5M2 = 0.0
-      RCR1M2 = 0.0; RCR2M2 = 0.0; RCR3M2 = 0.0
-      RCR4M2 = 0.0; RCR5M2 = 0.0
-      HED1M2 = 0.0; HED2M2 = 0.0; HED3M2 = 0.0
-      HED4M2 = 0.0; HED5M2 = 0.0
-      PRC1M2 = 0.0; PRC2M2 = 0.0; PRC3M2 = 0.0
-      PRC4M2 = 0.0; PRC5M2 = 0.0; PRC6M2 = 0.0
 
       ! Start yearly loop for simulation.
       ! IYR is the number of the year.
