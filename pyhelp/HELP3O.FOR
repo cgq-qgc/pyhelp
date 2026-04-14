@@ -90,7 +90,8 @@ C
       DOUBLE PRECISION DSWUL, DTHICK, DRCUL, DBUBUL,
      1  DWPUL, DLAMUL, DRSUL, DUL, DFCUL, DSUBIN, DCHG, DRCRS
 
-      CHARACTER(len=1) :: ISTAR(2) = ['*', ' ']
+      CHARACTER(len=1) :: ISTAR(2)
+      DATA ISTAR /'*', ' '/
       CHARACTER(len=1) :: ASTAR, SSTAR
       CHARACTER(len=60) TITLE
 
