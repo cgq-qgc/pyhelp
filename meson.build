@@ -3,6 +3,9 @@ project('pyhelp', 'fortran', 'c',
   default_options: ['warning_level=1']
   )
 
+add_project_arguments('-Wno-format', language: 'c')
+add_project_arguments('-Wno-conversion', language: 'fortran')
+
 py_mod = import('python')
 py = py_mod.find_installation(pure: false)
 py_dep = py.dependency()
