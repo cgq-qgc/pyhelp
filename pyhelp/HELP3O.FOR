@@ -6092,9 +6092,13 @@ C
         DO K = 1, 5
           IF (LP(K) > 0) THEN
             IF (LAYER(LP(K)) > 2) THEN
+              ! Bottom layer is a barrier (Type 3 or 4)
               IF (LAYER(LP(K)-1) <= 2) THEN
+                ! Layer above is a vertical percolation (Type 1)
+                ! or a lateral drainage layer (Type 2).
                 WRITE (8, 6121) K, LP(K), K, LP(K)-1
               ELSE
+                ! Layer above is a composite liner (Type 4).
                 WRITE (8, 6121) K, LP(K)-1, K, LP(K)-2
               END IF
             END IF
