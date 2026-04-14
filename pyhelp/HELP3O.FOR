@@ -243,7 +243,7 @@ C
       END IF
 
       ! Initialize the daily output array if applicable.
-      FILL_OUTDAY = (NVAR_PY_OUTDAY > 0)
+      FILL_OUTDAY = (NVAR_PY_OUTDAY == 20)
       IF (FILL_OUTDAY) THEN
         PY_OUTDAY = -999.0
       END IF
