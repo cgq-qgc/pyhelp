@@ -395,8 +395,6 @@ class HelpManager(object):
                   Flag to control the output of monthly results (1 Yes, 0 No).
             - 'IOA': int (default=0)
                   Flag to control the output of annual results (1 Yes, 0 No).
-            - 'IOS': int (default=0)
-                  Flag to control the output of summary results (1 Yes, 0 No).
             These flags are passed to the HELP model configuration to
             customize simulation output. If omitted, default values for these
             flags are used.
@@ -452,7 +450,6 @@ class HelpManager(object):
             daily_out = help_output_kwargs.get('IOD', 0)
             monthly_out = help_output_kwargs.get('IOM', 1)
             yearly_out = help_output_kwargs.get('IOA', 0)
-            summary_out = help_output_kwargs.get('IOS', 0)
 
             year_start = self.precip_data.index.year.min()
             year_end = self.precip_data.index.year.max()
@@ -462,7 +459,7 @@ class HelpManager(object):
                 fpath_d4, fpath_d7, fpath_d13,
                 d11_input, d10_input,
                 fpath_out,
-                daily_out, monthly_out, yearly_out, summary_out,
+                daily_out, monthly_out, yearly_out,
                 simu_nyear, tfsoil
                 )
 

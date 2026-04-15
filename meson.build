@@ -27,7 +27,9 @@ help3o_c = custom_target('help3o_c',
   input : 'pyhelp/HELP3O.FOR',
   output : ['HELP3Omodule.c', 'HELP3O-f2pywrappers.f'],
   command : [py, '-m', 'numpy.f2py', '@INPUT@', '-m', 'HELP3O',
-             '--lower', '--build-dir', '@OUTDIR@']
+             '--lower', '--build-dir', '@OUTDIR@',
+             'only:', 'run_simulation', ':'
+             ]
 )
 
 # Build extension using the generated C wrapper AND the original Fortran file

@@ -36,7 +36,6 @@ def rca_params(rca_folder, tmp_path):
     daily_out = 0
     monthly_out = 1
     yearly_out = 0
-    summary_out = 0
     tfsoil = 32.0  # Must be in Fahrenheit
     simu_nyear = 3
 
@@ -57,7 +56,6 @@ def rca_params(rca_folder, tmp_path):
             daily_out,
             monthly_out,
             yearly_out,
-            summary_out,
             simu_nyear,
             tfsoil]
 
