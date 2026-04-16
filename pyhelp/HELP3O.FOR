@@ -522,10 +522,10 @@ C     THY6 = 0.0D0
           DO J = 1, NSEG1D
             SWUL(J) = DSWUL(J)
           END DO
-C
-C     PERFORM ACCOUNTING OF MONTHLY AND ANNUAL TOTALS AND
-C     PEAK VALUES FOR THE TOP SUBPROFILE.
-C
+
+          ! Perform accounting of monthly and annual totals
+          ! for the top subprofile.
+
           RUNM(IMO) = RUNM(IMO) + RUN
           RUNA = RUNA + RUN
           ETT = ETT - EXET
@@ -565,10 +565,10 @@ C
           DO 1160 J = NSEG2B, NSEG2D
             SWUL(J) = DSWUL(J)
  1160     CONTINUE
-C
-C     PERFORM ACCOUNTING OF MONTHLY AND ANNUAL TOTALS AND
-C     PEAK VALUES FOR THE SECOND SUBPROFILE FROM THE TOP.
-C
+
+          ! Perform accounting of monthly and annual totals
+          ! for the second subprofile from the top.
+
           HED2S(IDAMO) = HED2
           HED2M(IMO) = HED2M(IMO) + HED2
           IF(LD(2) .GT. 0) THEN
@@ -600,10 +600,10 @@ C
           DO 1170 J = NSEG3B, NSEG3D
             SWUL(J) = DSWUL(J)
  1170     CONTINUE
-C
-C     PERFORM ACCOUNTING OF MONTHLY AND ANNUAL TOTALS AND
-C     PEAK VALUES FOR THE THIRD SUBPROFILE FROM THE TOP.
-C
+
+          ! Perform accounting of monthly and annual totals
+          ! for the third subprofile from the top.
+
           HED3S(IDAMO) = HED3
           HED3M(IMO) = HED3M(IMO) + HED3
           IF(LD(3) .GT. 0) THEN
@@ -640,10 +640,10 @@ C
           DO 1180 J = NSEG4B, NSEG4D
             SWUL(J) = DSWUL(J)
  1180     CONTINUE
-C
-C     PERFORM ACCOUNTING OF MONTHLY AND ANNUAL TOTALS AND
-C     PEAK VALUES FOR THE THIRD SUBPROFILE FROM THE TOP.
-C
+
+          ! Perform accounting of monthly and annual totals
+          ! for the third subprofile from the top.
+
           HED4S(IDAMO) = HED4
           HED4M(IMO) = HED4M(IMO) + HED4
           IF(LD(4) .GT. 0) THEN
@@ -675,10 +675,10 @@ C
           DO 1190 J = NSEG5B, NSEG5D
             SWUL(J) = DSWUL(J)
  1190     CONTINUE
-C
-C     PERFORM ACCOUNTING OF MONTHLY AND ANNUAL TOTALS AND
-C     PEAK VALUES FOR THE THIRD SUBPROFILE FROM THE TOP.
-C
+
+          ! Perform accounting of monthly and annual totals
+          ! for the third subprofile from the top.
+
           HED5S(IDAMO) = HED5
           HED5M(IMO) = HED5M(IMO) + HED5
           IF(LD(5) .GT. 0) THEN
@@ -710,10 +710,10 @@ C
           DO 1200 J = NSEG6B, NSEG6D
             SWUL(J) = DSWUL(J)
  1200     CONTINUE
-C
-C     PERFORM ACCOUNTING OF MONTHLY AND ANNUAL TOTALS AND
-C     PEAK VALUES FOR THE THIRD SUBPROFILE FROM THE TOP.
-C
+
+          ! Perform accounting of monthly and annual totals
+          ! for the third subprofile from the top.
+
           PRC6M(IMO) = PRC6M(IMO) + PRC6
           PRC6A = PRC6A + PRC6
 
