@@ -729,10 +729,14 @@ C
           ! End of daily loop.
 
           IF (IDA .EQ. ND) GO TO 1210
+
           IDAP1 = IDA + 1
           MO = MONTH (IDAP1, NT)
+
           IF (MO .EQ. MO1) GO TO 1100
+
  1210     CONTINUE
+
           HD1M2 = 0.0
           HD2M2 = 0.0
           HD3M2 = 0.0
@@ -770,7 +774,9 @@ C
           IF (HD3M2 .GT. 0.0) SHED3(MO1) = HD3M2**0.5
           IF (HD4M2 .GT. 0.0) SHED4(MO1) = HD4M2**0.5
           IF (HD5M2 .GT. 0.0) SHED5(MO1) = HD5M2**0.5
+
  1100   CONTINUE
+
         PSWULE =  EXWAT2 + EXWAT3 + EXWAT4 + EXWAT5 + EXWAT6
 C
 C     COMPUTES TOTAL SOIL WATER STORAGE.
