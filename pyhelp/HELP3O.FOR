@@ -122,10 +122,6 @@ C
      1  DRN1A, DRN2A, DRN3A, DRN4A, DRN5A, BAL, PREA, RUNA, ETA,
      2  STOR, RCR1A, RCR2A, RCR3A, RCR4A, RCR5A, RCRIA(20), HED1A,
      3  HED2A, HED3A, HED4A, HED5A, OSWULE, PSWULE, SUBINA(20)
-      COMMON /BLK14/ PPRC1, PPRC2, PPRC3, PPRC4, PPRC5, PPRC6,
-     1  PDRN1, PDRN2, PDRN3, PDRN4, PDRN5, PPRE, PRUN, PSNO, PSW, DSW,
-     2  PHED1, PHED2, PHED3, PHED4, PHED5, PRCR1, PRCR2, PRCR3,
-     3  PRCR4, PRCR5, PRCRI(20)
       COMMON /BLK15/ PRC1, PRC2, PRC3, PRC4, PRC5, PRC6, DRN1, DRN2,
      1  DRN3, DRN4, DRN5, HED1, HED2, HED3, HED4, HED5,
      2  RCR1, RCR2, RCR3, RCR4, RCR5, RCRI(20)
@@ -383,26 +379,12 @@ C     THY6 = 0.0D0
       DO J = 1, 7
         SWULE = SWULE + SWUL(J)
       END DO
-      PSW = SWULE/EDEPTH
-      DSW = SWULE/EDEPTH
 
       IMO = 0
       IDA = 1
 
       RCRIA = 0.0
       SUBINA = 0.0
-
-      PPRC1 = 0.0; PPRC2 = 0.0; PPRC3 = 0.0
-      PPRC4 = 0.0; PPRC5 = 0.0; PPRC6 = 0.0
-      PDRN1 = 0.0; PDRN2 = 0.0; PDRN3 = 0.0
-      PDRN4 = 0.0; PDRN5 = 0.0
-      PRCR1 = 0.0; PRCR2 = 0.0; PRCR3 = 0.0
-      PRCR4 = 0.0; PRCR5 = 0.0
-
-      PRUN = 0.0; PPRE = 0.0; PSNO = 0.0
-
-      PHED1 = 0.0; PHED2 = 0.0; PHED3 = 0.0
-      PHED4 = 0.0; PHED5 = 0.0
 
       RCRIM = 0.0; SUBINM = 0.0
 
@@ -466,9 +448,6 @@ C     THY6 = 0.0D0
           MO1 = MO
           PREM(IMO) = PREM(IMO) + PRE(IDA)
           PREA = PREA + PRE(IDA)
-          IF (PRE(IDA) > PPRE) THEN
-            PPRE = PRE(IDA)
-          END IF
 
           ! Determine if soil is frozen
           CALL FRZCHK (TFSOIL)
@@ -479,9 +458,6 @@ C     THY6 = 0.0D0
 
           ! Compute snowfall and snowmelt and adjusts rain accordingly.
           CALL SNOW (IT)
-          IF (SNO > PSNO) THEN
-            PSNO = SNO
-          END IF
 
           ! ASTAR indicates freezing temperatures.
           ASTAR = ISTAR(IT)
@@ -516,7 +492,6 @@ C     THY6 = 0.0D0
      &                SWULY)
 
           ! Accounting is performed.
-          IF (HED1 > PHED1) PHED1 = HED1
           SWULE = 0.0
           EXET = 0.0
           DO J = 1, 7
@@ -532,8 +507,6 @@ C     THY6 = 0.0D0
           END DO
 
           SWE = SWULE/EDEPTH
-          IF (SWE .LT. DSW) DSW = SWE
-          IF (SWE .GT. PSW) PSW = SWE
 
           ! Excess water added to the top segment is
           ! diverted to runoff.
@@ -555,7 +528,6 @@ C     PEAK VALUES FOR THE TOP SUBPROFILE.
 C
           RUNM(IMO) = RUNM(IMO) + RUN
           RUNA = RUNA + RUN
-          IF (RUN .GT. PRUN) PRUN = RUN
           ETT = ETT - EXET
           ETM(IMO) = ETM(IMO) + ETT
           ETA = ETA + ETT
@@ -566,12 +538,9 @@ C
              DRN1 = DRN1 - RCR1
              RCR1M(IMO) = RCR1M(IMO) + RCR1
              RCR1A = RCR1A + RCR1
-             IF (RCR1 .GT. PRCR1) PRCR1 = RCR1
           END IF
           DRN1M(IMO) = DRN1M(IMO) + DRN1
           DRN1A = DRN1A + DRN1
-          IF (DRN1 .GT. PDRN1) PDRN1 = DRN1
-          IF (PRC1 .GT. PPRC1) PPRC1 = PRC1
           PRC1M(IMO) = PRC1M(IMO) + PRC1
           PRC1A = PRC1A + PRC1
           FIN2 = PRC1 + EXWAT2
@@ -589,7 +558,6 @@ C
 
           CALL DRAIN (FIN2, DRN2, PRC2, HED2, BALY, BALT, EXWAT2,
      1       NPROF, NSEG2B, NSEG2E, LAY2B, LAY2E, DRIN, SWULY)
-          IF (HED2 .GT. PHED2) PHED2 = HED2
 C
 C     COMPUTES SOIL WATER CONTENT IN THE
 C     SECOND SUBPROFILE FROM THE TOP.
@@ -608,14 +576,11 @@ C
              DRN2 = DRN2 - RCR2
              RCR2M(IMO) = RCR2M(IMO) + RCR2
              RCR2A = RCR2A + RCR2
-             IF (RCR2 .GT. PRCR2) PRCR2 = RCR2
           END IF
           DRN2M(IMO) = DRN2M(IMO) + DRN2
           DRN2A = DRN2A + DRN2
-          IF (DRN2 .GT. PDRN2) PDRN2 = DRN2
           PRC2M(IMO) = PRC2M(IMO) + PRC2
           PRC2A = PRC2A + PRC2
-          IF (PRC2 .GT. PPRC2) PPRC2 = PRC2
           FIN3 = PRC2 + EXWAT3
           IF (NSEG3 .LE. 0) GO TO 1150
 C
@@ -632,7 +597,6 @@ C
           EXWAT3 = 0.0
           CALL DRAIN (FIN3, DRN3, PRC3, HED3, BALY, BALT, EXWAT3,
      1       NPROF, NSEG3B, NSEG3E, LAY3B, LAY3E, DRIN, SWULY)
-          IF (HED3 .GT. PHED3) PHED3 = HED3
           DO 1170 J = NSEG3B, NSEG3D
             SWUL(J) = DSWUL(J)
  1170     CONTINUE
@@ -647,14 +611,11 @@ C
              DRN3 = DRN3 - RCR3
              RCR3M(IMO) = RCR3M(IMO) + RCR3
              RCR3A = RCR3A + RCR3
-             IF (RCR3 .GT. PRCR3) PRCR3 = RCR3
           END IF
           DRN3M(IMO) = DRN3M(IMO) + DRN3
           DRN3A = DRN3A + DRN3
-          IF (DRN3 .GT. PDRN3) PDRN3 = DRN3
           PRC3M(IMO) = PRC3M(IMO) + PRC3
           PRC3A = PRC3A + PRC3
-          IF (PRC3 .GT. PPRC3) PPRC3 = PRC3
           FIN4 = PRC3 + EXWAT4
           IF (NSEG4 .LE. 0) GO TO 1150
 C
@@ -672,7 +633,6 @@ C
           EXWAT4 = 0.0
           CALL DRAIN (FIN4, DRN4, PRC4, HED4, BALY, BALT, EXWAT4,
      1       NPROF, NSEG4B, NSEG4E, LAY4B, LAY4E, DRIN, SWULY)
-          IF (HED4 .GT. PHED4) PHED4 = HED4
 C
 C     COMPUTES SOIL WATER CONTENT IN THE THIRD
 C     SUBPROFILE FROM THE TOP.
@@ -691,14 +651,11 @@ C
              DRN4 = DRN4 - RCR4
              RCR4M(IMO) = RCR4M(IMO) + RCR4
              RCR4A = RCR4A + RCR4
-             IF (RCR4 .GT. PRCR4) PRCR4 = RCR4
           END IF
           DRN4M(IMO) = DRN4M(IMO) + DRN4
           DRN4A = DRN4A + DRN4
-          IF (DRN4 .GT. PDRN4) PDRN4 = DRN4
           PRC4M(IMO) = PRC4M(IMO) + PRC4
           PRC4A = PRC4A + PRC4
-          IF (PRC4 .GT. PPRC4) PPRC4 = PRC4
           FIN5 = PRC4 + EXWAT5
           IF (NSEG5 .LE. 0) GO TO 1150
 C
@@ -715,7 +672,6 @@ C
           EXWAT5 = 0.0
           CALL DRAIN (FIN5, DRN5, PRC5, HED5, BALY, BALT, EXWAT5,
      1       NPROF, NSEG5B, NSEG5E, LAY5B, LAY5E, DRIN, SWULY)
-          IF (HED5 .GT. PHED5) PHED5 = HED5
           DO 1190 J = NSEG5B, NSEG5D
             SWUL(J) = DSWUL(J)
  1190     CONTINUE
@@ -730,14 +686,11 @@ C
              DRN5 = DRN5 - RCR5
              RCR5M(IMO) = RCR5M(IMO) + RCR5
              RCR5A = RCR5A + RCR5
-             IF (RCR5 .GT. PRCR5) PRCR5 = RCR5
           END IF
           DRN5M(IMO) = DRN5M(IMO) + DRN5
           DRN5A = DRN5A + DRN5
-          IF (DRN5 .GT. PDRN5) PDRN5 = DRN5
           PRC5M(IMO) = PRC5M(IMO) + PRC5
           PRC5A = PRC5A + PRC5
-          IF (PRC5 .GT. PPRC5) PPRC5 = PRC5
           FIN6 = PRC5 + EXWAT6
           IF (NSEG6 .LE. 0) GO TO 1150
 C
@@ -763,8 +716,6 @@ C     PEAK VALUES FOR THE THIRD SUBPROFILE FROM THE TOP.
 C
           PRC6M(IMO) = PRC6M(IMO) + PRC6
           PRC6A = PRC6A + PRC6
-          IF (PRC6 .GT. PPRC6) PPRC6 = PRC6
-
 
  1150     CONTINUE
 
@@ -5354,10 +5305,6 @@ C
      1  DRN1A, DRN2A, DRN3A, DRN4A, DRN5A, BAL, PREA, RUNA, ETA,
      2  STOR, RCR1A, RCR2A, RCR3A, RCR4A, RCR5A, RCRIA(20), HED1A,
      3  HED2A, HED3A, HED4A, HED5A, OSWULE, PSWULE, SUBINA(20)
-      COMMON /BLK14/ PPRC1, PPRC2, PPRC3, PPRC4, PPRC5, PPRC6,
-     1  PDRN1, PDRN2, PDRN3, PDRN4, PDRN5, PPRE, PRUN, PSNO, PSW, DSW,
-     2  PHED1, PHED2, PHED3, PHED4, PHED5, PRCR1, PRCR2, PRCR3,
-     3  PRCR4, PRCR5, PRCRI(20)
       COMMON /BLK15/ PRC1, PRC2, PRC3, PRC4, PRC5, PRC6, DRN1, DRN2,
      1  DRN3, DRN4, DRN5, HED1, HED2, HED3, HED4, HED5,
      2  RCR1, RCR2, RCR3, RCR4, RCR5, RCRI(20)
@@ -5409,7 +5356,6 @@ C
          DRCRS(J) = 0.0D0
  1010 CONTINUE
       DO 1020 K = 1, LAY
-         IF (RCRI(K) .GT. PRCRI(K)) PRCRI(K) = RCRI(K)
          IF (LRIN(K) .EQ. 1) THEN
             DO 1030 J = LSEGS(K,1), LSEGS(K,2)
               IF (LSEGS(K,1) .GT. 7) THEN
