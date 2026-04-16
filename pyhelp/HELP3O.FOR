@@ -6115,10 +6115,44 @@ C
       ! Packages the daily simulation results into a 3D array
       ! (PY_OUTDAY) to be returned to Python via f2py.
       !=================================================================
-      SUBROUTINE FILL_PY_OUTDAY(LMYR, SWE, ASTAR, SSTAR, PY_OUTDAY)
+      SUBROUTINE FILL_PY_OUTDAY (LMYR, SWE, ASTAR, SSTAR, PY_OUTDAY)
 
+      INTEGER, INTENT(IN) :: LMYR
       CHARACTER(len=1), INTENT(IN) :: ASTAR, SSTAR
-      REAL, INTENT(INOUT) :: PY_OUTDAY(:, :, :)
+      REAL, INTENT(INOUT) :: PY_OUTDAY(LMYR, 367, 20)
+
+      COMMON /BLK8/ PRE (370), TMPF (366), RAD (366)
+      COMMON /BLK9/ PINF, ES1T, SMELT, GMRO, ADDRUN, OLDSNO, SNO, WF(7),
+     1  SSNO
+      COMMON /BLK11/ ETO, XLAI, STAGE1, CONA, RAIN, RUN, ABST, EAJ, TS2
+      COMMON /BLK16/ LD(5), LP(6), LPQ(5), LCASE(5), IYR, IDA, MO,
+     &  NSTEP(6), ND
+
+      ! Print heading
+      IF (IDA == 1) THEN
+        PY_OUTDAY(IYR, 1, 1:7) = 0
+      End IF
+
+      ! Save if air temperature is freezing.
+      IF (ASTAR == '*') THEN
+        PY_OUTDAY(IYR, IDA + 1, 1) = 1
+      END IF
+
+      ! Save is soil is frozen.
+      IF (SSTAR == '*') THEN
+        PY_OUTDAY(IYR, IDA + 1, 2) = 1
+      END IF
+
+      ! Save daily rain in mm.
+      PY_OUTDAY(IYR, IDA + 1, 3) = PRE(IDA) * 25.4
+      ! Save surface runoff in mm.
+      PY_OUTDAY(IYR, IDA + 1, 4) = RUN * 25.4
+      ! Save surface evapotranspiration in mm.
+      PY_OUTDAY(IYR, IDA + 1, 5) = ETT * 25.4
+      ! Soil moisture in evaporative zone in cm/cm.
+      PY_OUTDAY(IYR, IDA + 1, 6) = SWE
+      ! Save total snow water equivalent in mm.
+      PY_OUTDAY(IYR, IDA + 1, 7) = SNO * 25.4
 
       RETURN
       END SUBROUTINE FILL_PY_OUTDAY
