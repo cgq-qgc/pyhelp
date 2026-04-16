@@ -714,7 +714,11 @@ C
 
           ! Call subroutine outday if daily output is desired.
           IF (IOD == 1 .AND. IPRE >= 2) THEN
-            CALL OUTDAY (SWE, ASTAR, SSTAR, NVAR)
+            CALL OUTDAY(SWE, ASTAR, SSTAR, NVAR)
+          END IF
+
+          IF (FILL_OUTDAY) THEN
+            CALL FILL_PY_OUTDAY(LMYR, SWE, ASTAR, SSTAR, PY_OUTDAY)
           END IF
 
           ! End of daily loop.
