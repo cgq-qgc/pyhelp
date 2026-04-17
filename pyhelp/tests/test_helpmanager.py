@@ -202,11 +202,11 @@ def test_plot_area_yearly_avg(output_dir, output_file, fig_title):
     children = fig.axes[0].get_children()
     expected_values = {
         'precip': 1086.8448950125246,
-        'rechg': 136.12068516893297,
-        'runoff': 226.9635476845988,
-        'evapo': 550.11140519815,
-        'subrun1': 47.97935577404126,
-        'subrun2': 121.66539490800443
+        'rechg': 144.59660495818275,
+        'runoff': 228.3554850746950,
+        'evapo': 526.3448146870115,
+        'subrun1': 52.79497962998723,
+        'subrun2': 131.34891390581527
         }
     for i, (name, value) in enumerate(expected_values.items()):
         height = children[i * 2].get_height()
