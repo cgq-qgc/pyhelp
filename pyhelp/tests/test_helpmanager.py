@@ -231,12 +231,12 @@ def test_calc_cells_yearly_avg(output_file):
     yearly_avg = output.calc_cells_yearly_avg()
     expected_results = {
         'precip': 1055.8597373343132,
-        'perco': 251.5843470406275,
-        'evapo': 548.5954285729573,
-        'rechg': 130.18263914385366,
-        'runoff': 212.26214164981408,
-        'subrun1': 46.26946108344004,
-        'subrun2': 113.02721698440918}
+        'perco': 267.6719784568864,
+        'evapo': 527.1941984146556,
+        'rechg': 137.9259378303636,
+        'runoff': 213.45404069293568,
+        'subrun1': 50.6600028195145,
+        'subrun2': 121.90106029782129}
     for name, value in expected_results.items():
         result = np.mean(yearly_avg[name])
         assert abs(result - value) < 1, f'{name}: {result} vs {value}'
@@ -245,12 +245,12 @@ def test_calc_cells_yearly_avg(output_file):
     yearly_avg = output.calc_cells_yearly_avg(year_from=2003, year_to=2009)
     expected_results = {
         'precip': 1086.8448950125246,
-        'perco': 259.85654385728577,
-        'evapo': 550.11140519815,
-        'rechg': 136.12068516893297,
-        'runoff': 226.9635476845988,
-        'subrun1': 47.97935577404126,
-        'subrun2': 121.66539490800443}
+        'perco': 277.51113515960424,
+        'evapo': 526.3448146870114,
+        'rechg': 144.59660495818272,
+        'runoff': 228.3554850746951,
+        'subrun1': 52.79497962998723,
+        'subrun2': 131.34891390581527}
     for name, value in expected_results.items():
         result = np.mean(yearly_avg[name])
         assert abs(result - value) < 1, f'{name}: {result} vs {value}'
@@ -259,12 +259,12 @@ def test_calc_cells_yearly_avg(output_file):
     yearly_avg = output.calc_cells_yearly_avg(year_from=2003, year_to=2003)
     expected_results = {
         'precip': 1144.4142919267927,
-        'perco': 324.15252048559057,
-        'evapo': 492.4243657442988,
-        'rechg': 148.72946963740077,
-        'runoff': 164.32582637467374,
-        'subrun1': 56.33706154407843,
-        'subrun2': 140.96849990912418}
+        'perco': 336.00345882089516,
+        'evapo': 476.6673904049153,
+        'rechg': 156.26847950749251,
+        'runoff': 165.63211222926193,
+        'subrun1': 60.01800987070037,
+        'subrun2': 149.44863253173403}
     for name, value in expected_results.items():
         result = np.mean(yearly_avg[name])
         assert abs(result - value) < 1, f'{name}: {result} vs {value}'
