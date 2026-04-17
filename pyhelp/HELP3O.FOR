@@ -6138,32 +6138,28 @@ C
       COMMON /BLK11/ ETO, XLAI, STAGE1, CONA, RAIN, RUN, ABST, EAJ, TS2
       COMMON /BLK16/ LD(5), LP(6), LPQ(5), LCASE(5), IYR, IDA, MO,
      &  NSTEP(6), ND
+      COMMON /BLK27/ IFREZ, IDFS, IFCNT, KCNT, MXKCNT
 
       ! Print heading
       IF (IDA == 1) THEN
-        PY_OUTDAY(IYR, :, 1:7) = 0
+        PY_OUTDAY(IYR, 1, 1:7) = 0
       End IF
 
-      ! Save if air temperature is freezing.
-      IF (ASTAR == '*') THEN
-        PY_OUTDAY(IYR, IDA + 1, 1) = 1
-      END IF
-
-      ! Save is soil is frozen.
-      IF (SSTAR == '*') THEN
-        PY_OUTDAY(IYR, IDA + 1, 2) = 1
-      END IF
-
       ! Save daily rain in mm.
-      PY_OUTDAY(IYR, IDA + 1, 3) = PRE(IDA) * 25.4
+      PY_OUTDAY(IYR, IDA + 1, 1) = PRE(IDA) * 25.4
       ! Save surface runoff in mm.
-      PY_OUTDAY(IYR, IDA + 1, 4) = RUN * 25.4
+      PY_OUTDAY(IYR, IDA + 1, 2) = RUN * 25.4
       ! Save surface evapotranspiration in mm.
-      PY_OUTDAY(IYR, IDA + 1, 5) = ETT * 25.4
+      PY_OUTDAY(IYR, IDA + 1, 3) = ETT * 25.4
       ! Soil moisture in evaporative zone in cm/cm.
-      PY_OUTDAY(IYR, IDA + 1, 6) = SWE
+      PY_OUTDAY(IYR, IDA + 1, 4) = SWE
       ! Save total snow water equivalent in mm.
-      PY_OUTDAY(IYR, IDA + 1, 7) = SNO * 25.4
+      PY_OUTDAY(IYR, IDA + 1, 5) = SNO * 25.4
+
+      ! Save daily air temperature in deg C.
+      PY_OUTDAY(IYR, IDA + 1, 6) = (TMPF(IDA) - 32.) / 1.8
+      ! Save if soil is frozen (1=Yes, 0=No).
+      PY_OUTDAY(IYR, IDA + 1, 7) = IFREZ
 
       RETURN
       END SUBROUTINE FILL_PY_OUTDAY
