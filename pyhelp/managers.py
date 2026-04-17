@@ -309,6 +309,7 @@ class HelpManager(object):
                 dist = calc_dist_from_coord(grid_lat[i], grid_lon[i],
                                             data_lat, data_lon)
                 argmin = int(np.argmin(dist))
+                col = data.columns[argmin]
 
                 lat = data_lat[argmin]
                 lon = data_lon[argmin]
@@ -317,16 +318,13 @@ class HelpManager(object):
                 if not osp.exists(help_input_fname):
                     city = '{} at {:3.1f} ; {:3.1f}'.format(var, lat, lon)
                     if var in ('precip', 'airtemp'):
-                        to_help_func(help_input_fname,
-                                     data.index.year.values,
-                                     data.values[:, argmin],
-                                     city)
+                        to_help_func(
+                            help_input_fname, data[col], city
+                            )
                     elif var == 'solrad':
-                        to_help_func(help_input_fname,
-                                     data.index.year.values,
-                                     data.values[:, argmin],
-                                     city,
-                                     lat)
+                        to_help_func(
+                            help_input_fname, data[col], city, lat
+                            )
 
                 file_conn_tbl[cellname] = help_input_fname
                 index_conn_tbl[cellname] = argmin
