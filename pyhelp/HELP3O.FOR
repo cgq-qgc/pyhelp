@@ -45,9 +45,10 @@
      &  fpath_solrad, d11_input, d10_nlines, d10_input, fpath_output,
      &  IOD, IOM, IOA,
      &  LMYR, TFSOIL, PY_OUTMO, PY_JYEAR1, IERR,
-     &  NVAR_PY_OUTDAY, PY_OUTDAY
+     &  FILL_OUTDAY, PY_OUTDAY
      &  )
 
+      PARAMETER (NDVAR = 23)
       PARAMETER (MXYR = 100)
       PARAMETER (MAXMO = 12)
 
@@ -72,8 +73,8 @@
       INTEGER, INTENT(OUT) :: PY_JYEAR1
       INTEGER, INTENT(OUT) :: IERR
 
-      INTEGER, INTENT(IN) :: NVAR_PY_OUTDAY
-      REAL, INTENT(OUT) :: PY_OUTDAY(LMYR, 367, NVAR_PY_OUTDAY)
+      INTEGER, INTENT(IN) :: FILL_OUTDAY
+      REAL, INTENT(OUT) :: PY_OUTDAY(LMYR, 367, FILL_OUTDAY*NDVAR)
 
       INTEGER :: IU8
       INTEGER :: IOF   ! Flag to write Output to file (1=Yes, 0=No)
