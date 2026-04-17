@@ -396,7 +396,7 @@
         IMO = IMO + 1
 
         ! Read and print weather data for year of simulation.
-        CALL READCD (NYEAR, ND, NT)
+        CALL READCD (NYEAR, ND, NT, IOF)
         JYEAR(IYR) = NYEAR
 
         ! Pass back the first year of simulation to the Python wrapper.
@@ -902,67 +902,78 @@ C
       RETURN
       END
 
-C    ************************* READCD *************************
 
-C    SUBROUTINE READCD READS A YEAR OF WEATHER DATA AT THE START
-C    OF EACH YEAR OF SIMULATION.
-C
-      SUBROUTINE READCD (NYEAR, ND, NT)
+      !=================================================================
+      ! SUBROUTINE: READCD
+      !
+      ! Read a year of weather data at the start
+      ! of each year of simulation.
+      !=================================================================
+      SUBROUTINE READCD (NYEAR, ND, NT, IOF)
+
+      INTEGER, INTENT(IN) :: IOF
+
       COMMON /BLK1/ IT4, IT7, IT13, IU4, IU7, IU13, IU11, IU10
       COMMON /BLK8/ PRE(370), TMPF(366), RAD(366)
-C
-C    READS PRECIPITATION DATA.
-C
+
+      ! -------------------------------------------------------------
+      ! Read precipitation data
+      ! -------------------------------------------------------------
       DO K = 1, 37
         J = 10*K
         I = J - 9
+        IF (J > 366) J = 366
         READ (4, 5000) NYEAR, (PRE (N), N = I, J)
- 5000   FORMAT(I10, 10F5.2)
       END DO
-C
-C    DETERMINES IF THE YEAR IS A LEAP YEAR.
-C
+
+ 5000 FORMAT(I10, 10F5.2)
+
+      ! Determine if the year is a leap year.
       ND = LEAP (NYEAR, NT)
-C
-C    READS DAILY TEMPERATURE VALUES AND DAILY RADIATION VALUES.
-C    TEMPERATURE IN DEG F, SOLAR RADIATION VALUES IN LANGLEYS PER DAY.
-C
+
+      ! -------------------------------------------------------------
+      ! Read daily temperature values and daily radiation values.
+      ! Temperature in deg F, solar radiation in langleys per day.
+      ! -------------------------------------------------------------
       DO K = 1, 37
         J = 10*K
         I = J - 9
-        IF (J .GT. 366) J = 366
+        IF (J > 366) J = 366
         READ (7, 5010) MYEAR, (TMPF (N), N = I, J)
         IF (IU13 .EQ. 1) READ (13, 5010) LYEAR, (RAD (N), N = I, J)
         IF (IU13 .NE. 1) READ (13, 5011) LYEAR, (RAD (N), N = I, J)
- 5010    FORMAT(I5,10F6.1)
- 5011    FORMAT(I5,10F6.0)
       END DO
+
+ 5010 FORMAT(I5, 10F6.1)
+ 5011 FORMAT(I5, 10F6.0)
+
       IF (MYEAR .NE. NYEAR) WRITE (*, 6000) MYEAR, NYEAR
-      IF (MYEAR .NE. NYEAR) WRITE (8, 6000) MYEAR, NYEAR
- 6000 FORMAT(1X/' WARNING:  TEMPERATURE FOR YEAR',I5,' USED ',
-     1 'WITH PRECIPITATION FOR YEAR',I5/)
+      IF ((MYEAR /= NYEAR) .AND. (IOF == 1)) THEN
+        WRITE (8, 6000) MYEAR, NYEAR
+      END IF
+
+ 6000 FORMAT(1X/' WARNING:  TEMPERATURE FOR YEAR', I5,
+     & ' USED WITH PRECIPITATION FOR YEAR', I5/)
+
       IF (LYEAR .NE. NYEAR) WRITE (*, 6010) LYEAR, NYEAR
-      IF (LYEAR .NE. NYEAR) WRITE (8, 6010) LYEAR, NYEAR
- 6010 FORMAT(1X/' WARNING:  SOLAR RADIATION FOR YEAR',I5,' USED ',
-     1 'WITH PRECIPITATION FOR YEAR',I5/)
-      IF (IU4 .NE. 1) THEN
-        DO N = 1, 366
-          PRE(N) = PRE(N) / 25.4
-        END DO
+      IF ((LYEAR .NE. NYEAR) .AND. (IOF == 1)) THEN
+        WRITE (8, 6010) LYEAR, NYEAR
       END IF
-      IF (IU7 .NE. 1) THEN
-        DO N = 1, 366
-          TMPF(N) = (TMPF(N) * 1.8) + 32.0
-        END DO
-      END IF
-      IF (IU13 .NE. 1) THEN
-        DO N = 1, 366
-          RAD(N) = RAD(N) * 23.89
-        END DO
-      END IF
+
+ 6010 FORMAT(1X/' WARNING:  SOLAR RADIATION FOR YEAR', I5,
+     & ' USED WITH PRECIPITATION FOR YEAR', I5/)
+
+      ! -------------------------------------------------------------
+      ! Convert to IP units from SI units when applicable
+      ! -------------------------------------------------------------
+      IF (IU4 /= 1) PRE = PRE / 25.4
+      IF (IU7 /= 1) TMPF = (TMPF * 1.8) + 32.0
+      IF (IU13 /= 1) RAD = RAD * 23.89
+
       RETURN
-      END
-C
+      END SUBROUTINE READCD
+
+
 C
 C      ************************* READIN *************************
 C
