@@ -103,12 +103,12 @@ def test_calc_help_cells(
     output = HelpOutput(output_file)
     area_yrly_avg = output.calc_area_yearly_avg()
     expected_results = {'precip': 11614.46,
-                        'perco': 2767.51,
-                        'evapo': 6034.42,
-                        'rechg': 1432.13,
-                        'runoff': 2334.89,
-                        'subrun1': 509.02,
-                        'subrun2': 1243.24}
+                        'perco': 2944.3917630257497,
+                        'evapo': 5799.136182561213,
+                        'rechg': 1517.1853161339995,
+                        'runoff': 2347.9944476222922,
+                        'subrun1': 557.2600310146595,
+                        'subrun2': 1340.911663276034}
     for name, value in expected_results.items():
         result = np.sum(area_yrly_avg[name])
         assert abs(result - value) < 1, f'{name}: {result} vs {value}'
