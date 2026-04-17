@@ -6131,7 +6131,7 @@ C
 
       ! Print heading
       IF (IDA == 1) THEN
-        PY_OUTDAY(IYR, 1, 1:7) = 0
+        PY_OUTDAY(IYR, :, 1:7) = 0
       End IF
 
       ! Save if air temperature is freezing.
