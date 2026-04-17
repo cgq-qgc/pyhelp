@@ -58,18 +58,18 @@ def run_help_singlecell(item):
         import pandas as pd
         import datetime
 
-        outday[:, :, 0] = np.round(outday[:, :, 0], 1)
-        outday[:, :, 1] = np.round(outday[:, :, 1], 2)
-        outday[:, :, 2] = np.round(outday[:, :, 2], 2)
-        outday[:, :, 3] = np.round(outday[:, :, 3], 4)
-        outday[:, :, 4] = np.round(outday[:, :, 4], 2)
+        outday[:, :, 0] = np.round(outday[:, :, 0], 1)  # RAIN
+        outday[:, :, 1] = np.round(outday[:, :, 1], 2)  # RUNOFF
+        outday[:, :, 2] = np.round(outday[:, :, 2], 2)  # ET
+        outday[:, :, 3] = np.round(outday[:, :, 3], 4)  # E_ZONE_WATER
+        outday[:, :, 4] = np.round(outday[:, :, 4], 2)  # SNOW_SURF
 
-        outday[:, :, 5] = np.round(outday[:, :, 5], 2)  # 'TAIR'
-        outday[:, :, 6] = np.round(outday[:, :, 6], 2)  # 'TAIR_AVT'
-        outday[:, :, 7] = np.round(outday[:, :, 7], 2)  # 'TAIR_AMP'
-        outday[:, :, 8] = np.round(outday[:, :, 8], 2)  # 'TSURF'
+        outday[:, :, 5] = np.round(outday[:, :, 5], 2)  # TAIR
+        outday[:, :, 6] = np.round(outday[:, :, 6], 2)  # TAIR_AVT
+        outday[:, :, 7] = np.round(outday[:, :, 7], 2)  # TAIR_AMP
+        outday[:, :, 8] = np.round(outday[:, :, 8], 2)  # TSURF
 
-        outday[:, :, 8] = np.round(outday[:, :, 9], 0)  # 'FROZEN_SOIL'
+        outday[:, :, 9] = np.round(outday[:, :, 9], 0)  # FROZEN_SOIL
 
         nyear = outday.shape[0]
         date_range_index = pd.date_range(
