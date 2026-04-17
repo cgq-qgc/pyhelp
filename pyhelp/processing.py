@@ -28,13 +28,75 @@ from pyhelp import HELP3O
 def run_help_singlecell(item):
     """Run HELP for a single cell."""
     cellname, outparam = item
+    return_daily = 1
 
-    outmo, yr0, error_code = HELP3O.run_simulation(*outparam)
+    outmo, yr0, error_code, outday = HELP3O.run_simulation(
+        *outparam, fill_outday=return_daily
+        )
     if error_code != 0:
         raise RuntimeError(
             f"Run simulation for cell {cellname} failed "
             f"with error code {error_code}."
             )
+
+    layers = outday[0, 0, :]
+    if return_daily:
+        columns = [
+            'RAIN', 'RUNOFF',
+            'ET', 'E_ZONE_WATER', 'SNOW_SURF',
+            'TAIR', 'TAIR_AVT', 'TAIR_AMP', 'TSURF',
+            'FROZEN_SOIL',
+            ]
+        for i in range(5):
+            columns.extend(
+                [f'HEAD{i+1}_LAY{layers[i*3 + 7]:.0f}',
+                 f'DRAIN{i+1}_LAY{layers[i*3 + 8]:.0f}',
+                 f'LEAK{i+1}_LAY{layers[i*3 + 9]:.0f}']
+                )
+        columns.extend([f'LEAK{i+1}_LAY{layers[i*3 + 7]:.0f}'])
+
+        import pandas as pd
+        import datetime
+
+        outday[:, :, 0] = np.round(outday[:, :, 0], 1)
+        outday[:, :, 1] = np.round(outday[:, :, 1], 2)
+        outday[:, :, 2] = np.round(outday[:, :, 2], 2)
+        outday[:, :, 3] = np.round(outday[:, :, 3], 4)
+        outday[:, :, 4] = np.round(outday[:, :, 4], 2)
+
+        outday[:, :, 5] = np.round(outday[:, :, 5], 2)  # 'TAIR'
+        outday[:, :, 6] = np.round(outday[:, :, 6], 2)  # 'TAIR_AVT'
+        outday[:, :, 7] = np.round(outday[:, :, 7], 2)  # 'TAIR_AMP'
+        outday[:, :, 8] = np.round(outday[:, :, 8], 2)  # 'TSURF'
+
+        outday[:, :, 8] = np.round(outday[:, :, 9], 0)  # 'FROZEN_SOIL'
+
+        nyear = outday.shape[0]
+        date_range_index = pd.date_range(
+            start=datetime.datetime(yr0, 1, 1),
+            end=datetime.datetime(yr0 + nyear - 1, 12, 31),
+            freq='D'
+            )
+
+        df = pd.DataFrame(
+            outday[:, 1:, :].reshape(-1, outday.shape[2]),
+            columns=columns,
+            )
+
+        df[df == -999] = np.nan
+        df = df.dropna(axis=1, how='all')
+        df = df.dropna(axis=0)
+
+        df.index = date_range_index
+        df.index.name = 'DATE'
+
+        for col in df.columns:
+            if col.startswith('HEAD'):
+                df[col] = np.round(df[col], 5)
+            elif col.startswith(('DRAIN', 'LEAK')):
+                df[col] = df[col].map(lambda x: f"{x:.4g}")
+
+        df.to_csv('D:/Projets/pyhelp/example/help_input_files/HELP30_output_files/37728.csv')
 
     # Note that we are rounding of the output data intentionally to
     # preserve the raw computational precision in the original Fortran code.
