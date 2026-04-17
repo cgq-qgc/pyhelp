@@ -79,7 +79,6 @@
       INTEGER :: IU8
       INTEGER :: IOF   ! Flag to write Output to file (1=Yes, 0=No)
       INTEGER :: NVAR  ! Number of output variables for OUTDAY
-      LOGICAL :: FILL_OUTDAY
 
       DOUBLE PRECISION BALY, BALT, DRIN, SWULY, DUMMY1, DUMMY2
       DOUBLE PRECISION PRC1, PRC2, PRC3, PRC4, PRC5, PRC6, DRN1, DRN2,
@@ -210,8 +209,7 @@
       END IF
 
       ! Initialize the daily output array if applicable.
-      FILL_OUTDAY = (NVAR_PY_OUTDAY == 23)
-      IF (FILL_OUTDAY) THEN
+      IF (FILL_OUTDAY == 1) THEN
         PY_OUTDAY = -999.0
       END IF
 
@@ -718,8 +716,8 @@ C
             CALL OUTDAY(SWE, ASTAR, SSTAR, NVAR)
           END IF
 
-          IF (FILL_OUTDAY) THEN
-            CALL FILL_PY_OUTDAY(LMYR, SWE, ASTAR, SSTAR, PY_OUTDAY)
+          IF (FILL_OUTDAY == 1) THEN
+            CALL FILL_PY_OUTDAY(LMYR, SWE, NDVAR, PY_OUTDAY)
           END IF
 
           ! End of daily loop.
@@ -6127,11 +6125,11 @@ C
       ! Packages the daily simulation results into a 3D array
       ! (PY_OUTDAY) to be returned to Python via f2py.
       !=================================================================
-      SUBROUTINE FILL_PY_OUTDAY (LMYR, SWE, ASTAR, SSTAR, PY_OUTDAY)
+      SUBROUTINE FILL_PY_OUTDAY (LMYR, SWE, NDVAR, PY_OUTDAY)
 
       INTEGER, INTENT(IN) :: LMYR
-      CHARACTER(len=1), INTENT(IN) :: ASTAR, SSTAR
-      REAL, INTENT(INOUT) :: PY_OUTDAY(LMYR, 367, 20)
+      INTEGER, INTENT(IN) :: NDVAR
+      REAL, INTENT(INOUT) :: PY_OUTDAY(LMYR, 367, NDVAR)
 
       COMMON /BLK8/ PRE (370), TMPF (366), RAD (366)
       COMMON /BLK9/ PINF, ES1T, SMELT, GMRO, ADDRUN, OLDSNO, SNO, WF(7),
