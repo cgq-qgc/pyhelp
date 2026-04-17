@@ -14,12 +14,13 @@ import calendar
 
 # ---- Third Party imports
 import numpy as np
+import pandas as pd
 
 # ---- Local imports
 from pyhelp.utils import save_content_to_csv
 
 
-def save_precip_to_HELP(filename, years, precip, city):
+def save_precip_to_HELP(filename: str, precip: pd.Series, city: str):
     """
     Formats and saves a daily precipitation time series in mm
     to the HELP format.
@@ -28,24 +29,44 @@ def save_precip_to_HELP(filename, years, precip, city):
     filename = filename if ext == '.D4' else filename + '.D4'
 
     fheader = format_weather_header_for_HELP(3, 2, city)
-    fdata = format_timeseries_for_HELP(years, precip, '{0:>10}', '{0:>5.1f}')
+
+    # Calculate and add monthly normals to header.
+    monthly_normals = precip.groupby(precip.index.month).mean().values
+    fheader.append([''.join([f'{x:>6.2f}' for x in monthly_normals])])
+
+    fdata = format_timeseries_for_HELP(
+        precip.index.year.values,
+        precip.values,
+        '{0:>10}', '{0:>5.1f}')
     save_content_to_csv(filename, fheader + fdata)
 
 
-def save_airtemp_to_HELP(filename, years, precip, city):
+def save_airtemp_to_HELP(filename: str, airtemp: pd.Series, city: str):
     """
-    Formats and saves a daily average air temperature time series in Celcius to
-    the HELP format.
+    Formats and saves a daily average air temperature time series in
+    Celcius to the HELP format.
     """
     root, ext = osp.splitext(filename)
     filename = filename if ext == '.D7' else filename + '.D7'
 
     fheader = format_weather_header_for_HELP(3, 2, city)
-    fdata = format_timeseries_for_HELP(years, precip, '{0:>5}', '{0:>6.1f}')
+
+    # Calculate and add monthly normals to header.
+    monthly_normals = airtemp.groupby(airtemp.index.month).mean().values
+    fheader.append([''.join([f'{x:>6.2f}' for x in monthly_normals])])
+
+    print(np.mean(monthly_normals))
+
+    fdata = format_timeseries_for_HELP(
+        airtemp.index.year.values,
+        airtemp.values,
+        '{0:>5}', '{0:>6.1f}')
     save_content_to_csv(filename, fheader + fdata)
 
 
-def save_solrad_to_HELP(filename, years, precip, city, lat):
+def save_solrad_to_HELP(
+        filename: str, solrad: pd.Series, city: str, lat: float
+        ):
     """
     Formats and saves a daily global solar radiation time series in MJ/m2/day
     to the HELP format.
@@ -54,7 +75,10 @@ def save_solrad_to_HELP(filename, years, precip, city, lat):
     filename = filename if ext == '.D13' else filename + '.D13'
 
     fheader = format_weather_header_for_HELP(3, 2, city, lat)
-    fdata = format_timeseries_for_HELP(years, precip, '{0:>5}', '{0:>6.2f}')
+    fdata = format_timeseries_for_HELP(
+        solrad.index.year.values,
+        solrad.values,
+        '{0:>5}', '{0:>6.2f}')
     save_content_to_csv(filename, fheader + fdata)
 
 
@@ -71,8 +95,6 @@ def format_weather_header_for_HELP(itype, iunits, city, lat=None):
     if lat is not None:
         # Append the latitude if the data are solar radiation.
         fheader.append(['{0:>6.2f}'.format(lat)])
-    else:
-        fheader.append([])
     return fheader
 
 
