@@ -450,7 +450,7 @@
           ! Compute snowfall and snowmelt and adjusts rain accordingly.
           CALL SNOW (IT)
 
-          ! ASTAR indicates freezing temperatures.
+          ! ASTAR indicates freezing air temperatures.
           ASTAR = ISTAR(IT)
 
           ! Compute runoff.
