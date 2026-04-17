@@ -48,7 +48,7 @@
      &  FILL_OUTDAY, PY_OUTDAY
      &  )
 
-      PARAMETER (NDVAR = 23)
+      PARAMETER (NDVAR = 26)
       PARAMETER (MXYR = 100)
       PARAMETER (MAXMO = 12)
 
@@ -6132,35 +6132,119 @@ C
       INTEGER, INTENT(IN) :: NDVAR
       DOUBLE PRECISION, INTENT(INOUT) :: PY_OUTDAY(LMYR, 367, NDVAR)
 
+      INTEGER :: WRITE_COL, K
+      DOUBLE PRECISION PRC1, PRC2, PRC3, PRC4, PRC5, PRC6,
+     &  DRN1, DRN2, DRN3, DRN4, DRN5, HED1, HED2, HED3, HED4, HED5,
+     &  RCR1, RCR2, RCR3, RCR4, RCR5, RCRI
+
+      COMMON /BLK4/ LAYER (21), LAYR (20), IPQ (20), ISOIL (20), LAY,
+     &  LAYSEG (67, 2), LSEG (67), LSEGS (20, 2), LRIN(20), LSIN(20)
       COMMON /BLK8/ PRE (370), TMPF (366), RAD (366)
       COMMON /BLK9/ PINF, ES1T, SMELT, GMRO, ADDRUN, OLDSNO, SNO, WF(7),
-     1  SSNO
+     &  SSNO
       COMMON /BLK10/ ETT, ESS, EP, ES, ET (67)
       COMMON /BLK11/ ETO, XLAI, STAGE1, CONA, RAIN, RUN, ABST, EAJ, TS2
+      COMMON /BLK15/ PRC1, PRC2, PRC3, PRC4, PRC5, PRC6, DRN1, DRN2,
+     &  DRN3, DRN4, DRN5, HED1, HED2, HED3, HED4, HED5,
+     &  RCR1, RCR2, RCR3, RCR4, RCR5, RCRI(20)
       COMMON /BLK16/ LD(5), LP(6), LPQ(5), LCASE(5), IYR, IDA, MO,
      &  NSTEP(6), ND
+      COMMON /BLK21/ TB, TO, TS, AVT, AMP, ABD, PHU, GS, CV,
+     &  RSD, DM, WFT (12), DD, DLAI
       COMMON /BLK27/ IFREZ, IDFS, IFCNT, KCNT, MXKCNT
 
-      ! Print heading
+      ! Save layer number for 'head', 'drain' and 'leak' columns.
       IF (IDA == 1) THEN
-        PY_OUTDAY(IYR, 1, 1:7) = 0
+        PY_OUTDAY(IYR, 1, 1:10) = 0
+
+        ! We follow the same logic as in SUBROUTINE OUTDAY
+        ! to assign layers.
+        WRITE_COL = 11
+        DO K = 1, 5
+          IF (LP(K) > 0) THEN
+            IF (LAYER(LP(K)) > 2) THEN
+              ! Bottom layer is a barrier (Type 3 or 4)
+              IF (LAYER(LP(K)-1) <= 2) THEN
+                ! Layer above is a vertical percolation (Type 1)
+                ! or a lateral drainage layer (Type 2).
+                PY_OUTDAY(IYR, 1, WRITE_COL) = LP(K)
+                WRITE_COL = WRITE_COL + 1
+
+                PY_OUTDAY(IYR, 1, WRITE_COL) = LP(K) - 1
+                WRITE_COL = WRITE_COL + 1
+              ELSE
+                ! Layer above is a composite liner (Type 4).
+                PY_OUTDAY(IYR, 1, WRITE_COL) = LP(K) - 1
+                WRITE_COL = WRITE_COL + 1
+
+                PY_OUTDAY(IYR, 1, WRITE_COL) = LP(K) - 2
+                WRITE_COL = WRITE_COL + 1
+              END IF
+            ELSE
+              WRITE_COL = WRITE_COL + 2
+            END IF
+
+            PY_OUTDAY(IYR, 1, WRITE_COL) = LP(K)
+            WRITE_COL = WRITE_COL + 1
+          ELSE
+            WRITE_COL = WRITE_COL + 3
+          END IF
+
+        END DO
+
+        IF (LP(6) > 0) PY_OUTDAY(IYR, 1, WRITE_COL) = LP(6)
+
       End IF
 
       ! Save daily rain in mm.
-      PY_OUTDAY(IYR, IDA + 1, 1) = PRE(IDA) * 25.4
+      PY_OUTDAY(IYR, IDA + 1, 1) = PRE(IDA) * 25.4D0
       ! Save surface runoff in mm.
-      PY_OUTDAY(IYR, IDA + 1, 2) = RUN * 25.4
+      PY_OUTDAY(IYR, IDA + 1, 2) = RUN * 25.4D0
       ! Save surface evapotranspiration in mm.
-      PY_OUTDAY(IYR, IDA + 1, 3) = ETT * 25.4
+      PY_OUTDAY(IYR, IDA + 1, 3) = ETT * 25.4D0
       ! Soil moisture in evaporative zone in cm/cm.
       PY_OUTDAY(IYR, IDA + 1, 4) = SWE
       ! Save total snow water equivalent in mm.
-      PY_OUTDAY(IYR, IDA + 1, 5) = SNO * 25.4
+      PY_OUTDAY(IYR, IDA + 1, 5) = SNO * 25.4D0
 
       ! Save daily air temperature in deg C.
-      PY_OUTDAY(IYR, IDA + 1, 6) = (TMPF(IDA) - 32.) / 1.8
+      PY_OUTDAY(IYR, IDA + 1, 6) = (TMPF(IDA) - 32.0D0) / 1.8D0
+      ! Save average air temperature in deg C.
+      PY_OUTDAY(IYR, IDA + 1, 7) = AVT
+      ! Save air temperature amplitude in deg C.
+      PY_OUTDAY(IYR, IDA + 1, 8) = AMP
       ! Save if soil is frozen (1=Yes, 0=No).
-      PY_OUTDAY(IYR, IDA + 1, 7) = IFREZ
+      PY_OUTDAY(IYR, IDA + 1, 10) = IFREZ
+
+      ! Save head, drain and leak daily values in mm.
+      IF (LP(1) > 0) THEN
+        PY_OUTDAY(IYR, IDA + 1, 11) = HED1 * 25.4D0
+        PY_OUTDAY(IYR, IDA + 1, 12) = (DRN1 + RCR1) * 25.4D0
+        PY_OUTDAY(IYR, IDA + 1, 13) = PRC1 * 25.4D0
+      END IF
+      IF (LP(2) > 0) THEN
+        PY_OUTDAY(IYR, IDA + 1, 14) = HED2 * 25.4D0
+        PY_OUTDAY(IYR, IDA + 1, 15) = (DRN2 + RCR2) * 25.4D0
+        PY_OUTDAY(IYR, IDA + 1, 16) = PRC2 * 25.4D0
+      END IF
+      IF (LP(3) > 0) THEN
+        PY_OUTDAY(IYR, IDA + 1, 17) = HED3 * 25.4D0
+        PY_OUTDAY(IYR, IDA + 1, 18) = (DRN3 + RCR3) * 25.4D0
+        PY_OUTDAY(IYR, IDA + 1, 19) = PRC3 * 25.4D0
+      END IF
+      IF (LP(4) > 0) THEN
+        PY_OUTDAY(IYR, IDA + 1, 20) = HED4 * 25.4D0
+        PY_OUTDAY(IYR, IDA + 1, 21) = (DRN4 + RCR4) * 25.4D0
+        PY_OUTDAY(IYR, IDA + 1, 22) = PRC4 * 25.4D0
+      END IF
+      IF (LP(5) > 0) THEN
+        PY_OUTDAY(IYR, IDA + 1, 23) = HED5 * 25.4D0
+        PY_OUTDAY(IYR, IDA + 1, 24) = (DRN5 + RCR5) * 25.4D0
+        PY_OUTDAY(IYR, IDA + 1, 25) = PRC5 * 25.4D0
+      END IF
+      IF (LP(6) > 0) THEN
+        PY_OUTDAY(IYR, IDA + 1, 26) = PRC6 * 25.4D0
+      END IF
 
       RETURN
       END SUBROUTINE FILL_PY_OUTDAY
