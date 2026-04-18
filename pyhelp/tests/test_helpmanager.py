@@ -133,7 +133,6 @@ def test_monthly_normals_in_weather_headers(helpm, output_file):
 
     # Calculate the expected monthly normals directly from the pandas Series
     precip = helpm.precip_data.iloc[:, d4_col_idx]
-    expected_d4_total = precip.resample("ME").sum()
 
     expected_d4_total = precip.resample("ME").sum()
     expected_d4_normals = (
@@ -182,7 +181,7 @@ def test_monthly_normals_in_weather_headers(helpm, output_file):
     with open(d7_file, 'r') as f:
         d7_lines = f.readlines()
 
-    assert len(d4_lines) == (37 * 11) + 4
+    assert len(d7_lines) == (37 * 11) + 4
 
     d7_normals_line = d7_lines[3].rstrip('\n')
     assert len(d7_normals_line) == 72
