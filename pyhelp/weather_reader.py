@@ -99,19 +99,21 @@ def format_weather_header_for_HELP(itype, iunits, city, lat=None):
 def format_timeseries_for_HELP(years, data, year_format, data_format):
     fdata = []
     for year in np.unique(years):
-        # Selects the data and asserts that the data are complete for
-        # that year :
-
+        # Select the data and validate that the year is complete.
         indexes = np.where(years == year)[0]
         days_in_year = 366 if calendar.isleap(year) else 365
-        assert len(indexes) == days_in_year
+
+        if len(indexes) != days_in_year:
+            raise ValueError(
+                f"Incomplete yearly data for {year}: got "
+                f"{len(indexes)} values, expected {days_in_year}."
+                )
 
         # Adds zeros to complete de last row and reshape the data
-        # in a 37 x 10 grid:
-
+        # in a 37 x 10 grid for HELP.
         year_data = data[indexes]
-        year_data = np.hstack(
-            [year_data, np.zeros(10 - len(year_data) % 10)])
+        pad = 370 - len(year_data)
+        year_data = np.hstack([year_data, np.zeros(pad)])
         year_data = year_data.reshape(37, 10).tolist()
 
         # Save the data in a format compatible with HELP :
