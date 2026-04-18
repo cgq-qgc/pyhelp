@@ -55,8 +55,6 @@ def save_airtemp_to_HELP(filename: str, airtemp: pd.Series, city: str):
     monthly_normals = airtemp.groupby(airtemp.index.month).mean().values
     fheader.append([''.join([f'{x:>6.2f}' for x in monthly_normals])])
 
-    print(np.mean(monthly_normals))
-
     fdata = format_timeseries_for_HELP(
         airtemp.index.year.values,
         airtemp.values,
