@@ -3513,12 +3513,13 @@ C     GS = GS + TMPC/PHU
       END SUBROUTINE SOLT
 
 
-C *************************** TSTR **************************
-C
-C      SUBROUTINE TSTR APPLIES A TEMPERATURE STRESS FACTOR TO CROPS
-C      IF THE DAILY MAXIMUM TEMPERATURE IS MORE THEN 15 DEG. C. BELOW
-C      THE AVERAGE ANNUAL TEMPERATURE
-C
+      !=================================================================
+      ! SUBROUTINE: TSTR
+      !
+      ! Applies a temperature stress factor to crops if the daily
+      ! maximum temperature is more then 15 deg.C below the average
+      ! annual temperature
+      !=================================================================
       SUBROUTINE TSTR (TGX, TMPC)
 
       COMMON /BLK21/ TB, TO, TS, AVT, AMP, ABD, PHU, GS, CV,
@@ -3533,9 +3534,9 @@ C
       END IF
       IF ((TMPC - 5.) .LE. (AVT - 15.)) TS = 0.
       RETURN
-      END
-C
-C
+      END SUBROUTINE TSTR
+
+
 C ************************* FRZCHK *******************************
 C
 C   SUBROUTINE FRZCHK DETERMINES THE OCCURENCE OF FROZEN SOIL
