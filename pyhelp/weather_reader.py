@@ -31,7 +31,12 @@ def save_precip_to_HELP(filename: str, precip: pd.Series, city: str):
     fheader = format_weather_header_for_HELP(3, 2, city)
 
     # Calculate and add monthly normals to header.
-    monthly_normals = precip.groupby(precip.index.month).mean().values
+    monthly_totals = precip.resample("ME").sum()
+    monthly_normals = (
+        monthly_totals.groupby(monthly_totals.index.month)
+        .mean()
+        .sort_index()
+        .values)
     fheader.append([''.join([f'{x:>6.2f}' for x in monthly_normals])])
 
     fdata = format_timeseries_for_HELP(
