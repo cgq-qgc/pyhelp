@@ -44,7 +44,7 @@ def save_precip_to_HELP(filename: str, precip: pd.Series, city: str):
 def save_airtemp_to_HELP(filename: str, airtemp: pd.Series, city: str):
     """
     Formats and saves a daily average air temperature time series in
-    Celcius to the HELP format.
+    Celsius to the HELP format.
     """
     root, ext = osp.splitext(filename)
     filename = filename if ext == '.D7' else filename + '.D7'
