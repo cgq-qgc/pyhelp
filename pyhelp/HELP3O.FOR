@@ -1100,9 +1100,7 @@ C
       ! Convert temperature from Fahrenheit to Celsius if IP units
       ! are used.
       IF (IU7 == 1) THEN
-        DO I = 1, 12
-          TM(I) = (TM(I) - 32.0) / 1.8
-        END DO
+        TM = (TM - 32.0) / 1.8
       END IF
 
       ! Convert evaporative zone depth and wind speed to
