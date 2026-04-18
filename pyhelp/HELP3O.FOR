@@ -974,11 +974,11 @@ C
       END SUBROUTINE READCD
 
 
-C
-C      ************************* READIN *************************
-C
-C  SUBROUTINE READIN READS ET AND SOIL DESIGN DATA, AND WEATHER HEADERS
-C
+      !=================================================================
+      ! SUBROUTINE: READIN
+      !
+      ! Reads ET and soil design data, and weather headers.
+      !=================================================================
       SUBROUTINE READIN (fpath_precip, fpath_tasavg, fpath_solrad,
      &                   d11_input, d10_nlines, d10_input, IERR)
 
@@ -1100,13 +1100,11 @@ C
       ! Convert temperature from Fahrenheit to Celsius if IP units
       ! are used.
       IF (IU7 == 1) THEN
-        DO I = 1, 12
-          TM(I) = (TM(I) - 32.0) / 1.8
-        END DO
+        TM = (TM - 32.0) / 1.8
       END IF
 
-      ! Convert evaporative zone depth and wind speed to SI units
-      ! if needed.
+      ! Convert evaporative zone depth and wind speed to
+      ! IP units if SI units are used.
       IF (IU11 /= 1) THEN
         EDEPTH = EDEPTH / 2.54
         WIND = WIND / 1.609
