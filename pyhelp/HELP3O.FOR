@@ -3517,7 +3517,7 @@ C     GS = GS + TMPC/PHU
       ! SUBROUTINE: TSTR
       !
       ! Applies a temperature stress factor to crops if the daily
-      ! maximum temperature is more then 15 deg.C below the average
+      ! maximum temperature is more than 15 deg.C below the average
       ! annual temperature
       !=================================================================
       SUBROUTINE TSTR (TGX, TMPC)
