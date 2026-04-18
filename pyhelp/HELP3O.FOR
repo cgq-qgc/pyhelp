@@ -458,7 +458,8 @@
           IF (IFREZ .GT. 0) SMX = SMXF
           CALL RUNOFF
 
-          ! Compute soil temperature at bottom of each segment.
+          ! Compute daily soil temperatures (TSEG) at the bottom
+          ! of each of the seven evaporative-zone segments.
           CALL SOLT
 
          ! Computes surface and soil evaporation and potential plant
@@ -3478,8 +3479,8 @@ C     GS = GS + TMPC/PHU
       !=================================================================
       ! SUBROUTINE: SOLT
       !
-      ! Estimates daily average temperature at the bottom
-      ! of each soil layer
+      ! Estimate daily soil temperatures (TSEG) at the bottom
+      ! of each of the seven evaporative-zone segments.
       !=================================================================
       SUBROUTINE SOLT
 
