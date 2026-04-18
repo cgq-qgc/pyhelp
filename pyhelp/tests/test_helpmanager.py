@@ -114,6 +114,88 @@ def test_calc_help_cells(
         assert abs(result - value) < 1, f'{name}: {result} vs {value}'
 
 
+def test_monthly_normals_in_weather_headers(helpm, output_file):
+    """
+    Test that monthly climate normals are correctly calculated and injected
+    into the 4th line of the D4 and D7 input files headers.
+
+    See cgq-qgc/pyhelp#127
+    """
+    # Generate the input files for the first cell
+    cellnames = helpm.cellnames[:1]
+    cellname = cellnames[0]
+
+    # -------------------------------------------------------------------------
+    # Test Precipitation (D4)
+    # -------------------------------------------------------------------------
+    d4_file = helpm.connect_tables['D4'][cellname]
+    d4_col_idx = helpm.connect_tables['precip'][cellname]
+
+    # Calculate the expected monthly normals directly from the pandas Series
+    precip = helpm.precip_data.iloc[:, d4_col_idx]
+    expected_d4_total = precip.resample("ME").sum()
+
+    expected_d4_total = precip.resample("ME").sum()
+    expected_d4_normals = (
+        expected_d4_total.groupby(expected_d4_total.index.month)
+        .mean()
+        .sort_index()
+        .values
+        .round(2)
+        )
+
+    with open(d4_file, 'r') as f:
+        d4_lines = f.readlines()
+
+    assert len(d4_lines) == (37 * 11) + 4
+
+    # The 4th line (index 3) should contain the 12 normals
+    d4_normals_line = d4_lines[3].rstrip('\n')
+
+    # Format F6.2 for 12 values means the line must be exactly
+    # 72 characters long
+    assert len(d4_normals_line) == 72
+
+    # Parse the strings back into floats
+    d4_parsed_normals = [
+        float(d4_normals_line[i:i+6]) for i in range(0, 72, 6)]
+    assert len(d4_parsed_normals) == 12
+
+    # Assert they match our expected values.
+    assert np.max(np.abs(d4_parsed_normals - expected_d4_normals)) < 0.001
+
+    # -------------------------------------------------------------------------
+    # Test Air Temperature (D7)
+    # -------------------------------------------------------------------------
+    d7_file = helpm.connect_tables['D7'][cellname]
+    d7_col_idx = helpm.connect_tables['airtemp'][cellname]
+
+    # Calculate the expected monthly normals directly from the pandas Series
+    airtemp = helpm.airtemp_data.iloc[:, d7_col_idx]
+    expected_d7_normals = (
+        airtemp.groupby(airtemp.index.month)
+        .mean()
+        .round(2)
+        .values
+        )
+
+    with open(d7_file, 'r') as f:
+        d7_lines = f.readlines()
+
+    assert len(d4_lines) == (37 * 11) + 4
+
+    d7_normals_line = d7_lines[3].rstrip('\n')
+    assert len(d7_normals_line) == 72
+
+    d7_parsed_normals = [
+        float(d7_normals_line[i:i+6]) for i in range(0, 72, 6)]
+    assert len(d7_parsed_normals) == 12
+
+    # Assert they match our expected values.
+    max_abs_err = np.max(np.abs(d7_parsed_normals - expected_d7_normals))
+    assert max_abs_err < 0.001, max_abs_err
+
+
 @pytest.mark.parametrize('fig_title', [None, 'Exemple figure title'])
 def test_plot_area_monthly_avg(output_dir, output_file, fig_title):
     """
