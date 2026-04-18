@@ -998,11 +998,11 @@ C
       END SUBROUTINE READCD
 
 
-C
-C      ************************* READIN *************************
-C
-C  SUBROUTINE READIN READS ET AND SOIL DESIGN DATA, AND WEATHER HEADERS
-C
+      !=================================================================
+      ! SUBROUTINE: READIN
+      !
+      ! Reads ET and soil design data, and weather headers.
+      !=================================================================
       SUBROUTINE READIN (fpath_precip, fpath_tasavg, fpath_solrad,
      &                   d11_input, d10_nlines, d10_input, IERR)
 
@@ -1124,13 +1124,11 @@ C
       ! Convert temperature from Fahrenheit to Celsius if IP units
       ! are used.
       IF (IU7 == 1) THEN
-        DO I = 1, 12
-          TM(I) = (TM(I) - 32.0) / 1.8
-        END DO
+        TM = (TM - 32.0) / 1.8
       END IF
 
-      ! Convert evaporative zone depth and wind speed to SI units
-      ! if needed.
+      ! Convert evaporative zone depth and wind speed to
+      ! IP units if SI units are used.
       IF (IU11 /= 1) THEN
         EDEPTH = EDEPTH / 2.54
         WIND = WIND / 1.609
@@ -2365,7 +2363,7 @@ C     COMPILER CORRECTIONS ABOVE
       COMMON /BLK19/ IPL, IHV, IPRE, IRUN, ITSOIL, IVEG
       COMMON /BLK20/ TSEG (7), Z (7), FCS (7), ST (7)
       COMMON /BLK21/ TB, TO, TS, AVT, AMP, ABD, PHU, GS, CV,
-     &  RSD, DM, WFT (12), DD, DLAI
+     &  RSD, DM, WFT (12), DD, DLAI, TSURF
 
       ! Setting base Temp, TB=0 degC; and optimal Temp, TO=20 degC.
       TB = 5.
@@ -3027,7 +3025,7 @@ C
       COMMON /BLK16/ LD(5), LP(6), LPQ(5), LCASE(5), IYR, IDA, MO,
      1  NSTEP(6), ND
       COMMON /BLK21/ TB, TO, TS, AVT, AMP, ABD, PHU, GS, CV,
-     1  RSD, DM, WFT (12), DD, DLAI
+     1  RSD, DM, WFT (12), DD, DLAI, TSURF
       COMMON /BLK27/ IFREZ, IDFS, IFCNT, KCNT, MXKCNT
       COMMON /BLK28/ WE, XNEGHS, XLIQW, TINDEX, STORGE, EXLAG(4), TWE
 C
@@ -3299,7 +3297,7 @@ C
       COMMON /BLK16/ LD(5), LP(6), LPQ(5), LCASE(5), IYR, IDA, MO,
      1  NSTEP(6), ND
       COMMON /BLK21/ TB, TO, TS, AVT, AMP, ABD, PHU, GS, CV,
-     1  RSD, DM, WFT (12), DD, DLAI
+     1  RSD, DM, WFT (12), DD, DLAI, TSURF
 C
       DATA SALB /0.23/
 C     DATA G /0.68/
@@ -3418,7 +3416,7 @@ C
       COMMON /BLK19/ IPL, IHV, IPRE, IRUN, ITSOIL, IVEG
       COMMON /BLK20/ TSEG (7), Z (7), FCS (7), ST (7)
       COMMON /BLK21/ TB, TO, TS, AVT, AMP, ABD, PHU, GS, CV,
-     1   RSD, DM, WFT (12), DD, DLAI
+     1   RSD, DM, WFT (12), DD, DLAI, TSURF
 C
       SUT = ST (7)*25.4/FCS (7)
       CDG = (.9*TSEG (7)/(TSEG (7) + EXP (9.93 -(.312*TSEG (7)))))+ .1
@@ -3492,7 +3490,7 @@ C     GS = GS + TMPC/PHU
      &  NSTEP(6), ND
       COMMON /BLK20/ TSEG (7), Z (7), FCS (7), ST (7)
       COMMON /BLK21/ TB, TO, TS, AVT, AMP, ABD, PHU, GS, CV,
-     &   RSD, DM, WFT (12), DD, DLAI
+     &   RSD, DM, WFT (12), DD, DLAI, TSURF
 
       ! DetermininG BCV.
       IF(CV.LT.0.0)CV=0.0
@@ -3520,10 +3518,10 @@ C     GS = GS + TMPC/PHU
          ST0 = WFT (MO)*5. + TMPC - 5.
       END IF
 
-      ! Calculate actual ground surface temperature (XX).
-      XX = BCV*TO + (1. - BCV)*ST0
+      ! Calculate actual ground surface temperature (TSURF).
+      TSURF = BCV*TO + (1. - BCV)*ST0
 
-      DT = XX - (AVT + AMP*COS (ALX))
+      DT = TSURF - (AVT + AMP*COS (ALX))
       DO K = 1, 7
          ZD = - Z (K)/DD
          IF(ABS(ZD) < 37.) THEN
@@ -3537,17 +3535,18 @@ C     GS = GS + TMPC/PHU
       END SUBROUTINE SOLT
 
 
-C *************************** TSTR **************************
-C
-C      SUBROUTINE TSTR APPLIES A TEMPERATURE STRESS FACTOR TO CROPS
-C      IF THE DAILY MAXIMUM TEMPERATURE IS MORE THEN 15 DEG. C. BELOW
-C      THE AVERAGE ANNUAL TEMPERATURE
-C
+      !=================================================================
+      ! SUBROUTINE: TSTR
+      !
+      ! Applies a temperature stress factor to crops if the daily
+      ! maximum temperature is more than 15 deg.C below the average
+      ! annual temperature
+      !=================================================================
       SUBROUTINE TSTR (TGX, TMPC)
-C
+
       COMMON /BLK21/ TB, TO, TS, AVT, AMP, ABD, PHU, GS, CV,
-     1   RSD, DM, WFT (12), DD, DLAI
-C
+     &   RSD, DM, WFT (12), DD, DLAI, TSURF
+
       IF (TMPC .GT. TO) TGX = 2.*TO - TB - TMPC
       RTO = ((TO - TMPC)/TGX)**2
       IF (RTO .GT. 200.) THEN
@@ -3557,9 +3556,9 @@ C
       END IF
       IF ((TMPC - 5.) .LE. (AVT - 15.)) TS = 0.
       RETURN
-      END
-C
-C
+      END SUBROUTINE TSTR
+
+
 C ************************* FRZCHK *******************************
 C
 C   SUBROUTINE FRZCHK DETERMINES THE OCCURENCE OF FROZEN SOIL
