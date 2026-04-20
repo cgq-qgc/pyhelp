@@ -6149,7 +6149,7 @@ C
       COMMON /BLK16/ LD(5), LP(6), LPQ(5), LCASE(5), IYR, IDA, MO,
      &  NSTEP(6), ND
       COMMON /BLK21/ TB, TO, TS, AVT, AMP, ABD, PHU, GS, CV,
-     &  RSD, DM, WFT (12), DD, DLAI
+     &  RSD, DM, WFT (12), DD, DLAI, TSURF
       COMMON /BLK27/ IFREZ, IDFS, IFCNT, KCNT, MXKCNT
 
       ! Save layer number for 'head', 'drain' and 'leak' columns.
@@ -6212,6 +6212,8 @@ C
       PY_OUTDAY(IYR, IDA + 1, 7) = AVT
       ! Save air temperature amplitude in deg C.
       PY_OUTDAY(IYR, IDA + 1, 8) = AMP
+      ! Save ground surface temperature in deg C.
+      PY_OUTDAY(IYR, IDA + 1, 9) = TSURF
       ! Save if soil is frozen (1=Yes, 0=No).
       PY_OUTDAY(IYR, IDA + 1, 10) = IFREZ
 
