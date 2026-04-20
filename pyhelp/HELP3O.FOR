@@ -48,7 +48,7 @@
      &  FILL_OUTDAY, PY_OUTDAY
      &  )
 
-      PARAMETER (NDVAR = 26)
+      PARAMETER (NDVAR = 25)
       PARAMETER (MXYR = 100)
       PARAMETER (MAXMO = 12)
 
@@ -6155,11 +6155,13 @@ C
 
       ! Save layer number for 'head', 'drain' and 'leak' columns.
       IF (IDA == 1) THEN
-        PY_OUTDAY(IYR, 1, 1:10) = 0
+        WRITE_COL = 9
+
+        PY_OUTDAY(IYR, 1, 1:WRITE_COL) = 0
+        WRITE_COL = WRITE_COL + 1
 
         ! We follow the same logic as in SUBROUTINE OUTDAY
         ! to assign layers.
-        WRITE_COL = 11
         DO K = 1, 5
           IF (LP(K) > 0) THEN
             IF (LAYER(LP(K)) > 2) THEN
