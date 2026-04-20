@@ -44,14 +44,16 @@ def run_help_singlecell(item):
         columns = [
             'RAIN', 'RUNOFF',
             'ET', 'E_ZONE_WATER', 'SNOW_SURF',
-            'TAIR', 'TAIR_AVT', 'TAIR_AMP', 'TSURF',
+            'TAIR', 'TSOIL_SURF', 'TSOIL_EDEPTH',
             'FROZEN_SOIL',
             ]
+
+        offset = len(columns)
         for i in range(5):
             columns.extend(
-                [f'HEAD{i+1}_ON_LAY{layers[i*3 + 10]:.0f}',
-                 f'DRAIN{i+1}_FROM_LAY{layers[i*3 + 11]:.0f}',
-                 f'LEAK{i+1}_THROUGH_LAY{layers[i*3 + 12]:.0f}']
+                [f'HEAD{i+1}_ON_LAY{layers[i*3 + offset]:.0f}',
+                 f'DRAIN{i+1}_FROM_LAY{layers[i*3 + offset + 1]:.0f}',
+                 f'LEAK{i+1}_THROUGH_LAY{layers[i*3 + offset + 2]:.0f}']
                 )
         columns.extend([f'LEAK{i+1}_THROUGH_LAY{layers[i*3 + 10]:.0f}'])
 
@@ -65,11 +67,10 @@ def run_help_singlecell(item):
         outday[:, :, 4] = np.round(outday[:, :, 4], 2)  # SNOW_SURF
 
         outday[:, :, 5] = np.round(outday[:, :, 5], 2)  # TAIR
-        outday[:, :, 6] = np.round(outday[:, :, 6], 2)  # TAIR_AVT
-        outday[:, :, 7] = np.round(outday[:, :, 7], 2)  # TAIR_AMP
-        outday[:, :, 8] = np.round(outday[:, :, 8], 2)  # TSURF
+        outday[:, :, 6] = np.round(outday[:, :, 6], 2)  # TSOIL_SURF
+        outday[:, :, 8] = np.round(outday[:, :, 7], 2)  # TSOIL_EDEPTH
 
-        outday[:, :, 9] = np.round(outday[:, :, 9], 0)  # FROZEN_SOIL
+        outday[:, :, 9] = np.round(outday[:, :, 8], 0)  # FROZEN_SOIL
 
         nyear = outday.shape[0]
         date_range_index = pd.date_range(
