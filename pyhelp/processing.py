@@ -28,7 +28,10 @@ from pyhelp import HELP3O
 def run_help_singlecell(item):
     """Run HELP for a single cell."""
     cellname, outparam = item
-    return_daily = 1
+
+    daily_fpath_out = outparam[-1]
+    outparam = outparam[:-1]
+    return_daily = daily_fpath_out is not None
 
     outmo, yr0, error_code, outday = HELP3O.run_simulation(
         *outparam, fill_outday=return_daily
@@ -55,7 +58,9 @@ def run_help_singlecell(item):
                  f'DRAIN{i+1}_FROM_LAY{layers[i*3 + offset + 1]:.0f}',
                  f'LEAK{i+1}_THROUGH_LAY{layers[i*3 + offset + 2]:.0f}']
                 )
-        columns.extend([f'LEAK{i+1}_THROUGH_LAY{layers[i*3 + 10]:.0f}'])
+        columns.extend(
+            [f'LEAK{i+1}_THROUGH_LAY{layers[i*3 + offset]:.0f}']
+            )
 
         import pandas as pd
         import datetime
@@ -68,9 +73,9 @@ def run_help_singlecell(item):
 
         outday[:, :, 5] = np.round(outday[:, :, 5], 2)  # TAIR
         outday[:, :, 6] = np.round(outday[:, :, 6], 2)  # TSOIL_SURF
-        outday[:, :, 8] = np.round(outday[:, :, 7], 2)  # TSOIL_EDEPTH
+        outday[:, :, 7] = np.round(outday[:, :, 7], 2)  # TSOIL_EDEPTH
 
-        outday[:, :, 9] = np.round(outday[:, :, 8], 0)  # FROZEN_SOIL
+        outday[:, :, 8] = np.round(outday[:, :, 8], 0)  # FROZEN_SOIL
 
         nyear = outday.shape[0]
         date_range_index = pd.date_range(
@@ -97,7 +102,7 @@ def run_help_singlecell(item):
             elif col.startswith(('DRAIN', 'LEAK')):
                 df[col] = df[col].map(lambda x: f"{x:.4g}")
 
-        df.to_csv('D:/Projets/pyhelp/example/help_input_files/HELP30_output_files/37728.csv')
+        df.to_csv(daily_fpath_out)
 
     # Note that we are rounding of the output data intentionally to
     # preserve the raw computational precision in the original Fortran code.
