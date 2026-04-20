@@ -4,6 +4,7 @@ connect_table.npy
 /example/*.pdf
 /example/*.out
 /example/help_input_files/*
+/example/help_io_files/*
 backup/
 H3OFS32F.exe
 /docs/html/*
