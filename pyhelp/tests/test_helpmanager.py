@@ -147,8 +147,8 @@ def test_write_daily_output(helpm, output_file):
         'HEAD2_ON_LAY5', 'DRAIN2_FROM_LAY4', 'LEAK2_THROUGH_LAY5'
         ]
 
-    daily_data.index[0] == datetime.datetime(2000, 1, 1)
-    daily_data.index[-1] == datetime.datetime(2010, 12, 31)
+    assert daily_data.index[0] == datetime.datetime(2000, 1, 1)
+    assert daily_data.index[-1] == datetime.datetime(2010, 12, 31)
 
     expected_sums = [
         11567.8, 2808.92, 5360.22, 812.325500000001, 121973.12, 23791.7,
