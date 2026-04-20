@@ -6149,6 +6149,7 @@ C
      &  RCR1, RCR2, RCR3, RCR4, RCR5, RCRI(20)
       COMMON /BLK16/ LD(5), LP(6), LPQ(5), LCASE(5), IYR, IDA, MO,
      &  NSTEP(6), ND
+      COMMON /BLK20/ TSEG (7), Z (7), FCS (7), ST (7)
       COMMON /BLK21/ TB, TO, TS, AVT, AMP, ABD, PHU, GS, CV,
      &  RSD, DM, WFT (12), DD, DLAI, TSURF
       COMMON /BLK27/ IFREZ, IDFS, IFCNT, KCNT, MXKCNT
@@ -6214,7 +6215,7 @@ C
       ! Save soil temperature at the surface in deg C.
       PY_OUTDAY(IYR, IDA + 1, 7) = TSURF
       ! Save soil temperature at bottom of evaporative zone in deg C.
-      PY_OUTDAY(IYR, IDA + 1, 8) = TS(7)
+      PY_OUTDAY(IYR, IDA + 1, 8) = TSEG(7)
       ! Save if soil is frozen (1=Yes, 0=No).
       PY_OUTDAY(IYR, IDA + 1, 9) = IFREZ
 
