@@ -6209,43 +6209,41 @@ C
 
       ! Save daily air temperature in deg C.
       PY_OUTDAY(IYR, IDA + 1, 6) = (TMPF(IDA) - 32.0D0) / 1.8D0
-      ! Save average air temperature in deg C.
-      PY_OUTDAY(IYR, IDA + 1, 7) = AVT
-      ! Save air temperature amplitude in deg C.
-      PY_OUTDAY(IYR, IDA + 1, 8) = AMP
-      ! Save ground surface temperature in deg C.
-      PY_OUTDAY(IYR, IDA + 1, 9) = TSURF
+      ! Save soil temperature at the surface in deg C.
+      PY_OUTDAY(IYR, IDA + 1, 7) = TSURF
+      ! Save soil temperature at bottom of evaporative zone in deg C.
+      PY_OUTDAY(IYR, IDA + 1, 8) = TS(7)
       ! Save if soil is frozen (1=Yes, 0=No).
-      PY_OUTDAY(IYR, IDA + 1, 10) = IFREZ
+      PY_OUTDAY(IYR, IDA + 1, 9) = IFREZ
 
       ! Save head, drain and leak daily values in mm.
       IF (LP(1) > 0) THEN
-        PY_OUTDAY(IYR, IDA + 1, 11) = HED1 * 25.4D0
-        PY_OUTDAY(IYR, IDA + 1, 12) = (DRN1 + RCR1) * 25.4D0
-        PY_OUTDAY(IYR, IDA + 1, 13) = PRC1 * 25.4D0
+        PY_OUTDAY(IYR, IDA + 1, 10) = HED1 * 25.4D0
+        PY_OUTDAY(IYR, IDA + 1, 11) = (DRN1 + RCR1) * 25.4D0
+        PY_OUTDAY(IYR, IDA + 1, 12) = PRC1 * 25.4D0
       END IF
       IF (LP(2) > 0) THEN
-        PY_OUTDAY(IYR, IDA + 1, 14) = HED2 * 25.4D0
-        PY_OUTDAY(IYR, IDA + 1, 15) = (DRN2 + RCR2) * 25.4D0
-        PY_OUTDAY(IYR, IDA + 1, 16) = PRC2 * 25.4D0
+        PY_OUTDAY(IYR, IDA + 1, 13) = HED2 * 25.4D0
+        PY_OUTDAY(IYR, IDA + 1, 14) = (DRN2 + RCR2) * 25.4D0
+        PY_OUTDAY(IYR, IDA + 1, 15) = PRC2 * 25.4D0
       END IF
       IF (LP(3) > 0) THEN
-        PY_OUTDAY(IYR, IDA + 1, 17) = HED3 * 25.4D0
-        PY_OUTDAY(IYR, IDA + 1, 18) = (DRN3 + RCR3) * 25.4D0
-        PY_OUTDAY(IYR, IDA + 1, 19) = PRC3 * 25.4D0
+        PY_OUTDAY(IYR, IDA + 1, 16) = HED3 * 25.4D0
+        PY_OUTDAY(IYR, IDA + 1, 17) = (DRN3 + RCR3) * 25.4D0
+        PY_OUTDAY(IYR, IDA + 1, 18) = PRC3 * 25.4D0
       END IF
       IF (LP(4) > 0) THEN
-        PY_OUTDAY(IYR, IDA + 1, 20) = HED4 * 25.4D0
-        PY_OUTDAY(IYR, IDA + 1, 21) = (DRN4 + RCR4) * 25.4D0
-        PY_OUTDAY(IYR, IDA + 1, 22) = PRC4 * 25.4D0
+        PY_OUTDAY(IYR, IDA + 1, 19) = HED4 * 25.4D0
+        PY_OUTDAY(IYR, IDA + 1, 20) = (DRN4 + RCR4) * 25.4D0
+        PY_OUTDAY(IYR, IDA + 1, 21) = PRC4 * 25.4D0
       END IF
       IF (LP(5) > 0) THEN
-        PY_OUTDAY(IYR, IDA + 1, 23) = HED5 * 25.4D0
-        PY_OUTDAY(IYR, IDA + 1, 24) = (DRN5 + RCR5) * 25.4D0
-        PY_OUTDAY(IYR, IDA + 1, 25) = PRC5 * 25.4D0
+        PY_OUTDAY(IYR, IDA + 1, 22) = HED5 * 25.4D0
+        PY_OUTDAY(IYR, IDA + 1, 23) = (DRN5 + RCR5) * 25.4D0
+        PY_OUTDAY(IYR, IDA + 1, 24) = PRC5 * 25.4D0
       END IF
       IF (LP(6) > 0) THEN
-        PY_OUTDAY(IYR, IDA + 1, 26) = PRC6 * 25.4D0
+        PY_OUTDAY(IYR, IDA + 1, 25) = PRC6 * 25.4D0
       END IF
 
       RETURN
