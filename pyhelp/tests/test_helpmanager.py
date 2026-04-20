@@ -171,7 +171,10 @@ def test_write_daily_output(helpm, output_file):
     for i, col in enumerate(daily_data.columns):
         actual = daily_data[col].values[:5].tolist()
         expected = expected_values[i]
-        assert actual == expected, f'{col}: {actual}'
+        np.testing.assert_allclose(
+            actual, expected,
+            err_msg=f"Mismatch in col '{col}': {actual}"
+            )
 
 
 def test_monthly_normals_in_weather_headers(helpm, output_file):
