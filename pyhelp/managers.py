@@ -90,7 +90,7 @@ class HelpManager(object):
         be saved in the working directory. This folder is created in case it
         doesn't already exist in the file system.
         """
-        inputdir = osp.join(self.workdir, 'help_input_files')
+        inputdir = osp.join(self.workdir, 'help_io_files')
         if not osp.exists(inputdir):
             os.makedirs(inputdir)
         return inputdir
