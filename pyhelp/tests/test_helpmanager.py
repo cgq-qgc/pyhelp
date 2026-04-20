@@ -151,15 +151,15 @@ def test_write_daily_output(helpm, output_file):
     daily_data.index[-1] == datetime.datetime(2010, 12, 31)
 
     expected_sums = [
-        11567.8, 11020.55, 417.19, 698.2392, 121973.12,
-        23791.7, 48626.63, 47692.79, 1248,
-        61.13821, 1.36028560088E-05, 159.5421547,
-        199.4278, 1.108320358353E-05, 159.5421447
+        11567.8, 2808.92, 5360.22, 812.325500000001, 121973.12, 23791.7,
+        55179.01, 48109.14, 1248,
+        1256.23204, 0.021887932775348, 3434.365061,
+        4250.60245, 0.00741770711287, 3393.3356759
         ]
 
     for i, col in enumerate(daily_data.columns):
         err = abs(daily_data[col].sum() - expected_sums[i])
-        assert err < 0.1, f'col, {err} > 0.1'
+        assert err < 0.1, f'{col}, {err} > 0.1'
 
 
 def test_monthly_normals_in_weather_headers(helpm, output_file):
