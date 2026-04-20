@@ -151,7 +151,7 @@ def test_write_daily_output(helpm, output_file):
     assert daily_data.index[-1] == datetime.datetime(2010, 12, 31)
 
     expected_values = [
-        [0.2, 7.2, 1.9, 17.1, 0],
+        [0.2, 7.2, 1.9, 17.1, 0.0],
         [0, 2.79, 0.05, 0, 0],
         [0, 0, 0.5, 0, 0.36],
         [0.2545, 0.2726, 0.2763, 0.2772, 0.2772],
@@ -169,7 +169,9 @@ def test_write_daily_output(helpm, output_file):
         ]
 
     for i, col in enumerate(daily_data.columns):
-        assert list(daily_data[col].values[:5]) == expected_values[i]
+        actual = daily_data[col].values[:5].tolist()
+        expected = expected_values[i]
+        assert actual == expected, f'{col}: {actual}'
 
 
 def test_monthly_normals_in_weather_headers(helpm, output_file):
