@@ -49,11 +49,11 @@ def run_help_singlecell(item):
             ]
         for i in range(5):
             columns.extend(
-                [f'HEAD{i+1}_LAY{layers[i*3 + 7]:.0f}',
-                 f'DRAIN{i+1}_LAY{layers[i*3 + 8]:.0f}',
-                 f'LEAK{i+1}_LAY{layers[i*3 + 9]:.0f}']
+                [f'HEAD{i+1}_ON_LAY{layers[i*3 + 10]:.0f}',
+                 f'DRAIN{i+1}_FROM_LAY{layers[i*3 + 11]:.0f}',
+                 f'LEAK{i+1}_THROUGH_LAY{layers[i*3 + 12]:.0f}']
                 )
-        columns.extend([f'LEAK{i+1}_LAY{layers[i*3 + 7]:.0f}'])
+        columns.extend([f'LEAK{i+1}_THROUGH_LAY{layers[i*3 + 10]:.0f}'])
 
         import pandas as pd
         import datetime
