@@ -398,9 +398,15 @@ class HelpManager(object):
             customize simulation output. If omitted, default values for these
             flags are used.
         write_daily_output: bool
-            If True, writes the daily output for each cell to a CSV file
-            in a format that is easily readable with pandas.
-            See cgq-qgc/pyhelp#123.
+            If True, extracts the high-resolution daily simulation outputs
+            from the HELP30 Fortran engine and saves them as CSV files in the
+            `help_io_files/Daily_output_files` directory. The generated
+            CSVs are indexed by date and contain critical daily hydrologic
+            variables including precipitation, runoff, evapotranspiration,
+            snow water equivalent, soil temperature profile (`TSURF`,
+            `TSEG`), frost status, and layer-specific drainage/leakage
+            metrics. Default is False. Note that enabling this will increase
+            disk usage and execution time. See cgq-qgc/pyhelp#123 for details.
 
         Returns
         -------
