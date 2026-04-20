@@ -8,6 +8,7 @@
 # -----------------------------------------------------------------------------
 
 # ---- Standard library imports
+import datetime
 import os
 import os.path as osp
 
@@ -134,11 +135,10 @@ def test_write_daily_output(helpm, output_file):
     assert len(os.listdir(daily_outdir)) == 98
 
     daily_data = pd.read_csv(
-        "D:/Projets/pyhelp/example/help_io_files/Daily_output_files/37728.csv",
+        osp.join(daily_outdir, '37728.csv'),
         index_col=0,
         parse_dates=True
         )
-    import datetime
 
     assert list(daily_data.columns) == [
         'RAIN', 'RUNOFF', 'ET', 'E_ZONE_WATER', 'SNOW_SURF',
