@@ -343,7 +343,8 @@ class HelpManager(object):
                         sf_cn: float = 1,
                         write_help_input_files: bool = False,
                         write_help_output_files: bool = False,
-                        help_output_kwargs: dict = None
+                        help_output_kwargs: dict = None,
+                        write_daily_output: bool = False,
                         ) -> HelpOutput:
         """
         Calcul the water budget for all eligible cells with HELP.
@@ -396,6 +397,10 @@ class HelpManager(object):
             These flags are passed to the HELP model configuration to
             customize simulation output. If omitted, default values for these
             flags are used.
+        write_daily_output: bool
+            If True, writes the daily output for each cell to a CSV file
+            in a format that is easily readable with pandas.
+            See cgq-qgc/pyhelp#123.
 
         Returns
         -------
@@ -418,6 +423,10 @@ class HelpManager(object):
         if write_help_output_files:
             outdir = Path(self.inputdir) / "HELP30_output_files"
             outdir.mkdir(parents=True, exist_ok=True)
+
+        if write_daily_output:
+            daily_outdir = Path(self.inputdir) / "Daily_output_files"
+            daily_outdir.mkdir(parents=True, exist_ok=True)
 
         run_cellnames = self.get_run_cellnames(cellnames)
         cellparams = {}
@@ -453,12 +462,20 @@ class HelpManager(object):
             year_end = self.precip_data.index.year.max()
             simu_nyear = year_end - year_start + 1
 
+            if write_daily_output:
+                daily_fpath_out = str(
+                    (daily_outdir / f"{cellname}.csv").resolve()
+                    )
+            else:
+                daily_fpath_out = None
+
             cellparams[cellname] = (
                 fpath_d4, fpath_d7, fpath_d13,
                 d11_input, d10_input,
                 fpath_out,
                 daily_out, monthly_out, yearly_out,
-                simu_nyear, tfsoil
+                simu_nyear, tfsoil,
+                daily_fpath_out
                 )
 
         skipped_cells = list(set(skipped_cells))
