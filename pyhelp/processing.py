@@ -31,7 +31,7 @@ def run_help_singlecell(item):
 
     daily_fpath_out = outparam[-1]
     outparam = outparam[:-1]
-    return_daily = daily_fpath_out is not None
+    return_daily = daily_fpath_out not in (None, 0)
 
     outmo, yr0, error_code, outday = HELP3O.run_simulation(
         *outparam, fill_outday=return_daily
