@@ -99,6 +99,9 @@ def test_calc_help_cells(
     if write_help_output_files:
         assert len(os.listdir(outputdir)) == 98
 
+    daily_outdir = osp.join(helpm.inputdir, 'Daily_output_files')
+    assert not osp.exists(daily_outdir)
+
     # Assert that the results are as expected.
     output = HelpOutput(output_file)
     area_yrly_avg = output.calc_area_yearly_avg()
@@ -112,6 +115,51 @@ def test_calc_help_cells(
     for name, value in expected_results.items():
         result = np.sum(area_yrly_avg[name])
         assert abs(result - value) < 1, f'{name}: {result} vs {value}'
+
+
+def test_write_daily_output(helpm, output_file):
+    """
+    Test that daily output are saved as expected when
+    `write_daily_output` is set to `True`.
+    """
+    cellnames = helpm.cellnames[:100]
+
+    helpm.calc_help_cells(
+        output_file, cellnames, tfsoil=-3,
+        write_daily_output=True,
+        )
+
+    daily_outdir = osp.join(helpm.inputdir, 'Daily_output_files')
+    assert osp.exists(daily_outdir)
+    assert len(os.listdir(daily_outdir)) == 98
+
+    daily_data = pd.read_csv(
+        "D:/Projets/pyhelp/example/help_io_files/Daily_output_files/37728.csv",
+        index_col=0,
+        parse_dates=True
+        )
+    import datetime
+
+    assert list(daily_data.columns) == [
+        'RAIN', 'RUNOFF', 'ET', 'E_ZONE_WATER', 'SNOW_SURF',
+        'TAIR', 'TSOIL_SURF', 'TSOIL_EDEPTH', 'FROZEN_SOIL',
+        'HEAD1_ON_LAY3', 'DRAIN1_FROM_LAY2', 'LEAK1_THROUGH_LAY3',
+        'HEAD2_ON_LAY5', 'DRAIN2_FROM_LAY4', 'LEAK2_THROUGH_LAY5'
+        ]
+
+    daily_data.index[0] == datetime.datetime(2000, 1, 1)
+    daily_data.index[-1] == datetime.datetime(2010, 12, 31)
+
+    expected_sums = [
+        11567.8, 11020.55, 417.19, 698.2392, 121973.12,
+        23791.7, 48626.63, 47692.79, 1248,
+        61.13821, 1.36028560088E-05, 159.5421547,
+        199.4278, 1.108320358353E-05, 159.5421447
+        ]
+
+    for i, col in enumerate(daily_data.columns):
+        err = abs(daily_data[col].sum() - expected_sums[i])
+        assert err < 0.1, f'col, {err} > 0.1'
 
 
 def test_monthly_normals_in_weather_headers(helpm, output_file):
