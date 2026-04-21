@@ -3523,8 +3523,11 @@ C     GS = GS + TMPC/PHU
          ST0 = WFT (MO)*5. + TMPC - 5.
       END IF
 
+      ! Initialize ground surface temperature.
+      IF (TSURF == -999) TSURF = ST0
+
       ! Calculate actual ground surface temperature (TSURF).
-      TSURF = BCV*TO + (1. - BCV)*ST0
+      TSURF = BCV * TSURF + (1. - BCV) * ST0
 
       DT = TSURF - (AVT + AMP*COS (ALX))
       DO K = 1, 7
