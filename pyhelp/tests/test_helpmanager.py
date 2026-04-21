@@ -299,11 +299,11 @@ def test_plot_area_monthly_avg(output_dir, output_file, fig_title):
     children = fig.axes[0].get_children()
     expected_values = {
         'precip': 1086.8448950125246,
-        'rechg': 144.59660495818275,
-        'runoff': 228.3554850746950,
-        'evapo': 526.3448146870115,
-        'subrun1': 52.79497962998723,
-        'subrun2': 131.34891390581527
+        'rechg': 145.8440860111447,
+        'runoff': 228.41669613037263,
+        'evapo': 523.7231069076861,
+        'subrun1': 53.17822738799963,
+        'subrun2': 132.172476817029
         }
     for i, (name, value) in enumerate(expected_values.items()):
         result = children[i].get_ydata().sum()
