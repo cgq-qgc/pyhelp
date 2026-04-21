@@ -3527,6 +3527,10 @@ C     GS = GS + TMPC/PHU
       ! Calculate actual ground surface temperature (TSURF).
       TSURF = BCV * TSURF + (1. - BCV) * ST0
 
+      ! Limit the minimum ground surface temperature
+      ! to zero Celsius.
+      IF (TSURF < 0) TSURF = 0
+
       DT = TSURF - (AVT + AMP*COS (ALX))
       DO K = 1, 7
          ZD = - Z (K)/DD
