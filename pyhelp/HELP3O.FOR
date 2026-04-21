@@ -1,58 +1,98 @@
-C    IDA IS THE DAY OF THE YEAR OF SIMULATION
-C    IYR IS THE NUMBER OF THE YEAR
-C    LMYR IS THE NUMBER OF YEARS OF SIMULATION
-C    OSNO IS THE INITIAL SNOW WATER
-C    AREA IS AREA PROJECTED ON HORIZONTAL PLANE
-C
-C******************************MAIN*************************
-C                         OUTPUT ROUTINE
-C
-C    DIRECTS THE RUNNING OF THE SIMULATION AND PRINTING OF OUTPUT,
-C    AND PERFORMS THE ACCOUNTING ON THE RESULTS.
-C
-C    IU8 is a flag to indicate the system of units used for the inputs and
-C        outputs. A value of 2 is used for SI and 1 for IP.
-C    TFSOIL is the average air temperature, in Fahrenheit degrees,
-C           below which the soil is assumed to be freezing
-C        
+      !=======================================================================
+      !     SUBROUTINE: run_simulation
+      !
+      !     DESCRIPTION:
+      !     Main entry point for running the HELP3O simulation from Python.
+      !     Directs the simulation steps, handles accounting of water routing,
+      !     and generates output reports.
+      !
+      !     INPUT ARGUMENTS (INTENT IN):
+      !     fpath_precip : CHARACTER(len=260) - File path to the daily
+      !                    precipitation data file (Unit 4).
+      !     fpath_tasavg : CHARACTER(len=260) - File path to the daily
+      !                    average temperature data file (Unit 7).
+      !     fpath_solrad : CHARACTER(len=260) - File path to the daily
+      !                    solar radiation data file (Unit 13).
+      !     d11_input    : CHARACTER(len=80) Array(3) - Array containing 3
+      !                    lines of surface condition (evapotranspiration)
+      !                    data.
+      !     d10_nlines   : INTEGER - The number of lines contained in the
+      !                    d10_input array.
+      !     d10_input    : CHARACTER(len=80) Array(d10_nlines) - Array
+      !                    containing soil and design layout data.
+      !     fpath_output : CHARACTER(len=260) - File path where the
+      !                    simulation output report will be saved (Unit 8).
+      !                    If left empty (''), file output is disabled.
+      !     IOD          : INTEGER - Flag for Daily Output (1=Yes, 0=No).
+      !     IOM          : INTEGER - Flag for Monthly Output (1=Yes, 0=No).
+      !     IOA          : INTEGER - Flag for Annual Output (1=Yes, 0=No).
+      !     LMYR         : INTEGER - Total number of years to simulate.
+      !     TFSOIL       : REAL - Average air temperature (in Fahrenheit)
+      !                    below which the soil is assumed to be freezing.
+      !
+      !     OUTPUT ARGUMENTS (INTENT OUT):
+      !     PY_OUTMO     : REAL Array(LMYR, 14, 13) - 3D array containing
+      !                    the monthly water routing totals in millimeters,
+      !                    packaged for direct return to Python.
+      !     PY_JYEAR1    : INTEGER - The starting calendar year of the
+      !                    simulation read from the weather files.
+      !     IERR         : INTEGER - Error code flag. Returns 0 on success.
+      !                    Values 1-15 indicate file I/O or parsing errors
+      !                    during the initialization/read step.
+      !=======================================================================
 
       SUBROUTINE run_simulation (fpath_precip, fpath_tasavg,
-     1 fpath_solrad, fpath_evapo, fpath_soil, fpath_output,
-     2 IOD, IOM, IOA, IOS, IU8, LMYR, TFSOIL)
-C
+     &  fpath_solrad, d11_input, d10_nlines, d10_input, fpath_output,
+     &  IOD, IOM, IOA,
+     &  LMYR, TFSOIL, PY_OUTMO, PY_JYEAR1, IERR,
+     &  FILL_OUTDAY, PY_OUTDAY
+     &  )
+
+      PARAMETER (NDVAR = 25)
       PARAMETER (MXYR = 100)
       PARAMETER (MAXMO = 12)
-      
+
+      CHARACTER(len=80), INTENT(IN) :: d11_input(3)
+
+      INTEGER, INTENT(IN) :: d10_nlines
+      CHARACTER(len=80), INTENT(IN) :: d10_input(d10_nlines)
+
       CHARACTER(len=260), INTENT(IN) :: fpath_precip
       CHARACTER(len=260), INTENT(IN) :: fpath_tasavg
       CHARACTER(len=260), INTENT(IN) :: fpath_solrad
-      CHARACTER(len=260), INTENT(IN) :: fpath_evapo
-      CHARACTER(len=260), INTENT(IN) :: fpath_soil
       CHARACTER(len=260), INTENT(IN) :: fpath_output
+
       INTEGER, INTENT(IN) :: IOD
       INTEGER, INTENT(IN) :: IOM
       INTEGER, INTENT(IN) :: IOA
-      INTEGER, INTENT(IN) :: IOS
-      INTEGER, INTENT(IN) :: IU8
+
       INTEGER, INTENT(IN) :: LMYR
       REAL, INTENT(IN) :: TFSOIL
 
+      REAL, INTENT(OUT) :: PY_OUTMO(LMYR, 14, 13)
+      INTEGER, INTENT(OUT) :: PY_JYEAR1
+      INTEGER, INTENT(OUT) :: IERR
+
+      INTEGER, INTENT(IN) :: FILL_OUTDAY
+      DOUBLE PRECISION, INTENT(OUT) ::
+     &  PY_OUTDAY(LMYR, 367, FILL_OUTDAY*NDVAR)
+
+      INTEGER :: IU8
+      INTEGER :: IOF   ! Flag to write Output to file (1=Yes, 0=No)
+      INTEGER :: NVAR  ! Number of output variables for OUTDAY
+
       DOUBLE PRECISION BALY, BALT, DRIN, SWULY, DUMMY1, DUMMY2
-C    1  QDRN1, QDRN2, QDRN3, QDRN4, QDRN5, 
-C    2  QPRCY1, QPRCY2, QPRCY3, QPRCY4, QPRCY5, QPRCY6, QLATY1, 
-C    3  QLATY2, QLATY3, QLATY4, QLATY5, DUMMY1, DUMMY2, 
-C    4  THY1, THY2, THY3, THY4, THY5, THY6
-C
-      DOUBLE PRECISION PRC1, PRC2, PRC3, PRC4, PRC5, PRC6, DRN1, DRN2, 
-     1  DRN3, DRN4, DRN5, HED1, HED2, HED3, HED4, HED5, 
-     2  RCR1, RCR2, RCR3, RCR4, RCR5, RCRI
-C
+      DOUBLE PRECISION PRC1, PRC2, PRC3, PRC4, PRC5, PRC6, DRN1, DRN2,
+     &  DRN3, DRN4, DRN5, HED1, HED2, HED3, HED4, HED5,
+     &  RCR1, RCR2, RCR3, RCR4, RCR5, RCRI
       DOUBLE PRECISION DSWUL, DTHICK, DRCUL, DBUBUL,
-     1  DWPUL, DLAMUL, DRSUL, DUL, DFCUL, DSUBIN, DCHG, DRCRS
-C
-      CHARACTER*1 ISTAR(2), ASTAR, SSTAR
-      CHARACTER*60 TITLE
-C
+     &  DWPUL, DLAMUL, DRSUL, DUL, DFCUL, DSUBIN, DCHG, DRCRS
+
+      CHARACTER(len=1) :: ISTAR(2)
+      DATA ISTAR /'*', ' '/
+      CHARACTER(len=1) :: ASTAR, SSTAR
+      CHARACTER(len=60) TITLE
+
       COMMON /BLK0/ TITLE
       COMMON /BLK1/ IT4, IT7, IT13, IU4, IU7, IU13, IU11, IU10
       DOUBLE PRECISION RC(20)
@@ -77,45 +117,19 @@ C
      2  DRN2M (12), DRN3M (12), DRN4M (12), DRN5M (12),
      3  PREM (12), RUNM (12), ETM (12), HED1M (12),
      4  HED2M (12), HED3M (12), HED4M (12), HED5M (12),
-     5  RCRIM (20,12), SUBINM (20,12), RCR1M (12), 
-     6  RCR2M (12), RCR3M (12), RCR4M (12), RCR5M (12) 
-      COMMON /BLK13/ PRC1A, PRC2A, PRC3A, PRC4A, PRC5A, PRC6A, 
+     5  RCRIM (20,12), SUBINM (20,12), RCR1M (12),
+     6  RCR2M (12), RCR3M (12), RCR4M (12), RCR5M (12)
+      COMMON /BLK13/ PRC1A, PRC2A, PRC3A, PRC4A, PRC5A, PRC6A,
      1  DRN1A, DRN2A, DRN3A, DRN4A, DRN5A, BAL, PREA, RUNA, ETA,
      2  STOR, RCR1A, RCR2A, RCR3A, RCR4A, RCR5A, RCRIA(20), HED1A,
      3  HED2A, HED3A, HED4A, HED5A, OSWULE, PSWULE, SUBINA(20)
-      COMMON /BLK14/ PPRC1, PPRC2, PPRC3, PPRC4, PPRC5, PPRC6, 
-     1  PDRN1, PDRN2, PDRN3, PDRN4, PDRN5, PPRE, PRUN, PSNO, PSW, DSW,
-     2  PHED1, PHED2, PHED3, PHED4, PHED5, PRCR1, PRCR2, PRCR3,
-     3  PRCR4, PRCR5, PRCRI(20)
-      COMMON /BLK15/ PRC1, PRC2, PRC3, PRC4, PRC5, PRC6, DRN1, DRN2, 
-     1  DRN3, DRN4, DRN5, HED1, HED2, HED3, HED4, HED5, 
+      COMMON /BLK15/ PRC1, PRC2, PRC3, PRC4, PRC5, PRC6, DRN1, DRN2,
+     1  DRN3, DRN4, DRN5, HED1, HED2, HED3, HED4, HED5,
      2  RCR1, RCR2, RCR3, RCR4, RCR5, RCRI(20)
       COMMON /BLK16/ LD(5), LP(6), LPQ(5), LCASE(5), IYR, IDA, MO,
      1  NSTEP(6), ND
       COMMON /BLK17/ NSEG1, NSEG2, NSEG3, NSEG4, NSEG5, NSEG6, NSEG
       COMMON /BLK19/ IPL, IHV, IPRE, IRUN, ITSOIL, IVEG
-      COMMON /BLK22/ PRC1M2 (12), PRC2M2 (12), PRC3M2 (12),
-     1  PRC4M2 (12), PRC5M2 (12), PRC6M2 (12), DRN1M2 (12),
-     2  DRN2M2 (12), DRN3M2 (12), DRN4M2 (12), DRN5M2 (12),
-     3  PREM2 (12), RUNM2 (12), ETM2 (12), HED1M2 (12),
-     4  HED2M2 (12), HED3M2 (12), HED4M2 (12), HED5M2 (12),
-     5  RCRIM2 (20,12), RCR1M2 (12), RCR2M2 (12),
-     6  RCR3M2 (12), RCR4M2 (12), RCR5M2 (12)
-      COMMON /BLK23/ PRC1M1 (12), PRC2M1 (12), PRC3M1 (12),
-     1  PRC4M1 (12), PRC5M1 (12), PRC6M1 (12), DRN1M1 (12),
-     2  DRN2M1 (12), DRN3M1 (12), DRN4M1 (12), DRN5M1 (12),
-     3  PREM1 (12), RUNM1 (12), ETM1 (12), HED1M1 (12),
-     4  HED2M1 (12), HED3M1 (12), HED4M1 (12), HED5M1 (12),
-     5  RCRIM1 (20,12), RCR1M1 (12), RCR2M1 (12),
-     6  RCR3M1 (12), RCR4M1 (12), RCR5M1 (12)
-      COMMON /BLK24/ PRC1A2, PRC2A2, PRC3A2, PRC4A2, PRC5A2, PRC6A2,
-     1  DRN1A2, DRN2A2, DRN3A2, DRN4A2, DRN5A2, PREA2, RUNA2, ETA2,
-     2  STOR2, RCR1A2, RCR2A2, RCR3A2, RCR4A2, RCR5A2, RCRIA2(20),
-     3  HED1A2, HED2A2, HED3A2, HED4A2, HED5A2
-      COMMON /BLK25/ PRC1A1, PRC2A1, PRC3A1, PRC4A1, PRC5A1, PRC6A1,
-     1  DRN1A1, DRN2A1, DRN3A1, DRN4A1, DRN5A1, PREA1, RUNA1, ETA1,
-     2  STOR1, RCR1A1, RCR2A1, RCR3A1, RCR4A1, RCR5A1, RCRIA1(20),
-     3  HED1A1, HED2A1, HED3A1, HED4A1, HED5A1
       COMMON /BLK27/ IFREZ, IDFS, IFCNT, KCNT, MXKCNT
       COMMON /BLK28/ WE, XNEGHS, XLIQW, TINDEX, STORGE, EXLAG(4), TWE
       COMMON /BLK31/ DRCUL (67), DBUBUL (67), DRSUL (67), DLAMUL (67),
@@ -126,11 +140,30 @@ C
       COMMON /BLK33/ JYEAR(MXYR)
       COMMON /BLK35/ NSEG1B, NSEG2B, NSEG3B, NSEG4B, NSEG5B,
      1  NSEG1D, NSEG2D, NSEG3D, NSEG4D, NSEG5D
-C
+
       DIMENSION  BALY(67), BALT(67), SWULL(20), HED1S(31), HED2S(31),
      1  HED3S(31), HED4S(31), HED5S(31), DRIN(68), SWULY(67)
-      DATA ISTAR/'*', ' '/
-C
+
+      ! Determine if file output is enabled based on fpath_output.
+      IF (LEN_TRIM(fpath_output) == 0) THEN
+         IOF = 0  ! Path is empty, disable file writing
+      ELSE
+         IOF = 1  ! Path is provided, enable file writing
+      END IF
+
+      ! Initialize the monthly output array to zero.
+      PY_OUTMO = 0.0
+
+      ! Initialize error flag to success.
+      IERR = 0
+
+      ! IU8 is now internally set to 2, indicating that SI units are
+      ! used for outputs. Previously, IU8 allowed selection between
+      ! SI (2) and IP (1) units, but now only SI units are supported.
+      ! Note that code supporting IP units will be removed gradually
+      ! from the source code.
+      IU8 = 2
+
       WF(1) = 0.085
       WF(2) = 0.334
       WF(3) = 0.252
@@ -138,73 +171,96 @@ C
       WF(5) = 0.091
       WF(6) = 0.054
       WF(7) = 0.033
-C
-      OPEN (8, FILE = fpath_output, STATUS = 'UNKNOWN')
-C
-C    READS CLIMATIC INPUT AND SOIL CHARACTERISTICS AND DESIGN
-C    INFORMATION.
-C
+
+      IF (IOF == 1) THEN
+        OPEN (8, FILE = fpath_output, STATUS = 'UNKNOWN')
+      END IF
+
+      ! Read climatic input and soil characteristics and
+      ! design information.
       CALL READIN(fpath_precip, fpath_tasavg, fpath_solrad,
-     1            fpath_evapo, fpath_soil)
-C
-C    SETS CONTROLS FOR SUBPROFILES AND OUTPUT.
-C
+     &            d11_input, d10_nlines, d10_input, IERR)
+
+      ! If READIN failed, immediately exit run_simulation.
+      IF (IERR /= 0) THEN
+         RETURN
+      END IF
+
+      ! Determine the drainage and percolation layers for output.
       CALL CNTRLD
-C
-C    ASSIGNS THICKNESSES AND SOIL CHARACTERISTICS TO SEGMENTS.
-C
+
+      ! Assign thicknesses and soil characteristics to segments.
       CALL SGMNT
-C
-C    COMPUTES MAXIMUM STORAGE RETENTION PARMETER.
-C
+
+      ! Determine the number of output variables (NVAR) for OUTDAY.
+      IF (LP(6) > 0) THEN
+        NVAR = 20
+      ELSE IF (LP(5) > 0) THEN
+        NVAR = 19
+      ELSE IF (LP(4) > 0) THEN
+        NVAR = 16
+      ELSE IF (LP(3) > 0) THEN
+        NVAR = 13
+      ELSE IF (LP(2) > 0) THEN
+        NVAR = 10
+      ELSE IF (LP(1) > 0) THEN
+        NVAR = 7
+      ELSE
+        NVAR = 0
+      END IF
+
+      ! Initialize the daily output array if applicable.
+      IF (FILL_OUTDAY == 1) THEN
+        PY_OUTDAY = -999.0
+      END IF
+
+      ! Computes maximum storage retention parameter.
       C2 = CN2*CN2
       C3 = CN2*C2
       C4 = CN2*C3
       CN1 = 0.3750701*CN2 + 2.756779E-03*C2 - 1.638951E-05*C3 +
-     1  5.142644E-07*C4
+     &  5.142644E-07*C4
       SMXN = (1000./CN1) - 10.0
-C
-C   SMX FOR FROZEN SOIL CONDITIONS
-C
+
+      ! SMX for frozen soil conditions.
       CN22 = 95.0
       IF (CN2 .GE. 80) CN22 = 98.0
       C22 = CN22*CN22
       C33 = CN22*C22
       C44 = CN22*C33
       CN11 = 0.3750701*CN22 + 2.756779E-03*C22 - 1.638951E-05*C33 +
-     1  5.142644E-07*C44
+     &  5.142644E-07*C44
       SMXF = (1000./CN11) - 10.
-C
-C    COMPUTES SOIL CHARACTERISTICS OF THE EVAPORATIVE ZONE.
-C
+
+      ! Computes soil characteristics of the evaporative zone.
       ULE = 0.0
-      DO 1000 J = 1, 7
+      DO J = 1, 7
         ULE = ULE + UL(J)
- 1000 CONTINUE
-C
-C    COMPUTES SOIL EVAPORATION COEFFICIENT.
-C
+      END DO
+
+      ! Computes soil evaporation coefficient.
       CALL ETCOEF
-C
-C    INITIALIZES ACCOUNTING VARIABLES.
-C
+
+      ! Initializes accounting variables.
       SWULE = 0.0
       DO J = 1, 7
         SWULE = SWULE + SWUL(J)
       END DO
+
       OSWULE = 0.0
       DO J = 1, NSEG
         OSWULE = OSWULE + SWUL(J)
         DSWUL(J) = SWUL(J)
         SWULI(J) = SWUL(J)
       END DO
+
       NSEG1B = 1
       NSEG1E = NSEG1
       NSEG1D = NSEG1E
       IF (LSEG(NSEG1) .GT. 2) NSEG1D = NSEG1E - 1
       LAY1B = 1
       LAY1E = LP(1)
-      IF (NSEG2 .GT. 0) THEN       
+      IF (NSEG2 .GT. 0) THEN
         NSEG2B = NSEG1 + 1
         NSEG2E = NSEG1 + NSEG2
         NSEG2D = NSEG2E
@@ -212,7 +268,7 @@ C
         LAY2B = LP(1) + 1
         LAY2E = LP(2)
       END IF
-      IF (NSEG3 .GT. 0) THEN 
+      IF (NSEG3 .GT. 0) THEN
         NSEG3B = NSEG2E+1
         NSEG3E = NSEG2E + NSEG3
         NSEG3D = NSEG3E
@@ -243,393 +299,194 @@ C
         LAY6B = LP(5) + 1
         LAY6E = LP(6)
       END IF
-      DO J = 1, 67
-        BALT(J) = 0.0D0
-        BALY(J) = 0.0D0
-        ET(J) = 0.0
-      END DO
-      IODAY = 0
+
+      BALT = 0.0D0
+      BALY = 0.0D0
+      ET = 0.0
+
       RUN = 0.0
       ES1T = 0.0
       TS2 = 0.0
-      DRN1 = 0.0D0
-      DRN2 = 0.0D0
-      DRN3 = 0.0D0
-      DRN4 = 0.0D0
-      DRN5 = 0.0D0
-      PRC1 = 0.0D0
-      PRC2 = 0.0D0
-      PRC3 = 0.0D0
-      PRC4 = 0.0D0
-      PRC5 = 0.0D0
-      PRC6 = 0.0D0
-      HED1 = 0.0D0
-      HED2 = 0.0D0
-      HED3 = 0.0D0
-      HED4 = 0.0D0
-      HED5 = 0.0D0
-C    COMPILER CORRECTIONS BELOW
-      RCR1 = 0.0D0
-      RCR2 = 0.0D0
-      RCR3 = 0.0D0
-      RCR4 = 0.0D0
-      RCR5 = 0.0D0
-C     COMPILER CORRECTIONS ABOVE
+
+      DRN1 = 0.0D0; DRN2 = 0.0D0; DRN3 = 0.0D0
+      DRN4 = 0.0D0; DRN5 = 0.0D0
+
+      PRC1 = 0.0D0; PRC2 = 0.0D0; PRC3 = 0.0D0
+      PRC4 = 0.0D0; PRC5 = 0.0D0; PRC6 = 0.0D0
+
+      HED1 = 0.0D0; HED2 = 0.0D0; HED3 = 0.0D0
+      HED4 = 0.0D0; HED5 = 0.0D0
+
+      RCR1 = 0.0D0; RCR2 = 0.0D0; RCR3 = 0.0D0
+      RCR4 = 0.0D0; RCR5 = 0.0D0
+
       ADDRUN = 0.0
-      EXWAT2 = 0.0
-      EXWAT3 = 0.0
-      EXWAT4 = 0.0
-      EXWAT5 = 0.0
-      EXWAT6 = 0.0
-C     QDRN1 = 0.0D0
-C     QDRN2 = 0.0D0
-C     QDRN3 = 0.0D0
-C     QDRN4 = 0.0D0
-C     QDRN5 = 0.0D0
-C     QPRCY1 = 0.0D0
-C     QPRCY2 = 0.0D0
-C     QPRCY3 = 0.0D0
-C     QPRCY4 = 0.0D0
-C     QPRCY5 = 0.0D0
-C     QPRCY6 = 0.0D0
-C     QLATY1 = 0.0D0
-C     QLATY2 = 0.0D0
-C     QLATY3 = 0.0D0
-C     QLATY4 = 0.0D0
-C     QLATY5 = 0.0D0
-C     THY1 = 0.0D0
-C     THY2 = 0.0D0
-C     THY3 = 0.0D0
-C     THY4 = 0.0D0
-C     THY5 = 0.0D0
-C     THY6 = 0.0D0
-      CALL INITIA 
+
+      EXWAT2 = 0.0; EXWAT3 = 0.0; EXWAT4 = 0.0
+      EXWAT5 = 0.0; EXWAT6 = 0.0
+
+      CALL INITIA
+
       IDA = 0
       ND = 365
+
  1060 CONTINUE
-C
-C  INITIALIZE COEFFICIENTS FOR THE HYDRO-17 SNOWMELT CALCULATIONS
-C
+
+      ! Initialize coefficients for the HYDRO-17 snowmelt calculations.
       CALL SNOCOEF
-C
-C    INITIALIZES TIME STEPS AND RESETS VALUES AFTER INITIALIZATION YEAR
-C
+
+      ! Initializes time steps and resets values after
+      ! initialization year.
       CALL SETUPS (SWULL, BALT, BALY, EXWAT2, EXWAT3, EXWAT4,
-     1  EXWAT5, EXWAT6)
-C
-C    PRINTS SOIL CHARACTERISTICS AND DESIGN INFORMATION.
-C
-      IF (IPRE .GE. 2) THEN
-         CALL OUTDAT (SWULL, fpath_precip, fpath_tasavg, fpath_solrad,
-     1                fpath_evapo, fpath_soil, fpath_output, IU8)
+     &             EXWAT5, EXWAT6)
+
+      ! Print soil characteristics and design information.
+      IF (IPRE >= 2) THEN
+        IF (IOF == 1) THEN
+          CALL OUTDAT (SWULL, fpath_precip, fpath_tasavg,
+     &                 fpath_solrad, fpath_output, IU8)
+        END IF
+
+        ! Rewind weather files to the beginning, then skip their
+        ! 4-line headers so the next read starts at the daily data.
+        REWIND 4
+        REWIND 7
+        REWIND 13
+
+        DO I = 1, 4
+          READ (4, *)
+          READ (7, *)
+          READ (13, *)
+        END DO
+
       END IF
-C
-C   INITIALIZING VARIABLES
-C
+
+      ! Initializing variables.
       OSWULE = 0.0
       DO J = 1, NSEG
-        OSWULE = OSWULE + DSWUL(J) 
+        OSWULE = OSWULE + DSWUL(J)
       END DO
       SWULE = 0.0
       DO J = 1, 7
         SWULE = SWULE + SWUL(J)
       END DO
-      PSW = SWULE/EDEPTH
-      DSW = SWULE/EDEPTH
+
       IMO = 0
       IDA = 1
-      PRC1A1 = 0.0
-      PRC2A1 = 0.0
-      PRC3A1 = 0.0
-      PRC4A1 = 0.0
-      PRC5A1 = 0.0
-      PRC6A1 = 0.0
-      DRN1A1 = 0.0
-      DRN2A1 = 0.0
-      DRN3A1 = 0.0
-      DRN4A1 = 0.0
-      DRN5A1 = 0.0
-      RCR1A1 = 0.0
-      RCR2A1 = 0.0
-      RCR3A1 = 0.0
-      RCR4A1 = 0.0
-      RCR5A1 = 0.0
-      HED1A1 = 0.0
-      HED2A1 = 0.0
-      HED3A1 = 0.0
-      HED4A1 = 0.0
-      HED5A1 = 0.0
-      RUNA1 = 0.0
-      PREA1 = 0.0
-      ETA1 = 0.0
-      STOR1 = 0.0
-      PRC1A2 = 0.0
-      PRC2A2 = 0.0
-      PRC3A2 = 0.0
-      PRC4A2 = 0.0
-      PRC5A2 = 0.0
-      PRC6A2 = 0.0
-      DRN1A2 = 0.0
-      DRN2A2 = 0.0
-      DRN3A2 = 0.0
-      DRN4A2 = 0.0
-      DRN5A2 = 0.0
-      RCR1A2 = 0.0
-      RCR2A2 = 0.0
-      RCR3A2 = 0.0
-      RCR4A2 = 0.0
-      RCR5A2 = 0.0
-      HED1A2 = 0.0
-      HED2A2 = 0.0
-      HED3A2 = 0.0
-      HED4A2 = 0.0
-      HED5A2 = 0.0
-      RUNA2 = 0.0
-      PREA2 = 0.0
-      ETA2  = 0.0
-      STOR2 = 0.0
-      DO K = 1, 20
-        RCRIA(K) = 0.0
-        RCRIA1(K) = 0.0
-        RCRIA2(K) = 0.0
-        SUBINA(K) = 0.0
-      END DO
-      PPRC1 = 0.0
-      PPRC2 = 0.0
-      PPRC3 = 0.0
-      PPRC4 = 0.0
-      PPRC5 = 0.0
-      PPRC6 = 0.0
-      PDRN1 = 0.0
-      PDRN2 = 0.0
-      PDRN3 = 0.0
-      PDRN4 = 0.0
-      PDRN5 = 0.0
-      PRCR1 = 0.0
-      PRCR2 = 0.0
-      PRCR3 = 0.0
-      PRCR4 = 0.0
-      PRCR5 = 0.0
-      PRUN = 0.0
-      PPRE = 0.0
-      PSNO = 0.0
-      PHED1 = 0.0
-      PHED2 = 0.0
-      PHED3 = 0.0
-      PHED4 = 0.0
-      PHED5 = 0.0
-      DO I = 1, MAXMO
-        PREM1(I)  = 0.0 
-        RUNM1(I)  = 0.0 
-        ETM1(I)   = 0.0 
-        DRN1M1(I) = 0.0 
-        DRN2M1(I) = 0.0 
-        DRN3M1(I) = 0.0 
-        DRN4M1(I) = 0.0 
-        DRN5M1(I) = 0.0 
-        RCR1M1(I) = 0.0 
-        RCR2M1(I) = 0.0 
-        RCR3M1(I) = 0.0 
-        RCR4M1(I) = 0.0 
-        RCR5M1(I) = 0.0 
-        HED1M1(I) = 0.0 
-        HED2M1(I) = 0.0 
-        HED3M1(I) = 0.0 
-        HED4M1(I) = 0.0 
-        HED5M1(I) = 0.0 
-        PRC1M1(I) = 0.0 
-        PRC2M1(I) = 0.0 
-        PRC3M1(I) = 0.0 
-        PRC4M1(I) = 0.0 
-        PRC5M1(I) = 0.0
-        PRC6M1(I) = 0.0
-        DO K = 1, 20
-          RCRIM1(K,I) = 0.0
-          RCRIM(K,I) = 0.0
-          SUBINM(K,I) = 0.0
-          RCRIM2(K,I) = 0.0
-        END DO
-        PREM2(I)  = 0.0 
-        RUNM2(I)  = 0.0 
-        ETM2(I)   = 0.0 
-        DRN1M2(I) = 0.0  
-        DRN2M2(I) = 0.0  
-        DRN3M2(I) = 0.0  
-        DRN4M2(I) = 0.0  
-        DRN5M2(I) = 0.0  
-        RCR1M2(I) = 0.0  
-        RCR2M2(I) = 0.0  
-        RCR3M2(I) = 0.0  
-        RCR4M2(I) = 0.0  
-        RCR5M2(I) = 0.0  
-        HED1M2(I) = 0.0  
-        HED2M2(I) = 0.0  
-        HED3M2(I) = 0.0  
-        HED4M2(I) = 0.0  
-        HED5M2(I) = 0.0  
-        PRC1M2(I) = 0.0  
-        PRC2M2(I) = 0.0  
-        PRC3M2(I) = 0.0  
-        PRC4M2(I) = 0.0  
-        PRC5M2(I) = 0.0
-        PRC6M2(I) = 0.0
-      END DO
-C
-C    START YEARLY LOOP FOR SIMULATION. IYR IS THE NUMBER
-C    OF THE YEAR.
-C
-      DO 1090 IYR = 1, LMYR
-        PRC1A = 0.0
-        PRC2A = 0.0
-        PRC3A = 0.0
-        PRC4A = 0.0
-        PRC5A = 0.0
-        PRC6A = 0.0
-        DRN1A = 0.0
-        DRN2A = 0.0
-        DRN3A = 0.0
-        DRN4A = 0.0
-        DRN5A = 0.0
-        RCR1A = 0.0
-        RCR2A = 0.0
-        RCR3A = 0.0
-        RCR4A = 0.0
-        RCR5A = 0.0
-        HED1A = 0.0
-        HED2A = 0.0
-        HED3A = 0.0
-        HED4A = 0.0
-        HED5A = 0.0
-        RUNA  = 0.0
-        PREA  = 0.0
-        ETA   = 0.0
-        BAL   = 0.0
-        STOR  = 0.0
 
-      DO I = 1, 12
-        HED1M(I) = 0.0
-        HED2M(I) = 0.0
-        HED3M(I) = 0.0
-        HED4M(I) = 0.0
-        HED5M(I) = 0.0
-        PRC1M(I) = 0.0
-        PRC2M(I) = 0.0
-        PRC3M(I) = 0.0
-        PRC4M(I) = 0.0
-        PRC5M(I) = 0.0
-        PRC6M(I) = 0.0
-        RCR1M(I) = 0.0
-        RCR2M(I) = 0.0
-        RCR3M(I) = 0.0
-        RCR4M(I) = 0.0
-        RCR5M(I) = 0.0
-        DO K = 1, 20
-          RCRIM(K,I) = 0.0
-        END DO
-        DRN1M(I) = 0.0
-        DRN2M(I) = 0.0
-        DRN3M(I) = 0.0
-        DRN4M(I) = 0.0
-        DRN5M(I) = 0.0
-        RUNM(I) = 0.0
-        PREM(I) = 0.0
-        ETM(I) = 0.0
-      END DO
-      DO K = 1, 20
-        RCRIA(K) = 0.0
-      END DO
-C  
-C    IMO IS THE NUMBER OF THE MONTH.
-C    MO1 IS THE NUMBER OF THE MONTH OF THE YEAR.
-C
+      RCRIA = 0.0
+      SUBINA = 0.0
+
+      RCRIM = 0.0; SUBINM = 0.0
+
+      ! Start yearly loop for simulation.
+      ! IYR is the number of the year.
+      DO 1090 IYR = 1, LMYR
+        PRC1A = 0.0; PRC2A = 0.0; PRC3A = 0.0; PRC4A = 0.0
+        PRC5A = 0.0; PRC6A = 0.0
+        DRN1A = 0.0; DRN2A = 0.0; DRN3A = 0.0; DRN4A = 0.0
+        DRN5A = 0.0
+        RCR1A = 0.0; RCR2A = 0.0; RCR3A = 0.0; RCR4A = 0.0
+        RCR5A = 0.0
+        HED1A = 0.0; HED2A = 0.0; HED3A = 0.0; HED4A = 0.0
+        HED5A = 0.0
+
+        RUNA = 0.0; PREA  = 0.0; ETA   = 0.0
+        BAL = 0.0
+        STOR = 0.0
+
+        HED1M = 0.0; HED2M = 0.0; HED3M = 0.0; HED4M = 0.0
+        HED5M = 0.0
+        PRC1M = 0.0; PRC2M = 0.0; PRC3M = 0.0; PRC4M = 0.0
+        PRC5M = 0.0; PRC6M = 0.0
+        RCR1M = 0.0; RCR2M = 0.0; RCR3M = 0.0; RCR4M = 0.0
+        RCR5M = 0.0
+        DRN1M = 0.0; DRN2M = 0.0; DRN3M = 0.0; DRN4M = 0.0
+        DRN5M = 0.0
+
+        RUNM = 0.0; PREM = 0.0; ETM = 0.0
+
+        RCRIM = 0.0; RCRIA = 0.0
+
+        ! IMO is the number of the month.
+        ! MO1 is the number of the month of the year.
         IDAMO = 0
         MO1 = 1
         IMO = 0
         IMO = IMO + 1
-C
-C    READS AND PRINTS WEATHER DATA FOR YEAR OF SIMULATION.
-C
-        CALL READCD (NYEAR, ND, NT)
+
+        ! Read and print weather data for year of simulation.
+        CALL READCD (NYEAR, ND, NT, IOF)
         JYEAR(IYR) = NYEAR
-C
-C    START DAILY LOOP FOR SIMULATION.
-C    IDA IS THE DAY OF THE YEAR OF SIMULATION.
-C
+
+        ! Pass back the first year of simulation to the Python wrapper.
+        IF (IYR == 1) THEN
+          PY_JYEAR1 = NYEAR
+        END IF
+
+        ! Start daily loop for simulation.
+        ! IDA is the day of the year of simulation.
         DO 1100 IDA = 1, ND
-C
-C    COMPUTES THE MONTH OF YEAR FOR THE DAY OF SIMULATION, MO
-C    1OMPARES IT WITH YESTERDAY'S MONTH, MO1 AND INCREMENTS
-C    IMO IF DIFFERENT.
-C
-C
-C
+          ! Compute the month of year for the day of simulation (MO),
+          ! compare it with yesterday's month (MO1) and increment
+          ! IMO if different.
           IDAMO = IDAMO + 1
           MO = MONTH (IDA, NT)
-          IF (MO .NE. MO1) IMO = IMO + 1
-          IF (MO .NE. MO1) IDAMO = 1
+          IF (MO /= MO1) THEN
+             IMO = IMO + 1
+             IDAMO = 1
+          END IF
           MO1 = MO
           PREM(IMO) = PREM(IMO) + PRE(IDA)
           PREA = PREA + PRE(IDA)
-          IF (PRE(IDA) .GT. PPRE) PPRE = PRE(IDA)
-C
-C    DETERMINES IF SOIL IS FROZEN
-C
+
+          ! Determine if soil is frozen
           CALL FRZCHK (TFSOIL)
-C
-C    SSTAR INDICATES FROZEN SOIL
-C
+
+          ! SSTAR indicates frozen soil
           SSTAR = ISTAR(2)
           IF (IFREZ .EQ. 1) SSTAR = ISTAR(1)
-C
-C    COMPUTES SNOWFALL AND SNOWMELT AND ADJUSTS RAIN
-C    ACCORDINGLY.
-C
+
+          ! Compute snowfall and snowmelt and adjusts rain accordingly.
           CALL SNOW (IT)
-          IF (SNO .GT. PSNO) PSNO = SNO
-C
-C    ASTAR INDICATES FREEZING TEMPERATURES.
-C
+
+          ! ASTAR indicates freezing air temperatures.
           ASTAR = ISTAR(IT)
-C
-C    COMPUTES RUNOFF.
-C
+
+          ! Compute runoff.
           SMX = SMXN
           IF (IFREZ .GT. 0) SMX = SMXF
           CALL RUNOFF
-C
-C   COMPUTES SOIL TEMPERATURE AT BOTTOM OF EACH SEGMENT
-C
+
+          ! Compute daily soil temperatures (TSEG) at the bottom
+          ! of each of the seven evaporative-zone segments.
           CALL SOLT
-C
-C    COMPUTES SURFACE AND SOIL EVAPORATION AND POTENTIAL PLANT
-C    TRANSPIRATION.
-C
+
+         ! Computes surface and soil evaporation and potential plant
+         ! Transpiration.
           CALL EVAPOT
-          DO 1120 J = 1, 19
+          DO J = 1, 19
             IF (DABS (BALT(J)) .LT. 1.E-08) BALT(J) = 0.0
- 1120     CONTINUE
-C
-C    COMPUTES DAILY LEAF AREA INDEX , PLANT TRANSPIRATION
-C    WHEN SOIL WATER CONTENT LIMITS
-C    PLANT TRANSPIRATION AND DISTRIBUTES EVAPOTRANSPIRATION
-C    AMONG TOP SEGMENTS.
-C
-          CALL CRPMOD 
-C
-C    COMPUTES LATERAL AND VERTICAL WATER ROUTING IN THE TOP
-C    SUBPROFILE.
-C
+          END DO
+
+          ! Computes daily leaf area index, plant transpiration
+          ! when soil water content limits
+          ! plant transpiration and distributes evapotranspiration
+          ! among top segments.
+          CALL CRPMOD
+
+          ! Computes lateral and vertical water routing in the top
+          ! subprofile.
           ADDRUN = 0.0
           NPROF = 1
           CALL DRAIN (PINF, DRN1, PRC1, HED1, BALY, BALT, ADDRUN,
-     1       NPROF, NSEG1B, NSEG1E, LAY1B, LAY1E, DRIN, SWULY)
-C
-C    ACCOUNTING IS PERFORMED.
-C
-          IF (HED1 .GT. PHED1) PHED1 = HED1
+     &                NPROF, NSEG1B, NSEG1E, LAY1B, LAY1E, DRIN,
+     &                SWULY)
+
+          ! Accounting is performed.
           SWULE = 0.0
           EXET = 0.0
-          DO 1130 J = 1, 7
+          DO J = 1, 7
             IF ((DSWUL(J) + (BALT(J)/2.0D0)) .LT. DWPUL(J)) THEN
               EXET2 = EXET + DWPUL(J) - DSWUL(J) - (BALT(J)/2.0D0)
               IF (EXET .LE. ETT) THEN
@@ -637,15 +494,14 @@ C
                 SWULY(J) = DSWUL(J)
                 EXET = EXET2
               END IF
-            END IF         
+            END IF
             SWULE = SWULE + DSWUL(J) + BALT(J)/2.0D0
- 1130     CONTINUE
+          END DO
+
           SWE = SWULE/EDEPTH
-          IF (SWE .LT. DSW) DSW = SWE
-          IF (SWE .GT. PSW) PSW = SWE
-C
-C    EXCESS WATER ADDED TO THE TOP SEGMENT IS DIVERTED TO RUNOFF.
-C
+
+          ! Excess water added to the top segment is
+          ! diverted to runoff.
           RUN = RUN + ADDRUN*FRUNOF
           ADDRUN = ADDRUN*(1.0 - FRUNOF)
           IF (SNO .GT. 0.0) THEN
@@ -653,17 +509,17 @@ C
             TWE = TWE + ADDRUN * 25.4
             XLIQW = XLIQW + ADDRUN * 25.4
             ADDRUN = 0.0
-          END IF 
-          DO 1140 J = 1, NSEG1D
+          END IF
+
+          DO J = 1, NSEG1D
             SWUL(J) = DSWUL(J)
- 1140     CONTINUE
-C
-C     PERFORM ACCOUNTING OF MONTHLY AND ANNUAL TOTALS AND
-C     PEAK VALUES FOR THE TOP SUBPROFILE.
-C
+          END DO
+
+          ! Perform accounting of monthly and annual totals
+          ! for the top subprofile.
+
           RUNM(IMO) = RUNM(IMO) + RUN
           RUNA = RUNA + RUN
-          IF (RUN .GT. PRUN) PRUN = RUN
           ETT = ETT - EXET
           ETM(IMO) = ETM(IMO) + ETT
           ETA = ETA + ETT
@@ -674,19 +530,15 @@ C
              DRN1 = DRN1 - RCR1
              RCR1M(IMO) = RCR1M(IMO) + RCR1
              RCR1A = RCR1A + RCR1
-             IF (RCR1 .GT. PRCR1) PRCR1 = RCR1
           END IF
           DRN1M(IMO) = DRN1M(IMO) + DRN1
           DRN1A = DRN1A + DRN1
-          IF (DRN1 .GT. PDRN1) PDRN1 = DRN1
-          IF (PRC1 .GT. PPRC1) PPRC1 = PRC1
           PRC1M(IMO) = PRC1M(IMO) + PRC1
           PRC1A = PRC1A + PRC1
           FIN2 = PRC1 + EXWAT2
           IF (NSEG2 .LE. 0) GO TO 1150
 C
 C     SETS INFLOW EQUAL TO PERCOLATION FROM TOP SUBPROFILE.
-C
 C
 C     CONTROLS SIMULATION OF SECOND SUBPROFILE FROM THE TOP.
 C
@@ -695,10 +547,9 @@ C     IN THE SECOND SUBPROFILE FROM THE TOP.
 C
           NPROF = 2
           EXWAT2 = 0.0
-         
+
           CALL DRAIN (FIN2, DRN2, PRC2, HED2, BALY, BALT, EXWAT2,
      1       NPROF, NSEG2B, NSEG2E, LAY2B, LAY2E, DRIN, SWULY)
-          IF (HED2 .GT. PHED2) PHED2 = HED2
 C
 C     COMPUTES SOIL WATER CONTENT IN THE
 C     SECOND SUBPROFILE FROM THE TOP.
@@ -706,10 +557,10 @@ C
           DO 1160 J = NSEG2B, NSEG2D
             SWUL(J) = DSWUL(J)
  1160     CONTINUE
-C
-C     PERFORM ACCOUNTING OF MONTHLY AND ANNUAL TOTALS AND
-C     PEAK VALUES FOR THE SECOND SUBPROFILE FROM THE TOP.
-C
+
+          ! Perform accounting of monthly and annual totals
+          ! for the second subprofile from the top.
+
           HED2S(IDAMO) = HED2
           HED2M(IMO) = HED2M(IMO) + HED2
           IF(LD(2) .GT. 0) THEN
@@ -717,14 +568,11 @@ C
              DRN2 = DRN2 - RCR2
              RCR2M(IMO) = RCR2M(IMO) + RCR2
              RCR2A = RCR2A + RCR2
-             IF (RCR2 .GT. PRCR2) PRCR2 = RCR2
           END IF
           DRN2M(IMO) = DRN2M(IMO) + DRN2
           DRN2A = DRN2A + DRN2
-          IF (DRN2 .GT. PDRN2) PDRN2 = DRN2
           PRC2M(IMO) = PRC2M(IMO) + PRC2
           PRC2A = PRC2A + PRC2
-          IF (PRC2 .GT. PPRC2) PPRC2 = PRC2
           FIN3 = PRC2 + EXWAT3
           IF (NSEG3 .LE. 0) GO TO 1150
 C
@@ -741,14 +589,13 @@ C
           EXWAT3 = 0.0
           CALL DRAIN (FIN3, DRN3, PRC3, HED3, BALY, BALT, EXWAT3,
      1       NPROF, NSEG3B, NSEG3E, LAY3B, LAY3E, DRIN, SWULY)
-          IF (HED3 .GT. PHED3) PHED3 = HED3
           DO 1170 J = NSEG3B, NSEG3D
             SWUL(J) = DSWUL(J)
  1170     CONTINUE
-C
-C     PERFORM ACCOUNTING OF MONTHLY AND ANNUAL TOTALS AND
-C     PEAK VALUES FOR THE THIRD SUBPROFILE FROM THE TOP.
-C
+
+          ! Perform accounting of monthly and annual totals
+          ! for the third subprofile from the top.
+
           HED3S(IDAMO) = HED3
           HED3M(IMO) = HED3M(IMO) + HED3
           IF(LD(3) .GT. 0) THEN
@@ -756,14 +603,11 @@ C
              DRN3 = DRN3 - RCR3
              RCR3M(IMO) = RCR3M(IMO) + RCR3
              RCR3A = RCR3A + RCR3
-             IF (RCR3 .GT. PRCR3) PRCR3 = RCR3
           END IF
           DRN3M(IMO) = DRN3M(IMO) + DRN3
           DRN3A = DRN3A + DRN3
-          IF (DRN3 .GT. PDRN3) PDRN3 = DRN3
           PRC3M(IMO) = PRC3M(IMO) + PRC3
           PRC3A = PRC3A + PRC3
-          IF (PRC3 .GT. PPRC3) PPRC3 = PRC3
           FIN4 = PRC3 + EXWAT4
           IF (NSEG4 .LE. 0) GO TO 1150
 C
@@ -781,7 +625,6 @@ C
           EXWAT4 = 0.0
           CALL DRAIN (FIN4, DRN4, PRC4, HED4, BALY, BALT, EXWAT4,
      1       NPROF, NSEG4B, NSEG4E, LAY4B, LAY4E, DRIN, SWULY)
-          IF (HED4 .GT. PHED4) PHED4 = HED4
 C
 C     COMPUTES SOIL WATER CONTENT IN THE THIRD
 C     SUBPROFILE FROM THE TOP.
@@ -789,10 +632,10 @@ C
           DO 1180 J = NSEG4B, NSEG4D
             SWUL(J) = DSWUL(J)
  1180     CONTINUE
-C
-C     PERFORM ACCOUNTING OF MONTHLY AND ANNUAL TOTALS AND
-C     PEAK VALUES FOR THE THIRD SUBPROFILE FROM THE TOP.
-C
+
+          ! Perform accounting of monthly and annual totals
+          ! for the third subprofile from the top.
+
           HED4S(IDAMO) = HED4
           HED4M(IMO) = HED4M(IMO) + HED4
           IF(LD(4) .GT. 0) THEN
@@ -800,14 +643,11 @@ C
              DRN4 = DRN4 - RCR4
              RCR4M(IMO) = RCR4M(IMO) + RCR4
              RCR4A = RCR4A + RCR4
-             IF (RCR4 .GT. PRCR4) PRCR4 = RCR4
           END IF
           DRN4M(IMO) = DRN4M(IMO) + DRN4
           DRN4A = DRN4A + DRN4
-          IF (DRN4 .GT. PDRN4) PDRN4 = DRN4
           PRC4M(IMO) = PRC4M(IMO) + PRC4
           PRC4A = PRC4A + PRC4
-          IF (PRC4 .GT. PPRC4) PPRC4 = PRC4
           FIN5 = PRC4 + EXWAT5
           IF (NSEG5 .LE. 0) GO TO 1150
 C
@@ -824,14 +664,13 @@ C
           EXWAT5 = 0.0
           CALL DRAIN (FIN5, DRN5, PRC5, HED5, BALY, BALT, EXWAT5,
      1       NPROF, NSEG5B, NSEG5E, LAY5B, LAY5E, DRIN, SWULY)
-          IF (HED5 .GT. PHED5) PHED5 = HED5
           DO 1190 J = NSEG5B, NSEG5D
             SWUL(J) = DSWUL(J)
  1190     CONTINUE
-C
-C     PERFORM ACCOUNTING OF MONTHLY AND ANNUAL TOTALS AND
-C     PEAK VALUES FOR THE THIRD SUBPROFILE FROM THE TOP.
-C
+
+          ! Perform accounting of monthly and annual totals
+          ! for the third subprofile from the top.
+
           HED5S(IDAMO) = HED5
           HED5M(IMO) = HED5M(IMO) + HED5
           IF(LD(5) .GT. 0) THEN
@@ -839,14 +678,11 @@ C
              DRN5 = DRN5 - RCR5
              RCR5M(IMO) = RCR5M(IMO) + RCR5
              RCR5A = RCR5A + RCR5
-             IF (RCR5 .GT. PRCR5) PRCR5 = RCR5
           END IF
           DRN5M(IMO) = DRN5M(IMO) + DRN5
           DRN5A = DRN5A + DRN5
-          IF (DRN5 .GT. PDRN5) PDRN5 = DRN5
           PRC5M(IMO) = PRC5M(IMO) + PRC5
           PRC5A = PRC5A + PRC5
-          IF (PRC5 .GT. PPRC5) PPRC5 = PRC5
           FIN6 = PRC5 + EXWAT6
           IF (NSEG6 .LE. 0) GO TO 1150
 C
@@ -866,28 +702,37 @@ C
           DO 1200 J = NSEG6B, NSEG6D
             SWUL(J) = DSWUL(J)
  1200     CONTINUE
-C
-C     PERFORM ACCOUNTING OF MONTHLY AND ANNUAL TOTALS AND
-C     PEAK VALUES FOR THE THIRD SUBPROFILE FROM THE TOP.
-C
+
+          ! Perform accounting of monthly and annual totals
+          ! for the third subprofile from the top.
+
           PRC6M(IMO) = PRC6M(IMO) + PRC6
           PRC6A = PRC6A + PRC6
-          IF (PRC6 .GT. PPRC6) PPRC6 = PRC6
-C
-C     CALLS SUBROUTINE OUTDAY IF DAILY OUTPUT IS DESIRED.
-C
+
  1150     CONTINUE
+
           CALL RECIRC (IMO)
-          IF (IOD .EQ. 1 .AND. IPRE .GE. 2) CALL OUTDAY (SWE,
-     1       IODAY, ASTAR, SSTAR, NVAR, IU8)
-C
-C     END OF DAILY LOOP.
-C
+
+          ! Call subroutine outday if daily output is desired.
+          IF (IOD == 1 .AND. IPRE >= 2) THEN
+            CALL OUTDAY(SWE, ASTAR, SSTAR, NVAR)
+          END IF
+
+          IF (FILL_OUTDAY == 1) THEN
+            CALL FILL_PY_OUTDAY(LMYR, SWE, NDVAR, PY_OUTDAY)
+          END IF
+
+          ! End of daily loop.
+
           IF (IDA .EQ. ND) GO TO 1210
+
           IDAP1 = IDA + 1
           MO = MONTH (IDAP1, NT)
+
           IF (MO .EQ. MO1) GO TO 1100
+
  1210     CONTINUE
+
           HD1M2 = 0.0
           HD2M2 = 0.0
           HD3M2 = 0.0
@@ -925,7 +770,9 @@ C
           IF (HD3M2 .GT. 0.0) SHED3(MO1) = HD3M2**0.5
           IF (HD4M2 .GT. 0.0) SHED4(MO1) = HD4M2**0.5
           IF (HD5M2 .GT. 0.0) SHED5(MO1) = HD5M2**0.5
+
  1100   CONTINUE
+
         PSWULE =  EXWAT2 + EXWAT3 + EXWAT4 + EXWAT5 + EXWAT6
 C
 C     COMPUTES TOTAL SOIL WATER STORAGE.
@@ -939,7 +786,7 @@ C        ADDRUN = 0.0
 C
 C     COMPUTES YEARLY WATER BUDGET BALANCE CHECK.
 C
-        SUBINY = SUBINF * FLOAT(ND) 
+        SUBINY = SUBINF * FLOAT(ND)
         STOR = PSWULE - OSWULE + SSNO - OLDSNO
         BAL = PREA - RUNA - ETA - STOR
      1    - DRN1A - DRN2A - DRN3A - DRN4A
@@ -957,24 +804,27 @@ C
         ELSE
           BAL = BAL - PRC1A
         END IF
-C
-C     CALLS SUBROUTINE OUTMO IF MONTHLY OUTPUT IS DESIRED.
-C
-        IF (IPRE .GE. 2 .AND. (IOM .EQ. 1 .OR. IOS .EQ. 1))
-     1    CALL OUTMO(IOM, IOS, IU8)
-C
-C     CALLS SUBROUTINE OUTYR TO PRINT ANNUAL TOTALS.
-C
-        IF (IPRE .GE. 2 .AND. (IOA .EQ. 1 .OR. IOS .EQ. 1))
-     1    CALL OUTYR(IOA, IOS, IU8)
-C
-C     INITIALIZES VARIABLES FOR THE NEXT YEAR.
-C
+
+        ! Calls subroutine OUTMO if monthly output is desired.
+        IF (IPRE >= 2 .AND. IOM == 1 .AND. IOF == 1) THEN
+          CALL OUTMO
+        END IF
+
+        IF (IPRE >= 2) THEN
+          CALL FILL_PY_OUTMO(LMYR, PY_OUTMO)
+        END IF
+
+        ! Calls subroutine OUTYR to print annual totals.
+        IF (IPRE >= 2 .AND. IOA == 1 .AND. IOF == 1) THEN
+          CALL OUTYR(IU8)
+        END IF
+
+        ! Initializes variables for the next year.
         OSWULE = PSWULE
         OLDSNO = SSNO
-C
-C     END OF YEARLY LOOP.
-C
+
+        ! End of yearly loop.
+
         IF (IPRE .LT. 2) THEN
           IPRE = IPRE + 2
           DO 1139 INSEG = 1, NSEG
@@ -987,14 +837,15 @@ C
           GO TO 1060
         END IF
  1090 CONTINUE
+
       REWIND 4
       REWIND 7
-      REWIND 11
       REWIND 13
+
       CLOSE (4)
       CLOSE (7)
-      CLOSE (11)
       CLOSE (13)
+
 C    COMPILER CORRECTIONS BELOW
 C     Do subprofiles exist? (NSEGnB not initialized, use NSEGn)
       IF (NSEG2 .GT. 0) DSWUL(NSEG2B) = DSWUL(NSEG2B) +  EXWAT2
@@ -1003,29 +854,21 @@ C     Do subprofiles exist? (NSEGnB not initialized, use NSEGn)
       IF (NSEG5 .GT. 0) DSWUL(NSEG5B) = DSWUL(NSEG5B) +  EXWAT5
       IF (NSEG6 .GT. 0) DSWUL(NSEG6B) = DSWUL(NSEG6B) +  EXWAT6
 C     COMPILER CORRECTIONS ABOVE
+
       EXWAT2 = 0.0
       EXWAT3 = 0.0
       EXWAT4 = 0.0
       EXWAT5 = 0.0
       EXWAT6 = 0.0
-C
-C     CALLS SUBROUTINE OUTAV TO PRINT AVERAGE
-C     RESULTS FOR THE SIMULATION PERIOD.
-C
-      IF (IOS .EQ. 1) CALL OUTAV(LMYR, IU8)
-C
-C     CALLS SUBROUTINE OUTPEK TO PRINT PEAK
-C     RESULTS FOR THE SIMULATION PERIOD.
-C
-      IF (IOS .EQ. 1) CALL OUTPEK(LMYR, IU8)
-      CALL OUTSW (LMYR, IU8)
-C
-      CLOSE (8)
-C
-C 
+
+      IF (IOF == 1) THEN
+        CALL OUTSW (LMYR, IU8)
+        CLOSE (8)
+      END IF
+
       END SUBROUTINE run_simulation
-C
-C
+
+
 C        *********************** LEAP ************************
 C
 C
@@ -1084,86 +927,103 @@ C
       RETURN
       END
 
-C    ************************* READCD *************************
 
-C    SUBROUTINE READCD READS A YEAR OF WEATHER DATA AT THE START
-C    OF EACH YEAR OF SIMULATION.
-C
-      SUBROUTINE READCD (NYEAR, ND, NT)
+      !=================================================================
+      ! SUBROUTINE: READCD
+      !
+      ! Read a year of weather data at the start
+      ! of each year of simulation.
+      !=================================================================
+      SUBROUTINE READCD (NYEAR, ND, NT, IOF)
+
+      INTEGER, INTENT(IN) :: IOF
+
       COMMON /BLK1/ IT4, IT7, IT13, IU4, IU7, IU13, IU11, IU10
       COMMON /BLK8/ PRE(370), TMPF(366), RAD(366)
-C
-C    READS PRECIPITATION DATA.
-C
+
+      ! -------------------------------------------------------------
+      ! Read precipitation data
+      ! -------------------------------------------------------------
       DO K = 1, 37
         J = 10*K
         I = J - 9
+        IF (J > 366) J = 366
         READ (4, 5000) NYEAR, (PRE (N), N = I, J)
- 5000   FORMAT(I10, 10F5.2)
       END DO
-C
-C    DETERMINES IF THE YEAR IS A LEAP YEAR.
-C
+
+ 5000 FORMAT(I10, 10F5.2)
+
+      ! Determine if the year is a leap year.
       ND = LEAP (NYEAR, NT)
-C
-C    READS DAILY TEMPERATURE VALUES AND DAILY RADIATION VALUES.
-C    TEMPERATURE IN DEG F, SOLAR RADIATION VALUES IN LANGLEYS PER DAY.
-C
+
+      ! -------------------------------------------------------------
+      ! Read daily temperature values and daily radiation values.
+      ! Temperature in deg F, solar radiation in langleys per day.
+      ! -------------------------------------------------------------
       DO K = 1, 37
         J = 10*K
         I = J - 9
-        IF (J .GT. 366) J = 366
+        IF (J > 366) J = 366
         READ (7, 5010) MYEAR, (TMPF (N), N = I, J)
         IF (IU13 .EQ. 1) READ (13, 5010) LYEAR, (RAD (N), N = I, J)
         IF (IU13 .NE. 1) READ (13, 5011) LYEAR, (RAD (N), N = I, J)
- 5010    FORMAT(I5,10F6.1)
- 5011    FORMAT(I5,10F6.0)
       END DO
+
+ 5010 FORMAT(I5, 10F6.1)
+ 5011 FORMAT(I5, 10F6.0)
+
       IF (MYEAR .NE. NYEAR) WRITE (*, 6000) MYEAR, NYEAR
-      IF (MYEAR .NE. NYEAR) WRITE (8, 6000) MYEAR, NYEAR
- 6000 FORMAT(1X/' WARNING:  TEMPERATURE FOR YEAR',I5,' USED ',
-     1 'WITH PRECIPITATION FOR YEAR',I5/)
+      IF ((MYEAR /= NYEAR) .AND. (IOF == 1)) THEN
+        WRITE (8, 6000) MYEAR, NYEAR
+      END IF
+
+ 6000 FORMAT(1X/' WARNING:  TEMPERATURE FOR YEAR', I5,
+     & ' USED WITH PRECIPITATION FOR YEAR', I5/)
+
       IF (LYEAR .NE. NYEAR) WRITE (*, 6010) LYEAR, NYEAR
-      IF (LYEAR .NE. NYEAR) WRITE (8, 6010) LYEAR, NYEAR
- 6010 FORMAT(1X/' WARNING:  SOLAR RADIATION FOR YEAR',I5,' USED ',
-     1 'WITH PRECIPITATION FOR YEAR',I5/)
-      IF (IU4 .NE. 1) THEN
-        DO N = 1, 366
-          PRE(N) = PRE(N) / 25.4
-        END DO
+      IF ((LYEAR .NE. NYEAR) .AND. (IOF == 1)) THEN
+        WRITE (8, 6010) LYEAR, NYEAR
       END IF
-      IF (IU7 .NE. 1) THEN
-        DO N = 1, 366
-          TMPF(N) = (TMPF(N) * 1.8) + 32.0
-        END DO
-      END IF
-      IF (IU13 .NE. 1) THEN
-        DO N = 1, 366
-          RAD(N) = RAD(N) * 23.89
-        END DO
-      END IF
+
+ 6010 FORMAT(1X/' WARNING:  SOLAR RADIATION FOR YEAR', I5,
+     & ' USED WITH PRECIPITATION FOR YEAR', I5/)
+
+      ! -------------------------------------------------------------
+      ! Convert to IP units from SI units when applicable
+      ! -------------------------------------------------------------
+      IF (IU4 /= 1) PRE = PRE / 25.4
+      IF (IU7 /= 1) TMPF = (TMPF * 1.8) + 32.0
+      IF (IU13 /= 1) RAD = RAD * 23.89
+
       RETURN
-      END
-C
-C
-C      ************************* READIN *************************
-C
-C  SUBROUTINE READIN READS ET AND SOIL DESIGN DATA, AND WEATHER HEADERS
-C
+      END SUBROUTINE READCD
+
+
+      !=================================================================
+      ! SUBROUTINE: READIN
+      !
+      ! Reads ET and soil design data, and weather headers.
+      !=================================================================
       SUBROUTINE READIN (fpath_precip, fpath_tasavg, fpath_solrad,
-     1 fpath_evapo, fpath_soil)
-      
+     &                   d11_input, d10_nlines, d10_input, IERR)
+
       CHARACTER(len=260), INTENT(IN) :: fpath_precip
       CHARACTER(len=260), INTENT(IN) :: fpath_tasavg
       CHARACTER(len=260), INTENT(IN) :: fpath_solrad
-      CHARACTER(len=260), INTENT(IN) :: fpath_evapo
-      CHARACTER(len=260), INTENT(IN) :: fpath_soil
 
-      CHARACTER*40 CITY4, CITY7, CITY13, CITY11
+      CHARACTER(len=80), INTENT(IN) :: d11_input(3)
+
+      INTEGER, INTENT(IN) :: d10_nlines
+      CHARACTER(len=80), INTENT(IN) :: d10_input(d10_nlines)
+
+      INTEGER, INTENT(OUT) :: IERR
+
+      INTEGER :: ILINE
+      CHARACTER*40 CITY4, CITY7, CITY13
       CHARACTER*60 TITLE
       COMMON /BLK0/ TITLE
       COMMON /BLK1/ IT4, IT7, IT13, IU4, IU7, IU13, IU11, IU10
-      COMMON /BLK2/ CITY4, CITY7, CITY13, CITY11
+      COMMON /BLK2/ CITY4, CITY7, CITY13
       DOUBLE PRECISION RC(20)
       COMMON /BLK3/ PORO (20), FC (20), WP (20), RC, SW (20),
      1  RS (20), XLAMBD (20), BUB (20), THICK (20), SLOPE (20),
@@ -1177,111 +1037,248 @@ C
       COMMON /BLK19/ IPL, IHV, IPRE, IRUN, ITSOIL, IVEG
       COMMON /BLK26/ TMPSUM, TMPAVG, TAVG(30)
       COMMON /BLK27/ IFREZ, IDFS, IFCNT, KCNT, MXKCNT
-C
+
       DIMENSION DRAD(31)
-C
-C
-C    READS STATE AND CITY , MAX LAI, PLANTING AND HARVESTING DATES,
-C    PROBABILITIES, AND MEAN MONTHLY TEMPERATURES IN DEGREES
-C    FAHRENHEIT FROM *.D11.
-C
+
+      ! Initialize error flag to success.
       IERR = 0
-      OPEN (4, FILE = fpath_precip, STATUS = 'OLD', ERR = 1000)
- 1010 CONTINUE
-      OPEN (7, FILE = fpath_tasavg, STATUS = 'OLD', ERR = 1020)
- 1030 CONTINUE
-      OPEN (13, FILE = fpath_solrad, STATUS = 'OLD', ERR = 1040)
- 1050 CONTINUE
-      OPEN (11, FILE = fpath_evapo, STATUS = 'OLD', ERR = 1060)
-C
- 1070 CONTINUE
-      IF (IERR .GT. 0) THEN
-        WRITE (*, 6000)
- 6000    FORMAT (1X/' CORRECT THE DOS PATH AND FILE NAMES BEFORE ',
-     1    'RESTARTING.'/)
-        CLOSE (4)
-        CLOSE (7)
-        CLOSE (13)
-        CLOSE (11)
-        STOP
+
+      ! -------------------------------------------------------------
+      ! Open and read climatic input data (D4, D7, and D13)
+      ! -------------------------------------------------------------
+      OPEN (4, FILE=fpath_precip, STATUS='OLD', IOSTAT=IERR)
+      IF (IERR /= 0) THEN
+         WRITE (*, 6010) fpath_precip
+         IERR = 1
+         RETURN
       END IF
-C
+
+      OPEN (7, FILE=fpath_tasavg, STATUS='OLD', IOSTAT=IERR)
+      IF (IERR /= 0) THEN
+         WRITE (*, 6020) fpath_tasavg
+         CLOSE (4)
+         IERR = 2
+         RETURN
+      END IF
+
+      OPEN (13, FILE=fpath_solrad, STATUS='OLD', IOSTAT=IERR)
+      IF (IERR /= 0) THEN
+         WRITE (*, 6030) fpath_solrad
+         CLOSE (4)
+         CLOSE (7)
+         IERR = 3
+         RETURN
+      END IF
+
+ 6010 FORMAT (1X/' PRECIPITATION DATA FILE NOT FOUND!!!  '/1X,A60/)
+ 6020 FORMAT (1X/' TEMPERATURE DATA FILE NOT FOUND!!!  '/1X,A60/)
+ 6030 FORMAT (1X/' SOLAR RADIATION DATA FILE NOT FOUND!!!  '/1X,A60/)
+
       REWIND (4)
       REWIND (7)
       REWIND (13)
-      REWIND (11)
-      READ (4, 5040) IT4, IU4, CITY4, (RM (I), I = 1, 12)
-      READ (7, 5040) IT7, IU7, CITY7, (TM (I), I = 1, 12)
-      READ (13, 5040) IT13, IU13, CITY13, RLAT
-      READ (11, 5050) IU11, CITY11
-      READ (11, 5060) ULAT, IPL, IHV, ULAI, EDEPTH, WIND, HUM1, HUM2,
-     1  HUM3, HUM4
- 5040 FORMAT (I2/I2/A40/12F6.2)
- 5050 FORMAT (I2/A40)
- 5060 FORMAT (F10.2,I4,I4,F7.0,F8.0,5F5.0)
-      CLOSE (11)
-C
-      IF (IU7 .EQ. 1) THEN
-        DO 1075 I = 1, 12
-          TM (I) = (TM (I) - 32.0) / 1.8
- 1075   CONTINUE
+
+      READ (4, 5040, IOSTAT=IERR) IT4, IU4, CITY4, (RM (I), I=1,12)
+      IF (IERR /= 0) THEN
+         WRITE (*, *) 'ERROR: PRECIPITATION HEADER FORMAT INCORRECT!'
+         IERR = 4
+         RETURN
       END IF
-      IF (IU11 .NE. 1) EDEPTH = EDEPTH / 2.54
-      IF (IU11 .NE. 1) WIND = WIND / 1.609
-      DO 1080 I = 1, 91
-        RH (I) = HUM1
- 1080 CONTINUE
-      DO 1090 I = 92, 182
-        RH (I) = HUM2
- 1090 CONTINUE
-      DO 1100 I = 183, 274
-        RH (I) = HUM3
- 1100 CONTINUE
-      DO 1110 I = 275, 366
-        RH (I) = HUM4
- 1110 CONTINUE
-C
-C   READS DATA10
-C
+
+      READ (7, 5040, IOSTAT=IERR) IT7, IU7, CITY7, (TM (I), I=1,12)
+      IF (IERR /= 0) THEN
+         WRITE (*, *) 'ERROR: PRECIPITATION HEADER FORMAT INCORRECT!'
+         IERR = 5
+         RETURN
+      END IF
+
+      READ (13, 5040, IOSTAT=IERR) IT13, IU13, CITY13, RLAT
+      IF (IERR /= 0) THEN
+         WRITE (*, *) 'ERROR: SOLAR RADIATION FILE FORMAT INCORRECT!'
+         IERR = 6
+         RETURN
+      END IF
+
+ 5040 FORMAT (I2/I2/A40/12F6.2)
+
+      ! -------------------------------------------------------------
+      ! Read D11 surface condition (evapotranspiration) data
+      ! -------------------------------------------------------------
+      READ (d11_input(1), 5050, IOSTAT=IERR) IU11
+      IF (IERR /= 0) THEN
+         WRITE (*, *) 'ERROR: D11 LINE 1 FORMAT INCORRECT!'
+         IERR = 7
+         RETURN
+      END IF
+
+      READ (d11_input(3), 5060, IOSTAT=IERR) ULAT, IPL, IHV, ULAI,
+     &  EDEPTH, WIND, HUM1, HUM2, HUM3, HUM4
+      IF (IERR /= 0) THEN
+         WRITE (*, *) 'ERROR: D11 LINE 3 FORMAT INCORRECT!'
+         IERR = 8
+         RETURN
+      END IF
+
+ 5050 FORMAT (I2)
+ 5060 FORMAT (F10.2, I4, I4, F7.0, F8.0, 5F5.0)
+
+      ! Convert temperature from Fahrenheit to Celsius if IP units
+      ! are used.
+      IF (IU7 == 1) THEN
+        TM = (TM - 32.0) / 1.8
+      END IF
+
+      ! Convert evaporative zone depth and wind speed to
+      ! IP units if SI units are used.
+      IF (IU11 /= 1) THEN
+        EDEPTH = EDEPTH / 2.54
+        WIND = WIND / 1.609
+      END IF
+
+      ! Assign quarterly relative humidity values to daily arrays.
+      DO I = 1, 91
+        RH(I) = HUM1
+      END DO
+
+      DO I = 92, 182
+        RH(I) = HUM2
+      END DO
+
+      DO I = 183, 274
+        RH(I) = HUM3
+      END DO
+
+      DO I = 275, 366
+        RH(I) = HUM4
+      END DO
+
+      ! -------------------------------------------------------------
+      ! Reads D10 soil and design data
+      ! -------------------------------------------------------------
       OCN2 = 0.
       SSLOPE = 0.
       SLENG = 0.
       IVEG = 0
       ITSOIL = 0
       LAY = 0
-C    COMPILER CORRECTIONS BELOW
-      DO 3000 I = 1, 20
-        LAYR (I) = 0
- 3000 CONTINUE
-C     COMPILER CORRECTIONS ABOVE
-      OPEN (10, FILE = fpath_soil, STATUS = 'OLD', ERR = 1120)
-      REWIND 10
-      READ (10, 5070) TITLE
+      DO I = 1, 20
+        LAYR(I) = 0
+      END DO
+
+      ILINE = 1
+
+      ! Read cell title.
+      READ (d10_input(ILINE), 5070, IOSTAT=IERR) TITLE
+      IF (IERR /= 0) THEN
+         WRITE (*, *) 'ERROR: D10 TITLE FORMAT INCORRECT!'
+         WRITE (*, *) 'FAILED AT D10 LINE: ', ILINE
+         IERR = 9
+         RETURN
+      END IF
+
+      ILINE = ILINE + 1
+
  5070 FORMAT(A60)
-      READ (10, 5080) IU10, IPRE, OSNO, AREA, FRUNOF, IRUN
- 5080 FORMAT(I2,I2,2F10.0,F6.0,I2)
-      IF (IRUN .EQ. 1) READ (10, 5090) CN2
-      IF (IRUN .EQ. 2) READ (10, 5100) OCN2, SSLOPE, SLENG, CN2
-      IF (IRUN .EQ. 3) READ (10, 5110) SSLOPE, SLENG, ITSOIL, IVEG, CN2
+
+      ! Read global parameters.
+      READ (d10_input(ILINE), 5080, IOSTAT=IERR) IU10, IPRE, OSNO,
+     &  AREA, FRUNOF, IRUN
+      IF (IERR /= 0) THEN
+         WRITE (*, *) 'ERROR: D10 GLOBAL PARAMETERS FORMAT INCORRECT!'
+         WRITE (*, *) 'FAILED AT D10 LINE: ', ILINE
+         IERR = 10
+         RETURN
+      END IF
+
+      ILINE = ILINE + 1
+
+ 5080 FORMAT(I2, I2, 2F10.0, F6.0, I2)
+
+      ! Read Runoff parameters based on IRUN flag.
+      IF (IRUN == 1) THEN
+        READ (d10_input(ILINE), 5090, IOSTAT=IERR) CN2
+        IF (IERR /= 0) THEN
+           WRITE (*, *) 'ERROR: D10 IRUN=1 FORMAT INCORRECT!'
+           WRITE (*, *) 'FAILED AT D10 LINE: ', ILINE
+           IERR = 11
+           RETURN
+        END IF
+
+        ILINE = ILINE + 1
+
+      ELSE IF (IRUN == 2) THEN
+        READ (d10_input(ILINE), 5100, IOSTAT=IERR) OCN2, SSLOPE,
+     &    SLENG, CN2
+        IF (IERR /= 0) THEN
+           WRITE (*, *) 'ERROR: D10 IRUN=2 FORMAT INCORRECT!'
+           WRITE (*, *) 'FAILED AT D10 LINE: ', ILINE
+           IERR = 12
+           RETURN
+        END IF
+
+        ILINE = ILINE + 1
+
+      ELSE IF (IRUN == 3) THEN
+        READ (d10_input(ILINE), 5110, IOSTAT=IERR) SSLOPE, SLENG,
+     &    ITSOIL, IVEG, CN2
+        IF (IERR /= 0) THEN
+           WRITE (*, *) 'ERROR: D10 IRUN=3 FORMAT INCORRECT!'
+           WRITE (*, *) 'FAILED AT D10 LINE: ', ILINE
+           IERR = 13
+           RETURN
+        END IF
+
+        ILINE = ILINE + 1
+
+      END IF
+
  5090 FORMAT(F7.0)
  5100 FORMAT(4F7.0)
- 5110 FORMAT(2F7.0,2I3,F7.0)
-C
-      DO 1130 J = 1, 20
-        READ (10, 5120, END = 1140) LAYER (J), THICK (J), ISOIL (J),
-     1    PORO (J), FC (J), WP (J), SW (J), RC (J)
+ 5110 FORMAT(2F7.0, 2I3, F7.0)
+
+      DO J = 1, 20
+        IF (ILINE > d10_nlines) GO TO 1140
+
+        ! Read layer properties line 1.
+        READ (d10_input(ILINE), 5120, IOSTAT=IERR) LAYER(J), THICK(J),
+     &    ISOIL(J), PORO(J), FC(J), WP(J), SW(J), RC(J)
+        IF (IERR /= 0) THEN
+           WRITE (*, *) 'ERROR: D10 LAYER PROPERTIES FORMAT INCORRECT!'
+           WRITE (*, *) 'LAYER NUMBER = ', J
+           IERR = 14
+           RETURN
+        END IF
+
+        ILINE = ILINE + 1
         LAY = LAY + 1
-        READ (10, 5130, END = 1140) XLENG (J), SLOPE (J), RECIR (J),
-     1    LAYR (J), SUBIN (J), PHOLE (J), DEFEC (J), IPQ (J), TRANS (J)
- 1130 CONTINUE
- 5120 FORMAT(I2,F7.0,I4,4F6.0,F16.0)
- 5130 FORMAT(F7.0,2F6.0,I3,F13.0,2F7.0,I2,G14.6)
+
+        IF (ILINE > d10_nlines) GO TO 1140
+
+        ! Read layer properties line 2.
+        READ (d10_input(ILINE), 5130, IOSTAT=IERR) XLENG(J), SLOPE(J),
+     &    RECIR(J), LAYR(J), SUBIN(J), PHOLE(J), DEFEC(J), IPQ(J),
+     &    TRANS(J)
+        IF (IERR /= 0) THEN
+           WRITE (*, *) 'ERROR: D10 LAYER PROPERTIES FORMAT INCORRECT!'
+           WRITE (*, *) 'LAYER NUMBER = ', J
+           IERR = 15
+           RETURN
+        END IF
+
+        ILINE = ILINE + 1
+
+      END DO
+
+ 5120 FORMAT(I2, F7.0, I4, 4F6.0, F16.0)
+ 5130 FORMAT(F7.0, 2F6.0, I3, F13.0, 2F7.0, I2, G14.6)
+
  1140 CONTINUE
-C
-      CLOSE (10)
-C
-C   DETERMINES THE BROOKS-COREY PARAMETERS AND EVAPORATION COEFFICIENT
-C
+
+      ! --------------------------------------------------------------
+      ! Determine the Brooks-Corey parameters and
+      ! evaporation coefficient
+      ! --------------------------------------------------------------
+
       DO 1150 J = 1, LAY
         IF (LAYER (J) .EQ. 4) THEN
           PORO (J) = .04
@@ -1351,46 +1348,22 @@ C
       IDFS = 35.4 - (0.154 * RADAVG)
       IF (IDFS .LT. 1) IDFS = 1
       MXKCNT = (IDFS + 2) / 3
-C
+
+      ! Reset file pointer and skip the header so the next
+      ! subroutine starts reading exactly at the daily data.
       REWIND 13
       READ (13, 5040) IT13, IU13, CITY13, RLAT
-C
+
       RETURN
-C
- 1000 CONTINUE
-      IERR = IERR + 1
-      WRITE (*, 6010) fpath_precip
- 6010 FORMAT (1X/' PRECIPITATION DATA FILE NOT FOUND!!!  '/1X,A60/)
-      GO TO 1010
- 1020 CONTINUE
-      IERR = IERR + 1
-      WRITE (*, 6020) fpath_tasavg
- 6020 FORMAT (1X/' TEMPERATURE DATA FILE NOT FOUND!!!  '/1X,A60/)
-      GO TO 1030
- 1040 CONTINUE
-      IERR = IERR + 1
-      WRITE (*, 6030) fpath_solrad
- 6030 FORMAT (1X/' SOLAR RADIATION DATA FILE NOT FOUND!!!  '/1X,A60/)
-      GO TO 1050
- 1060 CONTINUE
-      IERR = IERR + 1
-      WRITE (*, 6040) fpath_evapo
- 6040 FORMAT (1X/' EVAPOTRANSPIRATION DATA FILE NOT FOUND!!!'/1X,A60/)
-      GO TO 1070
- 1120 CONTINUE
-      IERR = IERR + 1
-      WRITE (*, 6050) fpath_soil
- 6050 FORMAT (1X/' SOIL AND DESIGN DATA FILE NOT FOUND!!!  '/1X,A60/)
-      GO TO 1070
-      END
-C
-C
+      END SUBROUTINE READIN
+
+
 C      ************************** SGMNT *************************
 C
 C
 C    SUBROUTINE SGMNT BREAKS THE LAYERS INTO MODELING SEGMENTS AND
 C       ASSIGNS THICKNESS, AND PROPERTIES TO THE SEGMENTS.
-C
+
       SUBROUTINE SGMNT
 C
       DOUBLE PRECISION DSWUL, DTHICK, DRCUL, DBUBUL,
@@ -1418,7 +1391,7 @@ C
       COMMON /BLK31/ DRCUL (67), DBUBUL (67), DRSUL (67), DLAMUL (67),
      1  DUL(67), DFCUL(67), DWPUL(67), DSWUL(67), DTHICK(67),
      2  DSUBIN(67), DCHG(67), DRCRS(67)
-      DIMENSION RCULS(67) 
+      DIMENSION RCULS(67)
 C
 C   INITIALIZES THE NUMBER OF SEGMENTS IN EACH SUBPROFILE AND PROPERTIES
 C
@@ -1446,7 +1419,7 @@ C
 C
 C    INITIALIZES THE MOISTURE CONTENTS OF THE LAYERS TO NEAR STEADY-
 C    STATE WHEN USER REQUESTS PROGRAM TO INITIALIZE SOIL MOISTURES.
-C    1W OF FML's = 0.0  AND  SW OF BARRIER LINER = POROSITY
+C    SW OF FML's = 0.0  AND  SW OF BARRIER LINER = POROSITY
 C
 C    ALSO SUMS TOTAL ANNUAL SUBSURFACE INFLOW  (SUBINF)
 C
@@ -1471,7 +1444,7 @@ C
           PHOLE(J) = PHOLE(J) / 2.471
           THICK(J) = THICK(J) / 2.54
           XLENG(J) = XLENG(J) * 3.281
-          SUBIN(J) = SUBIN(J) / 25.4 
+          SUBIN(J) = SUBIN(J) / 25.4
 C         TRANS(J) = TRANS(J) / 2.54 / 2.54
  1090   CONTINUE
       END IF
@@ -1998,7 +1971,7 @@ C
           RCULS(J) = RC(LAYSEG(J, 1))*STHICK(J)
           RSUL(J) = RS(LAYSEG(J, 1))*STHICK(J)
           XLAMBU(J) = XLAMBD(LAYSEG(J, 1))*STHICK(J)
-          IF (LSEG(J) .LT. 3) THEN 
+          IF (LSEG(J) .LT. 3) THEN
           SUBINS(J) = SUBIN(LAYSEG(J, 2))*STHICK(J)/THICK(LAYSEG(J,2))
           ELSE
             SUBINS(J) = SUBIN(LAYSEG(J, 2))
@@ -2336,7 +2309,7 @@ C
                IF (IPQ (I) .LT. 1 .OR. IPQ (I) .GT. 6) IPQ (I) = 4
                LPQ (NL) = IPQ (I)
             END IF
-          END IF 
+          END IF
         END IF
  1010 CONTINUE
       DO 1020 I = 1, 5
@@ -2373,55 +2346,60 @@ C     COMPILER CORRECTIONS ABOVE
  1040 CONTINUE
       RETURN
       END
-C
-C   ***************************** INITIA ************************
-C
-C     SUBROUTINE INITIA INITIALIZES VARIABLES USED IN SUBROUTINES
-C     SOLT AND CRPMOD
-C
-      SUBROUTINE INITIA 
-C
+
+
+      !=================================================================
+      ! SUBROUTINE: INITIA
+      !
+      ! Initializes variables used in subroutines SOLT and CRPMOD
+      !=================================================================
+      SUBROUTINE INITIA
+
       COMMON /BLK6/ ULAI, WIND, RH (366), OSNO, ULAT
       COMMON /BLK7/ STHICK(67), UL(67), FCUL(67), WPUL(67), SWUL(67),
-     1  RCUL(67), RSUL(67), XLAMBU(67), CONUL(67), BUBUL(67),
-     2  SUBINS(67), SWULI(67)
+     &  RCUL(67), RSUL(67), XLAMBU(67), CONUL(67), BUBUL(67),
+     &  SUBINS(67), SWULI(67)
       COMMON /BLK11/ ETO, XLAI, STAGE1, CONA, RAIN, RUN, ABST, EAJ, TS2
       COMMON /BLK18/ RM (12), TM (12), RLAT
       COMMON /BLK19/ IPL, IHV, IPRE, IRUN, ITSOIL, IVEG
       COMMON /BLK20/ TSEG (7), Z (7), FCS (7), ST (7)
       COMMON /BLK21/ TB, TO, TS, AVT, AMP, ABD, PHU, GS, CV,
-     1  RSD, DM, WFT (12), DD, DLAI
-C     DIMENSION TC(12)
-C******SETTING BASE TEMP, TB=0 DEG. C; AND OPTIMAL TEMP, TO=20 DEG. C.
+     &  RSD, DM, WFT (12), DD, DLAI, TSURF
+
+      ! Setting base Temp, TB=0 degC; and optimal Temp, TO=20 degC.
       TB = 5.
       TO = 20.
-C******COMPUTING AVERAGE YEARLY TEMP, AVT; AMPLITUDE, AMP; AND WFT
+
+      ! Computing average yearly Temp, AVT; amplitude, AMP; and WFT.
       AVT = 0.
       TBB = 0.
       TS = 200.
-      DO 1000 I = 1, 12
-         IF (TM (I) .GT. TBB) TBB = TM (I)
-         IF (TM (I) .LT. TS) TS = TM (I)
+      DO I = 1, 12
+         IF (TM (I) > TBB) TBB = TM (I)
+         IF (TM (I) < TS) TS = TM (I)
          AVT = AVT + TM (I)
-C        WFT (I) = PWD (I)/(1. - PWW (I) + PWD (I))
+         ! WFT (I) = PWD (I)/(1. - PWW (I) + PWD (I))
          WFT (I) = 0.2 /(1. - 0.4 + 0.2)
- 1000 CONTINUE
-C.....DEFINING AVT & AMP IN DEG. C.
-      AVT = AVT/12. 
+      END DO
+
+      ! Defining AVT & AMP in degC.
+      AVT = AVT/12.
       AMP = (TBB - TS)/2.0
-C******CHECKING PLANTING AND HARVEST DATES (IN JULIAN DATES)
-C      TO COMPUTE PHU - POTENTIAL HEAT UNITS
+
+      ! Checking planting and harvest dates (in julian dates)
+      ! to compute PHU - POTENTIAL HEAT UNITS
       CALL DATFIT(12,TM,A1,A2,A3)
       PHUX = 0.
-      IF (IPL .GE. IHV) THEN
+      IF (IPL >= IHV) THEN
          PHU = AHU (IPL, 365, A1,A2,A3)
          PHUX = PHU
          PHU = PHU + AHU (1, IHV, A1,A2,A3)
       ELSE
          PHU = AHU (IPL, IHV, A1, A2, A3)
       END IF
-      IF (PHU .LT. 30.) PHU = 30.
-C******INITIALIZING VARIABLES
+      IF (PHU < 30.) PHU = 30.
+
+      ! Initializing variables.
       XLAI = (PHUX/PHU)*ULAI
       DLAI = XLAI
       GS = PHUX/PHU
@@ -2430,31 +2408,28 @@ C******INITIALIZING VARIABLES
       DM = XLAI*100.
       ABD = 0.
       SWS = 0.
-      DO 1010 I = 1, 7
-         Z (I) = 0.0
- 1010 CONTINUE
-      DO 1020 I = 1, 7     
-C
-C    ACCUMULATING THICKNESSES OF EACH LAYER
-C      Z  = DEPTH FROM SURFACE TO BOTTOM OF SEGMENT I
-C
-         IF (I .EQ. 1) THEN
+      Z = 0.0
+
+      DO I = 1, 7
+         ! Accumulating thicknesses of each layer.
+         ! Z = depth from surface to bottom of segment I
+         IF (I == 1) THEN
             ZSEG = 0.
          ELSE
             ZSEG = Z (I - 1)
          END IF
          Z (I) = ZSEG + STHICK (I)*25.4
-C*****DETERMINE DRAINAGE COEFS FOR EACH SOIL SEGMENT.
+
+         ! Determine drainage coefs for each soil segment.
          XZ = UL (I)*25.4*10.
          ABD = ABD + XZ
          FCS (I) = (FCUL (I) - WPUL (I))*25.4
          ST (I) = (SWUL (I) - WPUL (I))*25.4
          SWS = SWS + ST (I)
          ST(I) = ST (I)/25.4
- 1020 CONTINUE
-C
-C  **** DETERMINING DD *****
-C
+      END DO
+
+      ! Determining DD.
       ABD = ABD/(10.*Z (7))
       F = ABD/(ABD + 686.*EXP ( - 5.63*ABD))
       DP = 1000. + 2500.*F
@@ -2463,9 +2438,10 @@ C
       WC = SWS/(WW*Z (7))
       F = EXP (B*((1. - WC)/(1. + WC))**2)
       DD = F*DP
+
       RETURN
-      END
-C
+      END SUBROUTINE INITIA
+
 C
 C   ************************** AHU *******************************
 C
@@ -2586,9 +2562,9 @@ C1010     CONTINUE
 C         RTOP = 2.0 * RTOP
 C         IF (RTOP .GT. 0.0005) RTOP = 0.0005
 C     COMPILER CORRECTIONS ABOVE
-          IF (XLENG(LD(1)) .EQ. 0.0) XLENG(LD(1)) = 1.        
+          IF (XLENG(LD(1)) .EQ. 0.0) XLENG(LD(1)) = 1.
           IF (SLOPE(LD(1)) .EQ. 0.0) SLOPE(LD(1)) = 0.00001
-          RDR = RC(LD(1)) * THICK(LD(1)) * SLOPE(LD(1)) / 
+          RDR = RC(LD(1)) * THICK(LD(1)) * SLOPE(LD(1)) /
      1        (1200. * XLENG(LD(1)))
           IF (RDR .GT. RTOP) THEN
             DT = (PORO(LD(1)) - FC(LD(1))) * THICK (LD(1)) * 2.54 /
@@ -2648,7 +2624,7 @@ C     COMPILER CORRECTIONS ABOVE
             END IF
           END IF
  1020   CONTINUE
-C        
+C
         DO 1050 N = 1, 6
           IF (NSTEP(N) .LT. 4) THEN
             NSTEP(N) = 4
@@ -2674,10 +2650,10 @@ C
             BALY(J) = 0.0D0
  1070     CONTINUE
         ELSE IF (IPRE .EQ. 2) THEN
-C       
+C
 C    COMPUTE INITIAL MOISTURES AT START OF SIMULATION;
 C    RESET RATES AS NEEDED
-C       
+C
 C        END IF
           DO 1110 K = 1, 20
             SWULL(K) = 0.0
@@ -2714,7 +2690,7 @@ C        END IF
             DO 1160 J = NSEG1 + 1, NSEG
               IF (LSEG(J) .LE. 2) THEN
                  SWULL(LAYSEG(J, 2)) = SWULL(LAYSEG(J, 2)) + DSWUL(J)
-     C           + (DCHG(J)/2.0D0) 
+     C           + (DCHG(J)/2.0D0)
               END IF
  1160       CONTINUE
           END IF
@@ -2728,7 +2704,7 @@ C        END IF
  1170     CONTINUE
         END IF
       END IF
-C     
+C
       RETURN
       END
 C
@@ -3050,14 +3026,14 @@ C
       COMMON /BLK16/ LD(5), LP(6), LPQ(5), LCASE(5), IYR, IDA, MO,
      1  NSTEP(6), ND
       COMMON /BLK21/ TB, TO, TS, AVT, AMP, ABD, PHU, GS, CV,
-     1  RSD, DM, WFT (12), DD, DLAI
+     1  RSD, DM, WFT (12), DD, DLAI, TSURF
       COMMON /BLK27/ IFREZ, IDFS, IFCNT, KCNT, MXKCNT
       COMMON /BLK28/ WE, XNEGHS, XLIQW, TINDEX, STORGE, EXLAG(4), TWE
 C
 C
 C
 C  INITIALIZE VARIABLES
-C     
+C
       RAIN = RAIN - SMELT
       ESNO = 0.0
       EABS = 0.0
@@ -3084,7 +3060,7 @@ C
      1  *(112.+(0.9*TA))
      1                       - 112. + (0.1*TA)
 C
-C  IF THERE IS SNOW ON THE GROUND AND THE ESTIMATED DEWPOINT 
+C  IF THERE IS SNOW ON THE GROUND AND THE ESTIMATED DEWPOINT
 C  TEMPERATURE IS GREATER THAN TEMPERATURE OF THE SNOW -
 C  NO EVAPORATION WILL OCCUR
 C
@@ -3099,14 +3075,14 @@ C
         RETURN
       ENDIF
 C
-C  IF THERE IS SNOW ON THE GROUND AND THE ESTIMATED DEWPOINT 
+C  IF THERE IS SNOW ON THE GROUND AND THE ESTIMATED DEWPOINT
 C  TEMPERATURE IS LESS THAN TEMPERATURE OF THE SNOW -
 C  EVAPORATIVE DEMAND IS APPLIED TO THE SNOWMELT AND TO THE SNOW
-C  
+C
       ETA = ETO
       IF (SNO.GT.0.0 .OR. SMELT.GT.0.0) THEN
         IF (SMELT .GT. 0.0) THEN
-C  ENERGY NOT AVAILABLE FOR ET DUE TO  MELTING & WARMING 
+C  ENERGY NOT AVAILABLE FOR ET DUE TO  MELTING & WARMING
           ESM = ESM + (0.1367 * SMELT) + (0.0240 * SMELT)
           ETA = ETO - ESM
           IF (ESM .GT. ETO) THEN
@@ -3164,8 +3140,8 @@ C
           TWE = WE + XLIQW + STORGE + TEX
         ENDIF
       ELSE
-C  
-C   IF THERE IS NO SNOW ON THE GROUND, SURFACE EVAPORATION 
+C
+C   IF THERE IS NO SNOW ON THE GROUND, SURFACE EVAPORATION
 C   IS EQUAL TO ANY INTERCEPTION
 C
         IF (RAIN .GT. 0.0) THEN
@@ -3322,7 +3298,7 @@ C
       COMMON /BLK16/ LD(5), LP(6), LPQ(5), LCASE(5), IYR, IDA, MO,
      1  NSTEP(6), ND
       COMMON /BLK21/ TB, TO, TS, AVT, AMP, ABD, PHU, GS, CV,
-     1  RSD, DM, WFT (12), DD, DLAI
+     1  RSD, DM, WFT (12), DD, DLAI, TSURF
 C
       DATA SALB /0.23/
 C     DATA G /0.68/
@@ -3425,7 +3401,7 @@ C
 C
 C  *********************** CRPMOD ************************
 C
-      SUBROUTINE CRPMOD 
+      SUBROUTINE CRPMOD
 C
 C     THIS SUBROUTINE PREDICTS DAILY POTENTIAL GROWTH OF TOTAL PLANT
 C     BIOMASS AND ROOTS AND CALCULATES LEAF AREA INDEX.  INCORPORATES
@@ -3441,7 +3417,7 @@ C
       COMMON /BLK19/ IPL, IHV, IPRE, IRUN, ITSOIL, IVEG
       COMMON /BLK20/ TSEG (7), Z (7), FCS (7), ST (7)
       COMMON /BLK21/ TB, TO, TS, AVT, AMP, ABD, PHU, GS, CV,
-     1   RSD, DM, WFT (12), DD, DLAI
+     1   RSD, DM, WFT (12), DD, DLAI, TSURF
 C
       SUT = ST (7)*25.4/FCS (7)
       CDG = (.9*TSEG (7)/(TSEG (7) + EXP (9.93 -(.312*TSEG (7)))))+ .1
@@ -3498,66 +3474,80 @@ C     GS = GS + TMPC/PHU
  1060 IF (XLAI .LT. 0.0) XLAI = 0.0
       RETURN
       END
-C
-C ****************************** SOLT **************************
-C
+
+
+      !=================================================================
+      ! SUBROUTINE: SOLT
+      !
+      ! Estimate daily soil temperatures (TSEG) at the bottom
+      ! of each of the seven evaporative-zone segments.
+      !=================================================================
       SUBROUTINE SOLT
-C     THIS SUBROUTINE ESTIMATES DAILY AVERAGE TEMPERATURE AT THE BOTTOM
-C     OF EACH SOIL LAYER
-C
+
       COMMON /BLK8/ PRE (370), TMPF (366), RAD (366)
       COMMON /BLK9/ PINF, ES1T, SMELT, GMRO, ADDRUN, OLDSNO, SNO, WF(7),
-     1  SSNO
+     &  SSNO
       COMMON /BLK16/ LD(5), LP(6), LPQ(5), LCASE(5), IYR, IDA, MO,
-     1  NSTEP(6), ND
+     &  NSTEP(6), ND
       COMMON /BLK20/ TSEG (7), Z (7), FCS (7), ST (7)
       COMMON /BLK21/ TB, TO, TS, AVT, AMP, ABD, PHU, GS, CV,
-     1   RSD, DM, WFT (12), DD, DLAI
-C
-C*****DETERMINING BCV
-C      
+     &   RSD, DM, WFT (12), DD, DLAI, TSURF
+
+      ! DetermininG BCV.
       IF(CV.LT.0.0)CV=0.0
       IF(CV.GT.20000.)CV=20000.
-      BCV = CV/(CV + EXP (7.563 - (0.0001297*CV)))
-      IF ((SNO*25.4) .GT. 120.) THEN
+
+      ! Calculate the biomass/snow cover lag factor.
+      BCV = CV / (CV + EXP (7.563 - (0.0001297*CV)))
+      IF ((SNO*25.4) > 120.) THEN
          BCV = AMAX1 (1., BCV)
-      ELSE IF (SNO .GT. 0.0) THEN
+      ELSE IF (SNO > 0.0) THEN
          XX = (SNO*25.4)/(SNO*25.4 + EXP (6.055 - (.3002*SNO*25.4)))
          BCV = AMAX1 (XX, BCV)
       END IF
-C
+
       XI = IDA
       ALX = (XI - 200.)/58.13
+
+      ! Convert air temperature from Fahrenheit to Celsius.
       TMPC = (TMPF (IDA) - 32.)/1.8
+
+      ! Estimate bare soil surface temperature (ST0).
       IF (RAD (IDA) .EQ. 0.) THEN
          ST0 = WFT (MO)*5. + TMPC
       ELSE
          ST0 = WFT (MO)*5. + TMPC - 5.
       END IF
-      XX = BCV*TO + (1. - BCV)*ST0
-      DT = XX - (AVT + AMP*COS (ALX))
-      DO 1000 K = 1, 7
+
+      ! Calculate actual ground surface temperature (TSURF).
+      TSURF = BCV*TO + (1. - BCV)*ST0
+
+      DT = TSURF - (AVT + AMP*COS (ALX))
+      DO K = 1, 7
          ZD = - Z (K)/DD
-         IF(ABS(ZD).LT.37.)THEN
+         IF(ABS(ZD) < 37.) THEN
             TSEG (K) = AVT + (AMP*COS (ALX + ZD) + DT)*EXP (ZD)
          ELSE
             TSEG(K) = AVT
          END IF
- 1000 CONTINUE
+      END DO
+
       RETURN
-      END
-C
-C *************************** TSTR **************************
-C
-C      SUBROUTINE TSTR APPLIES A TEMPERATURE STRESS FACTOR TO CROPS
-C      IF THE DAILY MAXIMUM TEMPERATURE IS MORE THEN 15 DEG. C. BELOW
-C      THE AVERAGE ANNUAL TEMPERATURE
-C
+      END SUBROUTINE SOLT
+
+
+      !=================================================================
+      ! SUBROUTINE: TSTR
+      !
+      ! Applies a temperature stress factor to crops if the daily
+      ! maximum temperature is more than 15 deg.C below the average
+      ! annual temperature
+      !=================================================================
       SUBROUTINE TSTR (TGX, TMPC)
-C
+
       COMMON /BLK21/ TB, TO, TS, AVT, AMP, ABD, PHU, GS, CV,
-     1   RSD, DM, WFT (12), DD, DLAI
-C
+     &   RSD, DM, WFT (12), DD, DLAI, TSURF
+
       IF (TMPC .GT. TO) TGX = 2.*TO - TB - TMPC
       RTO = ((TO - TMPC)/TGX)**2
       IF (RTO .GT. 200.) THEN
@@ -3567,16 +3557,16 @@ C
       END IF
       IF ((TMPC - 5.) .LE. (AVT - 15.)) TS = 0.
       RETURN
-      END
-C
-C
+      END SUBROUTINE TSTR
+
+
 C ************************* FRZCHK *******************************
 C
 C   SUBROUTINE FRZCHK DETERMINES THE OCCURENCE OF FROZEN SOIL
 C      MODIFIED FROM A CREAMS APPROACH
 C
       SUBROUTINE FRZCHK (TFSOIL)
-C      
+C
       REAL, INTENT(IN) :: TFSOIL
 C
       COMMON /BLK8/ PRE (370), TMPF (366), RAD (366)
@@ -3628,7 +3618,7 @@ C
      1  SSNO
       COMMON /BLK19/ IPL, IHV, IPRE, IRUN, ITSOIL, IVEG
       COMMON /BLK28/ WE, XNEGHS, XLIQW, TINDEX, STORGE, EXLAG(4), TWE
-      COMMON /BLK30/ XMFMAX, XMFMIN, XNMF, TIPM, UADJ, 
+      COMMON /BLK30/ XMFMAX, XMFMIN, XNMF, TIPM, UADJ,
      1  TBASE, PXTEMP, PLWHC, GM, PLQW, SFNEW, RFMIN
 C
 C   INPUT OF CONSTANTS
@@ -3646,7 +3636,7 @@ C
       IF (IPRE .LT. 2) THEN
         XMFMAX = 5.2
         XMFMIN = 2.0
-        XNMF = 0.6 
+        XNMF = 0.6
         TIPM = 0.3
         TBASE = 0.0
         PXTEMP = 0.0
@@ -3655,20 +3645,20 @@ C
         PLQW = 0.01
         UADJ = 0.262*(1.0 + 0.24*WIND)
 C        PA = 1000.
-C     
+C
 C       IF SNOWFALL EXCEEDS SNEW/HR--TINDEX = AIR TEMPERATURE
-C     
+C
         SNEW = 1.5
-C     
+C
 C       IF RAIN EXCEEDS RMIN/HR--USE RAIN-ON-SNOW MELT EQUATION
-C     
+C
         RMIN = 0.25
-C     
+C
         SFNEW = SNEW*24.
         RFMIN = RMIN*24.
-C     
+C
 C       INITIALIZATION OF VARIABLES FOR SNOW SUBROUTINE
-C     
+C
         TWE = 0.0
         TEX = 0.0
         WE = 0.0
@@ -3680,9 +3670,9 @@ C
           EXLAG (N) = 0.0
  1000   CONTINUE
         IF (OSNO .GT. 0 .AND. IPRE .EQ. 1) THEN
-C      
+C
 C        CASE OF SOME INITIAL SNOW COVER
-C      
+C
           XLIQW = (OSNO*25.4)*PLQW
           WE = (OSNO*25.4) - XLIQW
           SNO = OSNO
@@ -3729,10 +3719,10 @@ C
  1010     CONTINUE
         END IF
         SNO = OSNO
-        OLDSNO = OSNO 
+        OLDSNO = OSNO
       ELSE IF (IPRE .EQ. 2) THEN
-        OSNO = OLDSNO 
-        SNO = OLDSNO 
+        OSNO = OLDSNO
+        SNO = OLDSNO
       END IF
 C
       RETURN
@@ -3742,17 +3732,18 @@ C
 C      ************************* SNOW *************************
 C
       SUBROUTINE SNOW (IT)
-C       
+C
 C     SUBROUTINE SNOW DETERMINES IF DAILY PRECIPITATION IS
 C     SNOW OR RAIN;  COMPUTES SNOW ACCUMULATION AND MELT.
-C     
-C     ADOPTED FROM THE NWS HYDRO-17 CODE WHICH WAS INITIALLY 
-C     WRITTEN BY ERIC ANDERSON   MAY 1980 
-C....................................... 
-C 
-C     COMMON BLOCKS 
-      PARAMETER (MXYR = 100)
 C
+C     ADOPTED FROM THE NWS HYDRO-17 CODE WHICH WAS INITIALLY
+C     WRITTEN BY ERIC ANDERSON   MAY 1980
+C.......................................
+
+      INTEGER, INTENT(OUT) :: IT
+
+      PARAMETER (MXYR = 100)
+
       COMMON /BLK6/ ULAI, WIND, RH(366), OSNO, ULAT
       COMMON /BLK8/ PRE (370), TMPF (366), RAD (366)
       COMMON /BLK9/ PINF, ES1T, SMELT, GMRO, ADDRUN, OLDSNO, SNO, WF(7),
@@ -3763,35 +3754,35 @@ C
       COMMON /BLK18/ RM (12), TM (12), RLAT
       COMMON /BLK27/ IFREZ, IDFS, IFCNT, KCNT, MXKCNT
       COMMON /BLK28/ WE, XNEGHS, XLIQW, TINDEX, STORGE, EXLAG(4), TWE
-      COMMON /BLK30/ XMFMAX, XMFMIN, XNMF, TIPM, UADJ, 
+      COMMON /BLK30/ XMFMAX, XMFMIN, XNMF, TIPM, UADJ,
      1  TBASE, PXTEMP, PLWHC, GM, PLQW, SFNEW, RFMIN
       COMMON /BLK33/ JYEAR (MXYR)
 C
 C  INITIAL VALUES
 C
       TA = (TMPF(IDA)-32.)*0.55556
-      PXI = PRE(IDA)*25.4  
-C....................................... 
-C  INITIALIZE DAILY VARIABLES AT 0.       
+      PXI = PRE(IDA)*25.4
+C.......................................
+C  INITIALIZE DAILY VARIABLES AT 0.
 C
-      SFALL=0.0 
-      CNHSPX=0.0 
+      SFALL=0.0
+      CNHSPX=0.0
       CNHS = 0.0
-      RAIN=0.0 
+      RAIN=0.0
       ROS = 0.0
-      RAINM=0.0 
+      RAINM=0.0
       GMRO=0.
       XMELT=0.
-      SMELT = 0. 
+      SMELT = 0.
       GMWLOS=0.
       GMSLOS=0.
-C....................................... 
-C     DETERMINE FORM OF PRECIP. AND ACCUMULATE SNOW COVER IF SNOW. 
-C 
+C.......................................
+C     DETERMINE FORM OF PRECIP. AND ACCUMULATE SNOW COVER IF SNOW.
+C
       IF(TA.LT.PXTEMP) THEN
-C 
-C     ACCUMULATE SNOWFALL 
-C 
+C
+C     ACCUMULATE SNOWFALL
+C
         XLIQW = XLIQW + ADDRUN * 25.4
         SNO = SNO + ADDRUN
         TWE = TWE + ADDRUN * 25.4
@@ -3805,35 +3796,35 @@ C
         CNHSPX=-TS*SFALL/160.0
         IF(SFALL.GT.SFNEW) TINDEX=TS
       ELSE
-C 
-C     RAINFALL AND RAIN MELT. 
-C 
+C
+C     RAINFALL AND RAIN MELT.
+C
         RAIN=PXI
         IT = 2
         IF(WE.EQ.0.0) GO TO 380
       END IF
       TR=TA
-      IF(TR.LT.0.0) TR=0.0 
-      RAINM=0.0125*RAIN*TR 
-C....................................... 
+      IF(TR.LT.0.0) TR=0.0
+      RAINM=0.0125*RAIN*TR
+C.......................................
 C     MELT AT GROUND-SNOW INTERFACE
 C
       GMC = GM
-      IF(IFREZ.EQ.1)GMC = 0.0     
+      IF(IFREZ.EQ.1)GMC = 0.0
       IF(WE.LE.GMC) THEN
         GMRO=WE+XLIQW
         GO TO 350
       END IF
       GMWLOS=(GMC/WE)*XLIQW
-      GMSLOS=GMC 
+      GMSLOS=GMC
 C ....................................................................
-C 
+C
 C    COMPUTE SURFACE ENERGY EXCHANGE FOR THE COMPUTATIONAL PERIOD BASED
-C        ON 100 PERCENT COVER AND NON-RAIN CONDITIONS - 
-C 
+C        ON 100 PERCENT COVER AND NON-RAIN CONDITIONS -
+C
 C    ADJUST IDA SO THAT MAR 22 EQUALS DAY 1 for NORTHERN HEMISPHERE
 C    ADJUST IDA SO THAT SEP 21 EQUALS DAY 1 for SOUTHERN HEMISPHERE
-C 
+C
       ND = LEAP(JYEAR(IYR), NT)
       IF (ULAT .GE. 0.0) THEN
         IDANG = 80
@@ -3845,10 +3836,10 @@ C
       IDN = IDA - IDANG
       IF (IDN.LE.0) IDN = IDN + ND
       DIFF=(XMFMAX-XMFMIN)
-      DAYN=IDN 
-C....................................... 
+      DAYN=IDN
+C.......................................
 C     MELT FACTOR VARIATION FOR LATITUDE ABOVE 60 DEGREES
-C 
+C
       IF(IDN.GE.275) THEN
         X=(DAYN-275.0)/(458.0-275.0)
       ELSE IF(IDN.GE.92) THEN
@@ -3856,7 +3847,7 @@ C
       ELSE
         X=(91.0+DAYN)/183.0
       END IF
-      XX=(SIN(DAYN*2.0*3.1416/366.0)*0.5)+0.5 
+      XX=(SIN(DAYN*2.0*3.1416/366.0)*0.5)+0.5
       IF(X.LE.0.48) THEN
         ADJMF=0.0
       ELSE IF (X.GE.0.70) THEN
@@ -3864,13 +3855,13 @@ C
       ELSE
         ADJMF=(X-0.48)/(0.70-0.48)
       END IF
-      RMF60=(XX*ADJMF*DIFF) + XMFMIN 
+      RMF60=(XX*ADJMF*DIFF) + XMFMIN
       XMF = RMF60
-C....................................... 
+C.......................................
 C     MELT FACTOR VARIATION FOR LATITUDE BELOW 60 DEGREES AND 50 DEGREES
 C
       IF (ABS(ULAT) .LT. 60.0) THEN
-        RMF50=(SIN(DAYN*2.0*3.1416/366.0)*DIFF*0.5)+(XMFMAX+XMFMIN)*0.5 
+        RMF50=(SIN(DAYN*2.0*3.1416/366.0)*DIFF*0.5)+(XMFMAX+XMFMIN)*0.5
         XMF = RMF50
         IF (ABS(ULAT) .GT. 50.0) THEN
           RINT = (ABS(ULAT) - 50.)/10.
@@ -3878,74 +3869,74 @@ C  CORRECTION BELOW
           XMF = RMF50 + RINT * (RMF60 - RMF50)
         END IF
       END IF
-      RATIO=XMF/XMFMAX 
-C....................................... 
-C     COMPUTE MELT AND NEGATIVE HEAT EXCHANGE INDEX TEMPERATURES. 
+      RATIO=XMF/XMFMAX
+C.......................................
+C     COMPUTE MELT AND NEGATIVE HEAT EXCHANGE INDEX TEMPERATURES.
 C
-      TMX=TA-TBASE 
-      IF(TMX.LT.0.0) TMX=0.0 
-      TSUR=TA 
-      IF (TSUR.GT.0.0) TSUR=0.0 
-      TNMX=TINDEX-TSUR 
-C....................................... 
-C     NEGATIVE HEAT EXCHANGE 
+      TMX=TA-TBASE
+      IF(TMX.LT.0.0) TMX=0.0
+      TSUR=TA
+      IF (TSUR.GT.0.0) TSUR=0.0
+      TNMX=TINDEX-TSUR
+C.......................................
+C     NEGATIVE HEAT EXCHANGE
 C
-      XNMRATE=RATIO*XNMF 
-      CNHS=XNMRATE*TNMX 
-C 
-C     UPDATE TINDEX 
-C 
-      TINDEX=TINDEX+TIPM*(TA-TINDEX) 
-      IF(TINDEX.GT.0.0) TINDEX=0.0 
-C....................................... 
-C     SURFACE MELT. 
+      XNMRATE=RATIO*XNMF
+      CNHS=XNMRATE*TNMX
+C
+C     UPDATE TINDEX
+C
+      TINDEX=TINDEX+TIPM*(TA-TINDEX)
+      IF(TINDEX.GT.0.0) TINDEX=0.0
+C.......................................
+C     SURFACE MELT.
 C
       IF(TMX.GT.0.0) THEN
         XMELT=XMF*TMX
       END IF
-C....................................... 
-C     DETERMINE MELT FOR THE TIME INTERVAL - SURFACE ENERGY EXCHANGE 
-C        IS UNIFORM DURING THE COMPUTATIONAL PERIOD. 
-C 
+C.......................................
+C     DETERMINE MELT FOR THE TIME INTERVAL - SURFACE ENERGY EXCHANGE
+C        IS UNIFORM DURING THE COMPUTATIONAL PERIOD.
+C
       IF(RAIN.LE.RFMIN) THEN
-C 
-C     NON-RAIN OR LIGHT DIZZLE INTERVAL 
-C 
+C
+C     NON-RAIN OR LIGHT DIZZLE INTERVAL
+C
         XMELT=XMELT+RAINM
       ELSE
-C 
-C     RAIN INTERVAL. 
-C 
+C
+C     RAIN INTERVAL.
+C
         SVP1 = (0.00738*TA + 0.8072)**8.
         SVP2 = 0.000019 * ABS(1.8*TA + 48.)
         SVP = 33.8639 * (SVP1 - SVP2 + 0.001316)
-C 
-C     ASSUME 90 PERCENT RELATIVE HUMIDITY DURING RAIN-ON-SNOW 
-C 
+C
+C     ASSUME 90 PERCENT RELATIVE HUMIDITY DURING RAIN-ON-SNOW
+C
         AVP = 0.9 * SVP
         TK=(TA+273.)
         QN= (11.71E-8 * TK**4)/7.97 - 81.61
         QE=8.5*(AVP-6.11)*UADJ
-        BR = 0.68 * TA / (AVP - 6.11) 
+        BR = 0.68 * TA / (AVP - 6.11)
         QH=BR * QE
         XMELT=QN+QE+QH+RAINM
         IF(XMELT.LT.0.0) XMELT=0.0
       END IF
       ROS = RAIN
-      RAIN = 0. 
-C....................................... 
-C    CHECK CNHS. 
+      RAIN = 0.
+C.......................................
+C    CHECK CNHS.
 C
-      IF((CNHS+XNEGHS).LT.0.0) CNHS=-1.0*XNEGHS 
-C....................................... 
-C     ADJUST WE FOR SURFACE AND GROUND MELT 
-C     GROUND MELT 
+      IF((CNHS+XNEGHS).LT.0.0) CNHS=-1.0*XNEGHS
+C.......................................
+C     ADJUST WE FOR SURFACE AND GROUND MELT
+C     GROUND MELT
 C
-      WE=WE-GMSLOS 
-      XLIQW=XLIQW-GMWLOS 
-      GMRO=GMSLOS+GMWLOS 
-C 
-C     SURFACE MELT 
+      WE=WE-GMSLOS
+      XLIQW=XLIQW-GMWLOS
+      GMRO=GMSLOS+GMWLOS
+C
+C     SURFACE MELT
       IF(XMELT.GT.0.0) THEN
         IF(XMELT.GE.WE) THEN
           XMELT=WE+XLIQW
@@ -3954,59 +3945,59 @@ C     SURFACE MELT
           WE=WE-XMELT
         END IF
       END IF
-C....................................... 
-C     PERFORM HEAT AND WATER BALANCE FOR THE SNOW COVER. 
+C.......................................
+C     PERFORM HEAT AND WATER BALANCE FOR THE SNOW COVER.
 C
-      WATER=XMELT+ROS 
-      HEAT=CNHS+CNHSPX 
-      XLIQWMX=PLWHC*WE 
-      XNEGHS=XNEGHS+HEAT 
+      WATER=XMELT+ROS
+      HEAT=CNHS+CNHSPX
+      XLIQWMX=PLWHC*WE
+      XNEGHS=XNEGHS+HEAT
 C
-C     TEMPERATURE OF SNOW CAN NOT BE BELOW-52.8 DEGC 
+C     TEMPERATURE OF SNOW CAN NOT BE BELOW-52.8 DEGC
 C
-      IF(XNEGHS.LT.0.0) XNEGHS=0.0 
-      IF(XNEGHS.GT.0.33*WE) XNEGHS=0.33*WE 
+      IF(XNEGHS.LT.0.0) XNEGHS=0.0
+      IF(XNEGHS.GT.0.33*WE) XNEGHS=0.33*WE
       IF((WATER+XLIQW).GE.(XLIQWMX+XNEGHS)) THEN
-C 
-C     EXCESS WATER EXISTS 
+C
+C     EXCESS WATER EXISTS
 C
         EXCESS=WATER+XLIQW-XLIQWMX-XNEGHS
         XLIQW=XLIQWMX
         WE=WE+XNEGHS
         XNEGHS=0.0
       ELSE IF(WATER.GE.XNEGHS) THEN
-C 
-C     WATER EXCEEDS XNEGHS - LIQUID WATER CONTENT IS INCREASED. 
-C 
+C
+C     WATER EXCEEDS XNEGHS - LIQUID WATER CONTENT IS INCREASED.
+C
         XLIQW=XLIQW+WATER-XNEGHS
         WE=WE+XNEGHS
         XNEGHS=0.0
         EXCESS=0.0
       ELSE
-C 
-C     ALL WATER IS REFROZEN IN THE SNOW COVER. 
-C 
+C
+C     ALL WATER IS REFROZEN IN THE SNOW COVER.
+C
         WE=WE+WATER
         XNEGHS=XNEGHS-WATER
         EXCESS=0.0
       END IF
-C 
-C     IF NO NEGATIVE HEAT - TINDEX MUST BE 0.0. 
-C 
-      IF(XNEGHS.EQ.0.0) TINDEX=0.0 
-C....................................... 
-C     ROUTE EXCESS WATER THROUGH THE SNOW COVER. 
-C 
-      PACKRO=0.0 
+C
+C     IF NO NEGATIVE HEAT - TINDEX MUST BE 0.0.
+C
+      IF(XNEGHS.EQ.0.0) TINDEX=0.0
+C.......................................
+C     ROUTE EXCESS WATER THROUGH THE SNOW COVER.
+C
+      PACKRO=0.0
       FIT = 24
-C 
-C     LAG EXCESS WATER FIRST - FUNCTION OF EXCESS AND WE. 
-C 
+C
+C     LAG EXCESS WATER FIRST - FUNCTION OF EXCESS AND WE.
+C
       IF(EXCESS.NE.0.0) THEN
         IF(EXCESS.GE.0.1 .AND. WE.GE.1.0) THEN
-C 
-C     COMPUTE LAG IN HOURS AND PRORATE EXCESS. 
-C 
+C
+C     COMPUTE LAG IN HOURS AND PRORATE EXCESS.
+C
           N=((EXCESS*4.0)**0.3)+0.5
           IF(N.EQ.0) N=1
           FN=N
@@ -4024,25 +4015,25 @@ C
             EXLAG(L1)=EXLAG(L1)+POR1*EXCESS/FN
   250     CONTINUE
         ELSE
-C 
-C     EXCESS OR WE SMALL, THUS NO LAG. 
-C 
+C
+C     EXCESS OR WE SMALL, THUS NO LAG.
+C
           EXLAG(1)=EXLAG(1)+EXCESS
         END IF
       END IF
-C....................................... 
-C     ATTENUATE LAGGED EXCESS WATER - FUNCTION OF STORGE AND WE. 
-C 
+C.......................................
+C     ATTENUATE LAGGED EXCESS WATER - FUNCTION OF STORGE AND WE.
+C
       IF((STORGE+EXLAG(1)).NE.0.0) THEN
         IF((STORGE+EXLAG(1)).LT.0.1) THEN
-C 
-C     NO ATTENUATION 
-C 
+C
+C     NO ATTENUATION
+C
           PACKRO=STORGE+EXLAG(1)
           STORGE=0.0
         ELSE
 C
-C     EFFECT OF ATTENUATION COMPUTED USING A ONE-HOUR TIME STEP. 
+C     EFFECT OF ATTENUATION COMPUTED USING A ONE-HOUR TIME STEP.
 C
           EL=EXLAG(1)/FIT
           ELS=EL/25.4
@@ -4061,42 +4052,42 @@ C
           END IF
         END IF
       END IF
-C 
-C     DOWNSHIFT WATER IN EXLAG(). 
-  290 DO 295 I=2,4 
-      EXLAG(I-1)=EXLAG(I) 
-  295 CONTINUE 
-      EXLAG(4)=0.0 
-C....................................... 
-C     SET SURFACE MELT EQUAL TO SNOW COVER OUTFLOW 
 C
-      SMELT = PACKRO 
+C     DOWNSHIFT WATER IN EXLAG().
+  290 DO 295 I=2,4
+      EXLAG(I-1)=EXLAG(I)
+  295 CONTINUE
+      EXLAG(4)=0.0
+C.......................................
+C     SET SURFACE MELT EQUAL TO SNOW COVER OUTFLOW
+C
+      SMELT = PACKRO
       GO TO 380
-C....................................... 
-C     SNOW GONE - SET ALL CARRYOVER TO NO SNOW CONDITIONS. 
+C.......................................
+C     SNOW GONE - SET ALL CARRYOVER TO NO SNOW CONDITIONS.
 C
-  350 TEX=0.0 
-      DO 351 N=1,4 
+  350 TEX=0.0
+      DO 351 N=1,4
         TEX=TEX+EXLAG(N)
-  351 CONTINUE     
+  351 CONTINUE
       SMELT= XMELT + TEX + STORGE + ROS
-      WE=0.0 
-      XNEGHS=0.0 
-      XLIQW=0.0 
-      TINDEX=0.0 
-      STORGE=0.0 
-      DO 360 N=1,4 
+      WE=0.0
+      XNEGHS=0.0
+      XLIQW=0.0
+      TINDEX=0.0
+      STORGE=0.0
+      DO 360 N=1,4
         EXLAG(N)=0.0
-  360 CONTINUE 
+  360 CONTINUE
 C
-C     END OF COMPUTATIONS         
+C     END OF COMPUTATIONS
 C
-  380 TEX=0.0 
-      DO 390 N=1,4 
+  380 TEX=0.0
+      DO 390 N=1,4
         TEX=TEX+EXLAG(N)
   390 CONTINUE
       TWE = WE + XLIQW + STORGE + TEX
-C  
+C
 C  CONVERSION OF DAILY VALUES TO ENGLISH UNITS
 C
       GMRO = GMRO/25.4
@@ -4106,8 +4097,8 @@ C
 C   OUTPUT ANALYSIS WRITE STATEMENTS
 C
       SNO = TWE/25.4
-      RETURN 
-      END 
+      RETURN
+      END
 C
 C
 C
@@ -4124,7 +4115,7 @@ C
       DOUBLE PRECISION DSWUL, DTHICK, DRCUL, DBUBUL, DWPUL,
      1  DLAMUL, DRSUL, DUL, DFCUL, DSUBIN, DCHG, DRCRS, DSUB, DRCR
 C
-      DOUBLE PRECISION DT, F, E, HED, THY, PRC, DRN, 
+      DOUBLE PRECISION DT, F, E, HED, THY, PRC, DRN,
      1  QLAT, QPERC, DRIN, QPERCY, QLATY,
      2  EXCESS, BALY, BALT, SWULY, DRCULS, DTHICS, ELKS
 C
@@ -4273,7 +4264,7 @@ C     DRAINAGE THROUGH THE SEGMENTS ABOVE THE BARRIER
 C     LAYER OF A SUBPROFILE.
 C
       SUBROUTINE AVROUT (DRIN, E, DSUB, DRCR, BALY, BALT, SWULY, DT,
-     1   IBAR, LAT, NSEGB, NSEGL, NSEGE, NPROF, 
+     1   IBAR, LAT, NSEGB, NSEGL, NSEGE, NPROF,
      2   QPERCY, QLATY, QPERC, QLAT)
 C
       DOUBLE PRECISION SWULY, DRNMX, DRMX, DSUB, DRCR, BALT, QLATY,
@@ -4326,7 +4317,7 @@ C
             SWLIM = (RELSWL * (DUL(J) - DRSUL(J))) + DRSUL(J)
             IF (SWLIM .LT. DWPUL(J)) SWLIM = DWPUL(J)
             IF (SWLIM .GT. DFCUL(J)) SWLIM = DFCUL(J)
-          END IF 
+          END IF
           IF (J .EQ. NSEGL) SWLIM = DFCUL(J)
 C         IF (J .EQ. NSEG) SWLIM = DWPUL(J)
           IF (J .EQ. NSEG) SWLIM = DFCUL(J)
@@ -4354,8 +4345,8 @@ C         SWLIM = DWPUL(J)
           IF (SWLIM .GT. DFCUL(J)) SWLIM = DFCUL(J)
         END IF
         DRNMAX = SWULY(J) + (BALY(J)/2.0D0) + DRIN(J) + DSUB(J) +
-     1    DRCR(J) - E (J) - SWLIM 
-        IF (J .EQ. NSEGL) THEN 
+     1    DRCR(J) - E (J) - SWLIM
+        IF (J .EQ. NSEGL) THEN
           IF (NSEGE .EQ. NSEG) THEN
             IF (IBAR .EQ. 3) DRNMAX = 0.0D0
             IF (IBAR .GT. 3) DRNMAX = DRNMAX + DSUB(NSEGE)
@@ -4505,7 +4496,7 @@ C
  1100 CONTINUE
       DO 1110 J = NSEGB, NSEGL
         IF (J .EQ. NSEGE .AND. IBAR .EQ. 3) DRIN(J+1) = 0.0D0
-        BALT(J) = DRIN(J) + DSUB(J) + DRCR(J) - DRIN(J+1) - E(J) 
+        BALT(J) = DRIN(J) + DSUB(J) + DRCR(J) - DRIN(J+1) - E(J)
         IF (J .EQ. NSEGL .AND. IBAR .GT. 3) THEN
           BALT(J) = BALT(J) + DSUB(NSEGE)
         END IF
@@ -4521,7 +4512,7 @@ C     FROM SUPERSATURATED SEGMENTS TO THE SEGMENTS
 C     DIRECTLY ABOVE THE SUPERSATURATED SEGMENTS.
 C
       SUBROUTINE PROFIL (EXCESS,NSEGB,NSEGL,SWULY,BALT,DRIN,BALY)
-C 
+C
       DOUBLE PRECISION EXCESS, S, BALT, SWULY, BALY, EXCE, DRIN
       DOUBLE PRECISION DSWUL, DTHICK, DRCUL, DBUBUL, DSUBIN, DCHG,
      1   DWPUL, DLAMUL, DRSUL, DUL, DFCUL, DRCRS
@@ -4726,8 +4717,8 @@ C
 C     ************************   MOUND    ************************
 C
 C
-C     SUBROUTINE  MOUND  COMPUTES THE MAXIMUM HEAD USING THE     
-C         MCENROE'S EQUATIONS                           
+C     SUBROUTINE  MOUND  COMPUTES THE MAXIMUM HEAD USING THE
+C         MCENROE'S EQUATIONS
 C
 C
       SUBROUTINE MOUND (QDMAX, ELKS, LAYD, PMHED, PLEN, IU8)
@@ -4746,7 +4737,7 @@ C
          PMHED = 0.0
          PLEN = 0.0
          RETURN
-      END IF  
+      END IF
       XLEN = XLENG(LAYD) * 12.0
       IF (IU8 .NE. 1) XLEN = XLEN * 25.4
       TANALP = SLOPE(LAYD) / 100.0
@@ -4757,17 +4748,17 @@ C     ORIGINAL MOUND MODEL BY MOORE
 C
         IF (IU8 .NE. 1) QDMAX = QDMAX / 25.4
         CMAX = QDMAX / ELKS
-        IF (CMAX .GT. 1.E-8) THEN 
+        IF (CMAX .GT. 1.E-8) THEN
           PMHED = XLEN * SQRT(CMAX) * ((TANALP*TANALP/CMAX) + 1.0
      1      - ((TANALP / CMAX) * SQRT((TANALP * TANALP) + CMAX)))
-        ELSE 
+        ELSE
           PMHED = XLEN * SQRT(CMAX)
         END IF
         QPMAX = ELKS * PMHED * TANALP / XLEN
         IF (QPMAX .LT. QDMAX) THEN
           XL = 1. - (QPMAX / QDMAX)
           PLEN = XLEN * XL / 12.
-          IF (IU8 .NE. 1) PLEN = XLEN * XL /1000.0  
+          IF (IU8 .NE. 1) PLEN = XLEN * XL /1000.0
         ELSE
           PLEN = 0.0
         END IF
@@ -4776,11 +4767,11 @@ C
 C
 C     McENROE'S EQUATIONS
 C
-      S = TANALP 
+      S = TANALP
       IF (IU8 .NE. 1) QDMAX = QDMAX / 25.4
       RMAX = QDMAX / ELKS / SINALP / SINALP
       IF (RMAX .LT. 1./4.) THEN
-         A = SQRT(1. - (4.*RMAX)) 
+         A = SQRT(1. - (4.*RMAX))
          Y1 = SQRT (RMAX - (RMAX * S) + ((RMAX * S) * (RMAX * S)))
          Y2 = (1. - A - 2*RMAX) * (1 + A - 2 * (RMAX * S))
          Y3 = (1. + A - 2*RMAX) * (1 - A - 2 * (RMAX * S))
@@ -4795,7 +4786,7 @@ C
          IF (QPMAX .LT. QDMAX) THEN
             XL = 1. - (QPMAX / QDMAX)
             PLEN = XLEN * XL / 12.
-            IF (IU8 .NE. 1) PLEN = XLEN * XL /1000.0  
+            IF (IU8 .NE. 1) PLEN = XLEN * XL /1000.0
          ELSE
             PLEN = 0.0
          END IF
@@ -4811,7 +4802,7 @@ C   CORRECTION BELOW
          IF (QPMAX .LT. QDMAX) THEN
            XL = 1. - (QPMAX / QDMAX)
            PLEN = XLEN * XL / 12.
-           IF (IU8 .NE. 1) PLEN = XLEN * XL /1000.0  
+           IF (IU8 .NE. 1) PLEN = XLEN * XL /1000.0
          ELSE
            PLEN = 0.0
         END IF
@@ -4820,15 +4811,15 @@ C   CORRECTION BELOW
       IF (RMAX .GT. 1./4.) THEN
          B = SQRT((4.*RMAX) - 1.)
          Y1 = SQRT (RMAX - (RMAX * S) + ((RMAX * S) * (RMAX * S)))
-         Y2 = (1./B) * ATAN(((2*RMAX*S) - 1.) / B) 
-         Y3 = (1./B) * ATAN(((2*RMAX) - 1.) / B) 
+         Y2 = (1./B) * ATAN(((2*RMAX*S) - 1.) / B)
+         Y3 = (1./B) * ATAN(((2*RMAX) - 1.) / B)
          YMAX = Y1 * EXP(Y2 - Y3)
          PMHED = YMAX * XLEN * S
          QPMAX = ELKS * PMHED * TANALP / XLEN
          IF (QPMAX .LT. QDMAX) THEN
            XL = 1. - (QPMAX / QDMAX)
            PLEN = XLEN * XL / 12.
-           IF (IU8 .NE. 1) PLEN = XLEN * XL /1000.0  
+           IF (IU8 .NE. 1) PLEN = XLEN * XL /1000.0
          ELSE
            PLEN = 0.0
          END IF
@@ -4838,10 +4829,10 @@ C   CORRECTION BELOW
 C
 C     REVISED MOUND MODEL BY GIROUD
 C
-C     PMHED = XLEN * (SQRT( (CMAX + (TANALP * TANALP))) 
-C    1  - TANALP) 
+C     PMHED = XLEN * (SQRT( (CMAX + (TANALP * TANALP)))
+C    1  - TANALP)
 C
-      RETURN 
+      RETURN
       END SUBROUTINE MOUND
 C
 C
@@ -4956,7 +4947,7 @@ C
             IF (DEFEC(LINER) .GT. 0.0) THEN
             RDEFEC = 0.0229 * (TH**0.38)*(RC(LAYSEG(NSEGE,1))**(-0.25))
             HDEFEC = 1 +(TH/(2.* DTHICK(NSEGE) * DLOG(RDEFEC/0.00564)))
-            QDEFEC = DEFEC(LINER) * 26.4 * RC(LAYSEG(NSEGE,1)) * 
+            QDEFEC = DEFEC(LINER) * 26.4 * RC(LAYSEG(NSEGE,1)) *
      1               HDEFEC * (RDEFEC**2)
             END IF
 C
@@ -5002,7 +4993,7 @@ C
             IF (DEFEC(LINER) .GT. 0.0) THEN
             RDEFEC = 0.0663 * (TH**0.5) * (RC(LAYSEG(NSEGE,1))**(-0.06))
             HDEFEC = 1 + (TH/(2.*DTHICK(NSEGE) * DLOG(RDEFEC/0.00564)))
-            QDEFEC = DEFEC(LINER) * 26.4 * RC(LAYSEG(NSEGE,1)) * 
+            QDEFEC = DEFEC(LINER) * 26.4 * RC(LAYSEG(NSEGE,1)) *
      1               HDEFEC * (RDEFEC**2)
             END IF
 C
@@ -5022,7 +5013,7 @@ C
             IF (DEFEC(LINER) .GT. 0.0) THEN
             RDEFEC = 0.0572 *(TH**0.45) *(RC(LAYSEG(NSEGE,1))**(-0.13))
             HDEFEC = 1 + (TH/(2.*DTHICK(NSEGE) * DLOG(RDEFEC/0.00564)))
-            QDEFEC = DEFEC(LINER) * 26.4 * RC(LAYSEG(NSEGE,1)) * 
+            QDEFEC = DEFEC(LINER) * 26.4 * RC(LAYSEG(NSEGE,1)) *
      1               HDEFEC * (RDEFEC**2)
             END IF
 C
@@ -5042,7 +5033,7 @@ C
             IF (DEFEC(LINER) .GT. 0.0) THEN
             RDEFEC = 0.134 * (TH**0.45) * (RC(LAYSEG(NSEGE,1))**(-0.13))
             HDEFEC = 1 +(TH/(2.* DTHICK(NSEGE) * DLOG(RDEFEC/0.00564)))
-            QDEFEC = DEFEC(LINER) * 26.4 * RC(LAYSEG(NSEGE,1)) * 
+            QDEFEC = DEFEC(LINER) * 26.4 * RC(LAYSEG(NSEGE,1)) *
      1               HDEFEC * (RDEFEC**2)
             END IF
 C
@@ -5094,7 +5085,7 @@ C
      1               (RC(LAYSEG(NSEGE,1))**(-0.06))
             HDEFEC = 1 + ((TH+DTHICK(NSEGE)) / (2 * DTHICK(NSEGE) *
      1               DLOG(RDEFEC/0.00564)))
-            QDEFEC = DEFEC(LINER) * 26.4 * RC(LAYSEG(NSEGE,1)) * 
+            QDEFEC = DEFEC(LINER) * 26.4 * RC(LAYSEG(NSEGE,1)) *
      1               HDEFEC * (RDEFEC**2)
             END IF
 C
@@ -5118,7 +5109,7 @@ C
      1               (RC(LAYSEG(NSEGE,1))**(-0.13))
             HDEFEC = 1 + ((TH+DTHICK(NSEGE)) / (2 * DTHICK(NSEGE) *
      1               DLOG(RDEFEC/0.00564)))
-            QDEFEC = DEFEC(LINER) * 26.4 * RC(LAYSEG(NSEGE,1)) * 
+            QDEFEC = DEFEC(LINER) * 26.4 * RC(LAYSEG(NSEGE,1)) *
      1               HDEFEC * (RDEFEC**2)
             END IF
 C
@@ -5142,7 +5133,7 @@ C
      1               (RC(LAYSEG(NSEGE,1))**(-0.13))
             HDEFEC = 1 + ((TH+DTHICK(NSEGE)) / (2 * DTHICK(NSEGE) *
      1               DLOG(RDEFEC/0.00564)))
-            QDEFEC = DEFEC(LINER) * 26.4 * RC(LAYSEG(NSEGE,1)) * 
+            QDEFEC = DEFEC(LINER) * 26.4 * RC(LAYSEG(NSEGE,1)) *
      1               HDEFEC * (RDEFEC**2)
             END IF
 C
@@ -5187,7 +5178,7 @@ C         CALCULATE LEAKAGE THROUGH PINHOLE
 C
           HPHOLE = 1 +(TH/(2.* DTHICK(NSEGE) * DLOG(RPHOLE/0.0005)))
           QPHOLE = PHOLE(LINER) * 26.4 * RC(LAYSEG(NSEGE,1)) *
-     1               HPHOLE * RPHOLE**2          
+     1               HPHOLE * RPHOLE**2
           END IF
 
 C
@@ -5208,7 +5199,7 @@ C
 C           CALCULATE LEAKAGE THROUGH DEFECT
 C
           HDEFEC = 1 +(TH/(2.* DTHICK(NSEGE) * DLOG(RDEFEC/0.00564)))
-          QDEFEC = DEFEC(LINER) * 26.4 * RC(LAYSEG(NSEGE,1)) * 
+          QDEFEC = DEFEC(LINER) * 26.4 * RC(LAYSEG(NSEGE,1)) *
      1               HDEFEC * RDEFEC**2
           END IF
 
@@ -5243,7 +5234,7 @@ C
           HPHOLE = 1 + ((TH+DTHICK(NSEGE)) / (2 * DTHICK(NSEGE) *
      1               DLOG(RPHOLE/0.0005)))
           QPHOLE = PHOLE(LINER) * 26.4 * RC(LAYSEG(NSEGE,1)) *
-     1               HPHOLE * RPHOLE**2          
+     1               HPHOLE * RPHOLE**2
           END IF
 
 C
@@ -5266,7 +5257,7 @@ C           CALCULATE LEAKAGE THROUGH DEFECT
 C
           HDEFEC = 1 + ((TH+DTHICK(NSEGE)) / (2 * DTHICK(NSEGE) *
      1               DLOG(RDEFEC/0.00564)))
-          QDEFEC = DEFEC(LINER) * 26.4 * RC(LAYSEG(NSEGE,1)) * 
+          QDEFEC = DEFEC(LINER) * 26.4 * RC(LAYSEG(NSEGE,1)) *
      1               HDEFEC * RDEFEC**2
           END IF
 
@@ -5277,14 +5268,14 @@ C     SUM OF VAPOR, PINHOLE, AND DEFECT PERCOLATION
 C
       QPERC = QVAPOR + QPHOLE + QDEFEC
 C
-      IF ((LCASE(NPROF) .EQ. 3 .AND. LAYER(LP(NPROF)) .EQ. 3) 
+      IF ((LCASE(NPROF) .EQ. 3 .AND. LAYER(LP(NPROF)) .EQ. 3)
      1   .OR. LCASE(NPROF) .EQ. 4) THEN
-        IF (QPERC .GT. (34016.D0 * RC(LAYSEG(NSEGE,1)) * (TH + 
-     1    DTHICK(NSEGE)) / DTHICK(NSEGE) )) 
+        IF (QPERC .GT. (34016.D0 * RC(LAYSEG(NSEGE,1)) * (TH +
+     1    DTHICK(NSEGE)) / DTHICK(NSEGE) ))
      2    QPERC = 34016.D0 * RC(LAYSEG(NSEGE,1)) * (TH +
      3    DTHICK(NSEGE)) / DTHICK(NSEGE)
       ELSE
-        IF (QPERC .GT. (34016.D0 * RC(LAYSEG(NSEGE,1)))) 
+        IF (QPERC .GT. (34016.D0 * RC(LAYSEG(NSEGE,1))))
      1    QPERC = 34016.D0 * RC(LAYSEG(NSEGE,1))
       END IF
 C
@@ -5301,8 +5292,8 @@ C
       DOUBLE PRECISION DSWUL, DTHICK, DRCUL, DBUBUL,
      1  DWPUL, DLAMUL, DRSUL, DUL, DFCUL, DSUBIN, DCHG, DRCRS
 C
-      DOUBLE PRECISION PRC1, PRC2, PRC3, PRC4, PRC5, PRC6, DRN1, DRN2, 
-     1  DRN3, DRN4, DRN5, HED1, HED2, HED3, HED4, HED5, 
+      DOUBLE PRECISION PRC1, PRC2, PRC3, PRC4, PRC5, PRC6, DRN1, DRN2,
+     1  DRN3, DRN4, DRN5, HED1, HED2, HED3, HED4, HED5,
      2  RCR1, RCR2, RCR3, RCR4, RCR5, RCRI
 C
       DOUBLE PRECISION RC(20)
@@ -5320,18 +5311,14 @@ C
      2  DRN2M (12), DRN3M (12), DRN4M (12), DRN5M (12),
      3  PREM (12), RUNM (12), ETM (12), HED1M (12),
      4  HED2M (12), HED3M (12), HED4M (12), HED5M (12),
-     5  RCRIM (20,12), SUBINM (20,12), RCR1M (12), 
-     6  RCR2M (12), RCR3M (12), RCR4M (12), RCR5M (12) 
-      COMMON /BLK13/ PRC1A, PRC2A, PRC3A, PRC4A, PRC5A, PRC6A, 
+     5  RCRIM (20,12), SUBINM (20,12), RCR1M (12),
+     6  RCR2M (12), RCR3M (12), RCR4M (12), RCR5M (12)
+      COMMON /BLK13/ PRC1A, PRC2A, PRC3A, PRC4A, PRC5A, PRC6A,
      1  DRN1A, DRN2A, DRN3A, DRN4A, DRN5A, BAL, PREA, RUNA, ETA,
      2  STOR, RCR1A, RCR2A, RCR3A, RCR4A, RCR5A, RCRIA(20), HED1A,
      3  HED2A, HED3A, HED4A, HED5A, OSWULE, PSWULE, SUBINA(20)
-      COMMON /BLK14/ PPRC1, PPRC2, PPRC3, PPRC4, PPRC5, PPRC6, 
-     1  PDRN1, PDRN2, PDRN3, PDRN4, PDRN5, PPRE, PRUN, PSNO, PSW, DSW,
-     2  PHED1, PHED2, PHED3, PHED4, PHED5, PRCR1, PRCR2, PRCR3,
-     3  PRCR4, PRCR5, PRCRI(20)
-      COMMON /BLK15/ PRC1, PRC2, PRC3, PRC4, PRC5, PRC6, DRN1, DRN2, 
-     1  DRN3, DRN4, DRN5, HED1, HED2, HED3, HED4, HED5, 
+      COMMON /BLK15/ PRC1, PRC2, PRC3, PRC4, PRC5, PRC6, DRN1, DRN2,
+     1  DRN3, DRN4, DRN5, HED1, HED2, HED3, HED4, HED5,
      2  RCR1, RCR2, RCR3, RCR4, RCR5, RCRI(20)
       COMMON /BLK16/ LD(5), LP(6), LPQ(5), LCASE(5), IYR, IDA, MO,
      1  NSTEP(6), ND
@@ -5381,7 +5368,6 @@ C
          DRCRS(J) = 0.0D0
  1010 CONTINUE
       DO 1020 K = 1, LAY
-         IF (RCRI(K) .GT. PRCRI(K)) PRCRI(K) = RCRI(K)
          IF (LRIN(K) .EQ. 1) THEN
             DO 1030 J = LSEGS(K,1), LSEGS(K,2)
               IF (LSEGS(K,1) .GT. 7) THEN
@@ -5437,18 +5423,15 @@ C     CHARACTERISTICS AND DESIGN INFORMATION AND
 C     CLIMATOLOGICAL INPUT DATA
 C
       SUBROUTINE OUTDAT (SWULL, fpath_precip, fpath_tasavg,
-     1 fpath_solrad, fpath_evapo, fpath_soil, fpath_output, IU8)
-      
+     1 fpath_solrad, fpath_output, IU8)
+
       CHARACTER(len=260), INTENT(IN) :: fpath_precip
       CHARACTER(len=260), INTENT(IN) :: fpath_tasavg
       CHARACTER(len=260), INTENT(IN) :: fpath_solrad
-      CHARACTER(len=260), INTENT(IN) :: fpath_evapo
-      CHARACTER(len=260), INTENT(IN) :: fpath_soil
       CHARACTER(len=260), INTENT(IN) :: fpath_output
       INTEGER, INTENT(IN) :: IU8
 
-      CHARACTER*2 DUMMY1, DUMMY2, DUMMY3, DUMMY4
-      CHARACTER*40 CITY4, CITY7, CITY13, CITY11
+      CHARACTER*40 CITY4, CITY7, CITY13
       CHARACTER*60 TITLE
       INTEGER :: DATTIM(8)
       DOUBLE PRECISION  DTHICK, DRCUL, DBUBUL, DWPUL,
@@ -5456,7 +5439,7 @@ C
 C
       COMMON /BLK0/ TITLE
       COMMON /BLK1/ IT4, IT7, IT13, IU4, IU7, IU13, IU11, IU10
-      COMMON /BLK2/ CITY4, CITY7, CITY13, CITY11
+      COMMON /BLK2/ CITY4, CITY7, CITY13
       DOUBLE PRECISION RC(20)
       COMMON /BLK3/ PORO (20), FC (20), WP (20), RC, SW (20),
      1  RS (20), XLAMBD (20), BUB (20), THICK (20), SLOPE (20),
@@ -5492,13 +5475,11 @@ C
      6  1X,'**',74X,'**'/1X,'**',74X,'**'/1X,78('*')/
      7  1X,78('*'))
       WRITE (8, 6005) fpath_precip, fpath_tasavg, fpath_solrad,
-     1 fpath_evapo, fpath_soil, fpath_output
+     &  fpath_output
  6005 FORMAT(///1X,'PRECIPITATION DATA FILE:    ',A260/
      1 1X,'TEMPERATURE DATA FILE:      ', A260/
      2 1X,'SOLAR RADIATION DATA FILE:  ', A260/
-     3 1X,'EVAPOTRANSPIRATION DATA:    ', A260/
-     4 1X,'SOIL AND DESIGN DATA FILE:  ', A260/
-     5 1X,'OUTPUT DATA FILE:           ', A260///)
+     3 1X,'OUTPUT DATA FILE:           ', A260///)
 C
       CALL DATE_AND_TIME(values=DATTIM)
       WRITE(8,6010) DATTIM(5),DATTIM(6),DATTIM(2),DATTIM(3),DATTIM(1)
@@ -5556,7 +5537,7 @@ C
          WRITE(8,6090) ISOIL(I)
  6090    FORMAT(26X,'MATERIAL TEXTURE NUMBER',I4)
          IF (IU10 .EQ. 1) THEN
-           WRITE (8, 6131) THICK (I) 
+           WRITE (8, 6131) THICK (I)
          ELSE
            WRITE (8, 6132) THICK (I) * 2.54
          END IF
@@ -5744,10 +5725,10 @@ C     SNO = (WE + XLIQW + STORGE + TEX) /25.4
      4     19X,'AND A SLOPE LENGTH OF',F6.0,' METERS.'/
      1 /9X,'SCS RUNOFF CURVE NUMBER',11X,'  =',F10.2)
       IF (IU10 .EQ. 1) THEN
-        WRITE (8, 6181) FRUNOF*100.0, AREA, EDEPTH, SWULE, ULE, 
+        WRITE (8, 6181) FRUNOF*100.0, AREA, EDEPTH, SWULE, ULE,
      1    WPULE, OSNO, SWT, TWAT, SUBINF*365.0
       ELSE
-        WRITE (8, 6182) FRUNOF*100.0, AREA, EDEPTH*2.54, 
+        WRITE (8, 6182) FRUNOF*100.0, AREA, EDEPTH*2.54,
      1    SWULE*2.54, ULE*2.54, WPULE*2.54,
      2    OSNO*2.54, SWT*2.54, TWAT*2.54, SUBINF*25.4*365.0
       END IF
@@ -5781,9 +5762,6 @@ C
 C
 C    PRINTS WEATHER DATA
 C
-      WRITE (8, 6200) CITY11
- 6200 FORMAT(//21X,'EVAPOTRANSPIRATION AND WEATHER DATA '/21X,35('-')//
-     1 10X,'NOTE:  EVAPOTRANSPIRATION DATA WAS OBTAINED FROM'/19X,A40/)
       WRITE (8, 6263) ULAT
  6263 FORMAT(14X,'STATION LATITUDE',23X,'= ',F6.2,' DEGREES')
       WRITE (8, 6210) ULAI, IPL, IHV
@@ -5925,787 +5903,379 @@ C
       END IF
  6257 FORMAT(///10X,
      1 'NOTE:  SOLAR RADIATION DATA WAS SYNTHETICALLY GENERATED USING')
-                                                      
+
  6258 FORMAT(///10X,'NOTE:  SOLAR RADIATION DATA FOR     ',A40)
  6262 FORMAT(20X,' AND STATION LATITUDE  = ',F6.2,' DEGREES'///)
-C
-C
-      REWIND 4
-      REWIND 7
-      REWIND 13
-      READ(4,6300) DUMMY1,DUMMY2,DUMMY3,DUMMY4
-      DUMMY2 = DUMMY1 
-      READ(7,6300) DUMMY1,DUMMY2,DUMMY3,DUMMY4
-      DUMMY4 = DUMMY3 
-      READ(13,6300) DUMMY1,DUMMY2,DUMMY3,DUMMY4
-      DUMMY1 = DUMMY2 
-      DUMMY2 = DUMMY4
- 6300 FORMAT(A2/A2/A2/A2)
 
-C
-C
       RETURN
       END SUBROUTINE OUTDAT
-C
-C
-C      ******************************* OUTDAY ******************
-C
-C     SUBROUTINE OUTDAY PRINTS DAILY RESULTS OF THE SIMULATION.
-C
-      SUBROUTINE OUTDAY (SWE, IODAY, ASTAR, SSTAR, NVAR, IU8)
-C
+
+
+      !=================================================================
+      ! SUBROUTINE: OUTDAY
+      !
+      ! Print daily results of the simulation.
+      !=================================================================
+      SUBROUTINE OUTDAY (SWE, ASTAR, SSTAR, NVAR)
+
       PARAMETER (MXYR = 100)
-      INTEGER, INTENT(IN) :: IU8
-C
-      CHARACTER*1 ASTAR, SSTAR
-      DOUBLE PRECISION PRC1, PRC2, PRC3, PRC4, PRC5, PRC6, 
-     1  DRN1, DRN2, DRN3, DRN4, DRN5, HED1, HED2, HED3, HED4, HED5, 
-     2  RCR1, RCR2, RCR3, RCR4, RCR5, RCRI, VAR, VARD
-C
+
+      CHARACTER(len=1), INTENT(IN) :: ASTAR, SSTAR
+      INTEGER, INTENT(IN) :: NVAR
+
+      DOUBLE PRECISION PRC1, PRC2, PRC3, PRC4, PRC5, PRC6,
+     &  DRN1, DRN2, DRN3, DRN4, DRN5, HED1, HED2, HED3, HED4, HED5,
+     &  RCR1, RCR2, RCR3, RCR4, RCR5, RCRI, VAR, VARD
+
       COMMON /BLK1/ IT4, IT7, IT13, IU4, IU7, IU13, IU11, IU10
       COMMON /BLK4/ LAYER (21), LAYR (20), IPQ (20), ISOIL (20), LAY,
-     1  LAYSEG (67, 2), LSEG (67), LSEGS (20, 2), LRIN(20), LSIN(20)
+     &  LAYSEG (67, 2), LSEG (67), LSEGS (20, 2), LRIN(20), LSIN(20)
       COMMON /BLK8/ PRE (370), TMPF (366), RAD (366)
       COMMON /BLK10/ ETT, ESS, EP, ES, ET (67)
       COMMON /BLK11/ ETO, XLAI, STAGE1, CONA, RAIN, RUN, ABST, EAJ, TS2
-      COMMON /BLK15/ PRC1, PRC2, PRC3, PRC4, PRC5, PRC6, DRN1, DRN2, 
-     1  DRN3, DRN4, DRN5, HED1, HED2, HED3, HED4, HED5, 
-     2  RCR1, RCR2, RCR3, RCR4, RCR5, RCRI(20)
+      COMMON /BLK15/ PRC1, PRC2, PRC3, PRC4, PRC5, PRC6, DRN1, DRN2,
+     &  DRN3, DRN4, DRN5, HED1, HED2, HED3, HED4, HED5,
+     &  RCR1, RCR2, RCR3, RCR4, RCR5, RCRI(20)
       COMMON /BLK16/ LD(5), LP(6), LPQ(5), LCASE(5), IYR, IDA, MO,
-     1  NSTEP(6), ND
+     &  NSTEP(6), ND
       COMMON /BLK33/ JYEAR (MXYR)
       COMMON /BLK34/  VAR (13), VARD (7,366)
-C
-      VAR (1)  = PRE (IDA)
-      VAR (2)  = RUN
-      VAR (3)  = ETT
+
+      VAR (1)  = PRE(IDA) * 25.4
+      VAR (2)  = RUN * 25.4
+      VAR (3)  = ETT * 25.4
       VAR (4)  = SWE
-      VAR (5)  = HED1
-      VAR (6)  = DRN1 + RCR1
-      VAR (7)  = PRC1
-      VAR (8)  = HED2
-      VAR (9)  = DRN2 + RCR2
-      VAR (10) = PRC2
-      VAR (11) = HED3
-      VAR (12) = DRN3 + RCR3
-      VAR (13) = PRC3
-      IF (LP(4) .GT. 0) THEN
-        VARD (1,IDA) = HED4
-        VARD (2,IDA) = DRN4 + RCR4
-        VARD (3,IDA) = PRC4
-        VARD (4,IDA) = HED5
-        VARD (5,IDA) = DRN5 + RCR5
-        VARD (6,IDA) = PRC5
-        VARD (7,IDA) = PRC6
+      VAR (5)  = HED1 * 2.54
+      VAR (6)  = (DRN1 + RCR1) * 25.4
+      VAR (7)  = PRC1 * 25.4
+      VAR (8)  = HED2 * 2.54
+      VAR (9)  = (DRN2 + RCR2) * 25.4
+      VAR (10) = PRC2 * 25.4
+      VAR (11) = HED3 * 2.54
+      VAR (12) = (DRN3 + RCR3) * 25.4
+      VAR (13) = PRC3 * 25.4
+      IF (LP(4) > 0) THEN
+        VARD (1, IDA) = HED4 * 2.54
+        VARD (2, IDA) = (DRN4 + RCR4) * 25.4
+        VARD (3, IDA) = PRC4 * 25.4
+        VARD (4, IDA) = HED5 * 2.54
+        VARD (5, IDA) = (DRN5 + RCR5) * 25.4
+        VARD (6, IDA) = PRC5 * 25.4
+        VARD (7, IDA) = PRC6 * 25.4
       END IF
-      IF (IU8 .NE. 1) THEN
-        VAR (1)  = PRE(IDA) * 25.4
-        VAR (2)  = RUN * 25.4
-        VAR (3)  = ETT * 25.4
-        VAR (4)  = SWE 
-        VAR (5)  = HED1 * 2.54
-        VAR (6)  = (DRN1 + RCR1) * 25.4
-        VAR (7)  = PRC1 * 25.4
-        VAR (8)  = HED2 * 2.54
-        VAR (9)  = (DRN2 + RCR2) * 25.4
-        VAR (10) = PRC2 * 25.4
-        VAR (11) = HED3 * 2.54
-        VAR (12) = (DRN3 + RCR3) * 25.4
-        VAR (13) = PRC3 * 25.4
-        IF (LP(4) .GT. 0) THEN   
-          VARD (1,IDA) = HED4 * 2.54
-          VARD (2,IDA) = (DRN4 + RCR4) * 25.4
-          VARD (3,IDA) = PRC4 * 25.4
-          VARD (4,IDA) = HED5 * 2.54
-          VARD (5,IDA) = (DRN5 + RCR5) * 25.4
-          VARD (6,IDA) = PRC5 * 25.4
-          VARD (7,IDA) = PRC6 * 25.4
-        END IF
-      END IF
-      IF (IDA .EQ. 1) THEN       
-        IF (IODAY .EQ. 0) THEN      
-          IODAY = 1
-          IF(LP(1) .GT. 0) NVAR = 7
-          IF(LP(2) .GT. 0) NVAR = 10
-          IF(LP(3) .GT. 0) NVAR = 13
-          IF(LP(4) .GT. 0) NVAR = 16
-          IF(LP(5) .GT. 0) NVAR = 19
-          IF(LP(6) .GT. 0) NVAR = 20
-        END IF
-C
-C     PRINTS HEADING
-C
+
+      ! Print heading
+      IF (IDA .EQ. 1) THEN
         WRITE (8, 6110)
-        DO 1010 K = 1, 5
-          IF (LP(K) .GT. 0) THEN
-            IF (LAYER(LP(K)) .GT. 2) THEN
-              IF (LAYER(LP(K)-1) .LE. 2) THEN
+
+        DO K = 1, 5
+          IF (LP(K) > 0) THEN
+            IF (LAYER(LP(K)) > 2) THEN
+              ! Bottom layer is a barrier (Type 3 or 4)
+              IF (LAYER(LP(K)-1) <= 2) THEN
+                ! Layer above is a vertical percolation (Type 1)
+                ! or a lateral drainage layer (Type 2).
                 WRITE (8, 6121) K, LP(K), K, LP(K)-1
               ELSE
+                ! Layer above is a composite liner (Type 4).
                 WRITE (8, 6121) K, LP(K)-1, K, LP(K)-2
               END IF
             END IF
             WRITE (8, 6131) K, LP(K)
           END IF
- 1010   CONTINUE
+        END DO
+
         K = 6
-        IF (LP(6) .GT. 0) WRITE (8, 6131) K, LP(6)
-        IF (NVAR .GE. 13) THEN 
-          IF (IU8 .EQ. 1) THEN
-            WRITE (8, 6141) JYEAR (IYR)
-          ELSE
-            WRITE (8, 6142) JYEAR (IYR)
-          END IF
-        ELSE IF (NVAR .GE. 10) THEN
-          IF (IU8 .EQ. 1) THEN
-            WRITE (8, 6151) JYEAR (IYR)
-          ELSE
-            WRITE (8, 6152) JYEAR (IYR)
-          END IF
+        IF (LP(6) > 0) WRITE (8, 6131) K, LP(6)
+
+        IF (NVAR >= 13) THEN
+          WRITE (8, 6142) JYEAR (IYR)
+        ELSE IF (NVAR >= 10) THEN
+          WRITE (8, 6152) JYEAR (IYR)
         ELSE
-          IF (IU8 .EQ. 1) THEN
-            WRITE (8, 6161) JYEAR (IYR)
-          ELSE
-            WRITE (8, 6162) JYEAR (IYR)
-          END IF
+          WRITE (8, 6162) JYEAR (IYR)
         END IF
       END IF
-C
+
  6110 FORMAT(///)
  6121 FORMAT(4X,'HEAD  #',I1,':  AVERAGE HEAD ON TOP OF LAYER',I3/4X,
-     1 'DRAIN #',I1,':  LATERAL DRAINAGE FROM LAYER',
-     2 I3,' (RECIRCULATION AND COLLECTION)')
+     & 'DRAIN #',I1,':  LATERAL DRAINAGE FROM LAYER',
+     & I3,' (RECIRCULATION AND COLLECTION)')
  6131 FORMAT(4X,'LEAK  #',I1,
-     1 ':  PERCOLATION OR LEAKAGE THROUGH LAYER',I3)
- 6141 FORMAT(1X/1X,130('*')//52X,'DAILY OUTPUT FOR YEAR',I5/
-     1 2X,128('-')/'          S'/
-     2 '  DAY  A  O  RAIN  RUNOFF   ET   E. ZONE   HEAD      DRAIN  ',
-     3 '   LEAK      HEAD      DRAIN     LEAK      HEAD      DRAIN  ',
-     4 '   LEAK '/
-     5 '       I  I                       WATER     #1        #1    ',
-     6 '    #1        #2        #2        #2        #3        #3    ',
-     7 '    #3  '/
-     8 '       R  L   IN.    IN.    IN.  IN./IN.    IN.       IN.   ',
-     9 '    IN.       IN.       IN.       IN.       IN.       IN.   ',
-     A '    IN. '/
-     B '  ---  -  -  ----- ------ ------ ------- --------- ---------',
-     C ' --------- --------- --------- --------- --------- ---------',
-     D ' ---------'/)
+     & ':  PERCOLATION OR LEAKAGE THROUGH LAYER',I3)
  6142 FORMAT(1X/1X,130('*')//52X,'DAILY OUTPUT FOR YEAR',I5/
-     1 2X,128('-')/'          S'/
-     2 '  DAY  A  O  RAIN  RUNOFF   ET   E. ZONE   HEAD      DRAIN  ',
-     3 '   LEAK      HEAD      DRAIN     LEAK      HEAD      DRAIN  ',
-     4 '   LEAK '/
-     5 '       I  I                       WATER     #1        #1    ',
-     6 '    #1        #2        #2        #2        #3        #3    ',
-     7 '    #3  '/
-     8 '       R  L   MM     MM     MM    CM/CM     CM        MM    ',
-     9 '    MM        CM        MM        MM        CM        MM    ',
-     A '    MM  '/
-     B '  ---  -  -  ----- ------ ------ ------- --------- ---------',
-     C ' --------- --------- --------- --------- --------- ---------',
-     D ' ---------'/)
- 6151 FORMAT(1X/1X,100('*')//37X,'DAILY OUTPUT FOR YEAR',I5/
-     1 2X, 98('-')/'          S'/
-     2 '  DAY  A  O  RAIN  RUNOFF   ET   E. ZONE   HEAD      DRAIN  ',
-     3 '   LEAK      HEAD      DRAIN     LEAK   '/                     
-     5 '       I  I                       WATER     #1        #1    ',
-     6 '    #1        #2        #2        #2    '/                    
-     8 '       R  L   IN.    IN.    IN.  IN./IN.    IN.       IN.   ',
-     9 '    IN.       IN.       IN.       IN.   '/                     
-     B '  ---  -  -  ----- ------ ------ ------- --------- ---------',
-     C ' --------- --------- --------- ---------'/)                   
+     & 2X,128('-')/'          S'/
+     & '  DAY  A  O  RAIN  RUNOFF   ET   E. ZONE   HEAD      DRAIN  ',
+     & '   LEAK      HEAD      DRAIN     LEAK      HEAD      DRAIN  ',
+     & '   LEAK '/
+     & '       I  I                       WATER     #1        #1    ',
+     & '    #1        #2        #2        #2        #3        #3    ',
+     & '    #3  '/
+     & '       R  L   MM     MM     MM    CM/CM     CM        MM    ',
+     & '    MM        CM        MM        MM        CM        MM    ',
+     & '    MM  '/
+     & '  ---  -  -  ----- ------ ------ ------- --------- ---------',
+     & ' --------- --------- --------- --------- --------- ---------',
+     & ' ---------'/)
  6152 FORMAT(1X/1X,100('*')//37X,'DAILY OUTPUT FOR YEAR',I5/
-     1 2X, 98('-')/'          S'/
-     2 '  DAY  A  O  RAIN  RUNOFF   ET   E. ZONE   HEAD      DRAIN  ',
-     3 '   LEAK      HEAD      DRAIN     LEAK   '/                     
-     5 '       I  I                       WATER     #1        #1    ',
-     6 '    #1        #2        #2        #2    '/                    
-     8 '       R  L   MM     MM     MM    CM/CM     CM        MM    ',
-     9 '    MM        CM        MM        MM    '/                     
-     B '  ---  -  -  ----- ------ ------ ------- --------- ---------',
-     C ' --------- --------- --------- ---------'/)                   
- 6161 FORMAT(1X/1X,70('*')//22X,'DAILY OUTPUT FOR YEAR',I5/
-     1 2X, 68('-')/'          S'/
-     2 '  DAY  A  O  RAIN  RUNOFF   ET   E. ZONE   HEAD      DRAIN  ',
-     3 '   LEAK   '/                                                   
-     5 '       I  I                       WATER     #1        #1    ',
-     6 '    #1    '/ 
-     8 '       R  L   IN.    IN.    IN.  IN./IN.    IN.       IN.   ',
-     9 '    IN.   '/ 
-     B '  ---  -  -  ----- ------ ------ ------- --------- ---------',
-     C ' ---------'/)                   
+     & 2X, 98('-')/'          S'/
+     & '  DAY  A  O  RAIN  RUNOFF   ET   E. ZONE   HEAD      DRAIN  ',
+     & '   LEAK      HEAD      DRAIN     LEAK   '/
+     & '       I  I                       WATER     #1        #1    ',
+     & '    #1        #2        #2        #2    '/
+     & '       R  L   MM     MM     MM    CM/CM     CM        MM    ',
+     & '    MM        CM        MM        MM    '/
+     & '  ---  -  -  ----- ------ ------ ------- --------- ---------',
+     & ' --------- --------- --------- ---------'/)
  6162 FORMAT(1X/1X,100('*')//37X,'DAILY OUTPUT FOR YEAR',I5/
-     1 2X, 98('-')/'          S'/
-     2 '  DAY  A  O  RAIN  RUNOFF   ET   E. ZONE   HEAD      DRAIN  ',
-     3 '   LEAK   '/                                                   
-     5 '       I  I                       WATER     #1        #1    ',
-     6 '    #1    '/ 
-     8 '       R  L   MM     MM     MM    CM/CM     CM        MM    ',
-     9 '    MM    '/ 
-     B '  ---  -  -  ----- ------ ------ ------- --------- ---------',
-     C ' ---------'/)                   
-C
-C
-C     PRINTS DAILY RESULTS, * INDICATES FREEZING
-C          TEMPERATURES OR FROZEN SOIL
-C     
-C   WRITES THE DAILY VARIABLES
-C
-      IF (NVAR .GE. 13) THEN
-        IF (IU8 .EQ. 1) THEN
-          WRITE (8, 7001) IDA, ASTAR, SSTAR, (VAR (J), J = 1, 13)
-        ELSE
-          WRITE (8, 7002) IDA, ASTAR, SSTAR, (VAR (J), J = 1, 13)
-        END IF
-      ELSE IF (NVAR .GE. 10) THEN
-        IF (IU8 .EQ. 1) THEN
-          WRITE (8, 7001) IDA, ASTAR, SSTAR, (VAR (J), J = 1, 10)
-        ELSE
-          WRITE (8, 7002) IDA, ASTAR, SSTAR, (VAR (J), J = 1, 10)
-        END IF
+     & 2X, 98('-')/'          S'/
+     & '  DAY  A  O  RAIN  RUNOFF   ET   E. ZONE   HEAD      DRAIN  ',
+     & '   LEAK   '/
+     & '       I  I                       WATER     #1        #1    ',
+     & '    #1    '/
+     & '       R  L   MM     MM     MM    CM/CM     CM        MM    ',
+     & '    MM    '/
+     & '  ---  -  -  ----- ------ ------ ------- --------- ---------',
+     & ' ---------'/)
+
+      ! Prints daily results, * indicates freezing
+      ! temperatures or frozen soil
+
+      ! Write the daily variables.
+      IF (NVAR >= 13) THEN
+        WRITE (8, 7002) IDA, ASTAR, SSTAR, (VAR (J), J = 1, 13)
+      ELSE IF (NVAR >= 10) THEN
+        WRITE (8, 7002) IDA, ASTAR, SSTAR, (VAR (J), J = 1, 10)
       ELSE
-        IF (IU8 .EQ. 1) THEN
-          WRITE (8, 7001) IDA, ASTAR, SSTAR, (VAR (J), J = 1, 7)
-        ELSE
-          WRITE (8, 7002) IDA, ASTAR, SSTAR, (VAR (J), J = 1, 7)
-        END IF
+        WRITE (8, 7002) IDA, ASTAR, SSTAR, (VAR (J), J = 1, 7)
       END IF
-C
-C
- 7001 FORMAT(2X,I3,2X,A1,2X,A1,2X,F5.2,F7.3,F7.3,F8.4,1X,3(F9.4,1X,
-     1  2(G9.4,1X)))
+
  7002 FORMAT(2X,I3,2X,A1,2X,A1,2X,F5.1,F7.2,F7.2,F8.4,1X,3(F9.4,1X,
-     1  2(G9.4,1X)))
- 7011 FORMAT(2X,I3,3X,2(F9.4,3X,G9.4,3X,G9.4,3X),G9.4)
+     &  2(G9.4,1X)))
  7012 FORMAT(2X,I3,3X,2(F9.4,3X,G9.4,3X,G9.4,3X),G9.4)
-C
-C
-      IF (IDA .EQ. ND) THEN
-        IF (NVAR .GT. 19) THEN
-          IF (IU8 .EQ. 1) THEN
-            WRITE (8, 6241) JYEAR (IYR)
-              DO 3001 I = 1, ND
-                WRITE (8, 7011) I, (VARD (J,I), J = 1, 7)
- 3001         CONTINUE
-          ELSE
-            WRITE (8, 6242) JYEAR (IYR)
-              DO 3002 I = 1, ND
-                WRITE (8, 7012) I, (VARD (J,I), J = 1, 7)
- 3002         CONTINUE
-          END IF
+
+      IF (IDA == ND) THEN
+        IF (NVAR > 19) THEN
+          WRITE (8, 6242) JYEAR (IYR)
+            DO I = 1, ND
+              WRITE (8, 7012) I, (VARD (J,I), J = 1, 7)
+          END DO
           WRITE (8, 6176)
-        ELSE IF (NVAR .GT. 16) THEN
-          IF (IU8 .EQ. 1) THEN
-            WRITE (8, 6251) JYEAR (IYR)
-              DO 3003 I = 1, ND
-                WRITE (8, 7011) I, (VARD (J,I), J = 1, 6)
- 3003         CONTINUE
-          ELSE
-            WRITE (8, 6252) JYEAR (IYR)
-              DO 3004 I = 1, ND
-                WRITE (8, 7012) I, (VARD (J,I), J = 1, 6)
- 3004         CONTINUE
-          END IF
+        ELSE IF (NVAR > 16) THEN
+          WRITE (8, 6252) JYEAR (IYR)
+            DO I = 1, ND
+              WRITE (8, 7012) I, (VARD (J,I), J = 1, 6)
+            END DO
           WRITE (8, 6175)
-        ELSE IF (NVAR .GT. 13) THEN
-          IF (IU8 .EQ. 1) THEN
-            WRITE (8, 6261) JYEAR (IYR)
-              DO 3005 I = 1, ND
-                WRITE (8, 7011) I, (VARD (J,I), J = 1, 3)
- 3005         CONTINUE
-          ELSE
-            WRITE (8, 6262) JYEAR (IYR)
-              DO 3006 I = 1, ND
-                WRITE (8, 7012) I, (VARD (J,I), J = 1, 3)
- 3006         CONTINUE
-          END IF
+        ELSE IF (NVAR > 13) THEN
+          WRITE (8, 6262) JYEAR (IYR)
+            DO I = 1, ND
+              WRITE (8, 7012) I, (VARD (J,I), J = 1, 3)
+            END DO
           WRITE (8, 6174)
-        ELSE IF (NVAR .GT. 10) THEN
+        ELSE IF (NVAR > 10) THEN
           WRITE (8, 6173)
-        ELSE IF (NVAR .GT. 7) THEN
+        ELSE IF (NVAR > 7) THEN
           WRITE (8, 6172)
-        ELSE 
+        ELSE
           WRITE (8, 6171)
         END IF
       END IF
-C
- 6241 FORMAT(1X/1X,130('-')////1X,89('-')//
-     1 32X,'DAILY OUTPUT FOR YEAR',I5//
-     1 '  DAY     HEAD        DRAIN       LEAK   ',
-     2 '     HEAD        DRAIN       LEAK        LEAK '/
-     3 '           #4          #4          #4    ',
-     4 '      #5          #5          #5          #6  '/
-     5 '           IN.         IN.         IN.   ',
-     6 '      IN.         IN.         IN.         IN. '/
-     7 '  ---   ---------   ---------   ---------',
-     8 '   ---------   ---------   ---------   ---------'/)
+
  6242 FORMAT(1X/1X,130('-')////1X,89('-')//
-     1 32X,'DAILY OUTPUT FOR YEAR',I5//
-     1 '  DAY     HEAD        DRAIN       LEAK   ',
-     2 '     HEAD        DRAIN       LEAK        LEAK '/
-     3 '           #4          #4          #4    ',
-     4 '      #5          #5          #5          #6  '/
-     5 '           CM          MM          MM    ',
-     6 '      CM          MM          MM          MM  '/
-     7 '  ---   ---------   ---------   ---------',
-     8 '   ---------   ---------   ---------   ---------'/)
- 6251 FORMAT(1X/1X,130('-')////1X,77('-')//
-     1 26X,'DAILY OUTPUT FOR YEAR',I5//
-     1 '  DAY     HEAD        DRAIN       LEAK   ',
-     2 '     HEAD        DRAIN       LEAK   '/
-     3 '           #4          #4          #4    ',
-     4 '      #5          #5          #5    '/
-     5 '           IN.         IN.         IN.   ',
-     6 '      IN.         IN.         IN.   '/
-     7 '  ---   ---------   ---------   ---------',
-     8 '   ---------   ---------   ---------'/)
+     & 32X,'DAILY OUTPUT FOR YEAR',I5//
+     & '  DAY     HEAD        DRAIN       LEAK   ',
+     & '     HEAD        DRAIN       LEAK        LEAK '/
+     & '           #4          #4          #4    ',
+     & '      #5          #5          #5          #6  '/
+     & '           CM          MM          MM    ',
+     & '      CM          MM          MM          MM  '/
+     & '  ---   ---------   ---------   ---------',
+     & '   ---------   ---------   ---------   ---------'/)
  6252 FORMAT(1X/1X,130('-')////1X,77('-')//
-     1 26X,'DAILY OUTPUT FOR YEAR',I5//
-     1 '  DAY     HEAD        DRAIN       LEAK   ',
-     2 '     HEAD        DRAIN       LEAK   '/
-     3 '           #4          #4          #4    ',
-     4 '      #5          #5          #5    '/
-     5 '           CM          MM          MM    ',
-     6 '      CM          MM          MM    '/
-     7 '  ---   ---------   ---------   ---------',
-     8 '   ---------   ---------   ---------'/)
- 6261 FORMAT(1X/1X,130('-')////1X,41('-')//
-     1 8X,'DAILY OUTPUT FOR YEAR',I5//
-     1 '  DAY     HEAD        DRAIN       LEAK   '/
-     2 '           #4          #4          #4    '/
-     3 '           IN.         IN.         IN.   '/
-     4 '  ---   ---------   ---------   ---------'/)
+     & 26X,'DAILY OUTPUT FOR YEAR',I5//
+     & '  DAY     HEAD        DRAIN       LEAK   ',
+     & '     HEAD        DRAIN       LEAK   '/
+     & '           #4          #4          #4    ',
+     & '      #5          #5          #5    '/
+     & '           CM          MM          MM    ',
+     & '      CM          MM          MM    '/
+     & '  ---   ---------   ---------   ---------',
+     & '   ---------   ---------   ---------'/)
  6262 FORMAT(1X/1X,130('-')////1X,41('-')//
-     1 8X,'DAILY OUTPUT FOR YEAR',I5//
-     1 '  DAY     HEAD        DRAIN       LEAK   '/
-     2 '           #4          #4          #4    '/
-     3 '           CM          MM          MM    '/
-     4 '  ---   ---------   ---------   ---------'/)
-C
+     & 8X,'DAILY OUTPUT FOR YEAR',I5//
+     & '  DAY     HEAD        DRAIN       LEAK   '/
+     & '           #4          #4          #4    '/
+     & '           CM          MM          MM    '/
+     & '  ---   ---------   ---------   ---------'/)
+
  6171 FORMAT(1X/1X,70('*'))
  6172 FORMAT(1X/1X,100('*'))
  6173 FORMAT(1X/1X,130('*'))
  6174 FORMAT(1X/1X,41('*'))
  6175 FORMAT(1X/1X,77('*'))
  6176 FORMAT(1X/1X,89('*'))
+
       RETURN
       END SUBROUTINE OUTDAY
-C
-C
-C     ************************ OUTMO *************************
-C
-C     SUBROUTINE OUTMO PRINTS MONTHLY TOTALS.
-C
-      SUBROUTINE OUTMO (IOM, IOS, IU8)
-      
-      INTEGER, INTENT(IN) :: IOM
-      INTEGER, INTENT(IN) :: IOS
-      INTEGER, INTENT(IN) :: IU8
 
-      PARAMETER (MXYR = 100)
-      COMMON /BLK1/ IT4, IT7, IT13, IU4, IU7, IU13, IU11, IU10
-      COMMON /BLK12/ PRC1M (12), PRC2M (12), PRC3M (12),
-     1  PRC4M (12), PRC5M (12), PRC6M (12), DRN1M (12),
-     2  DRN2M (12), DRN3M (12), DRN4M (12), DRN5M (12),
-     3  PREM (12), RUNM (12), ETM (12), HED1M (12),
-     4  HED2M (12), HED3M (12), HED4M (12), HED5M (12),
-     5  RCRIM (20,12), SUBINM (20,12), RCR1M (12), 
-     6  RCR2M (12), RCR3M (12), RCR4M (12), RCR5M (12) 
-      COMMON /BLK22/ PRC1M2 (12), PRC2M2 (12), PRC3M2 (12),
-     1  PRC4M2 (12), PRC5M2 (12), PRC6M2 (12), DRN1M2 (12),
-     2  DRN2M2 (12), DRN3M2 (12), DRN4M2 (12), DRN5M2 (12),
-     3  PREM2 (12), RUNM2 (12), ETM2 (12), HED1M2 (12),
-     4  HED2M2 (12), HED3M2 (12), HED4M2 (12), HED5M2 (12),
-     5  RCRIM2 (20,12), RCR1M2 (12), RCR2M2 (12),
-     6  RCR3M2 (12), RCR4M2 (12), RCR5M2 (12)
-      COMMON /BLK23/ PRC1M1 (12), PRC2M1 (12), PRC3M1 (12),
-     1  PRC4M1 (12), PRC5M1 (12), PRC6M1 (12), DRN1M1 (12),
-     2  DRN2M1 (12), DRN3M1 (12), DRN4M1 (12), DRN5M1 (12),
-     3  PREM1 (12), RUNM1 (12), ETM1 (12), HED1M1 (12),
-     4  HED2M1 (12), HED3M1 (12), HED4M1 (12), HED5M1 (12),
-     5  RCRIM1 (20,12), RCR1M1 (12), RCR2M1 (12),
-     6  RCR3M1 (12), RCR4M1 (12), RCR5M1 (12)
-C
-C     ACCUMULATES MONTHLY TOTALS FOR COMPUTING AVERAGES AND
-C       STANDARD DEVIATIONS.
-C
-      IF (IOS .EQ. 1) THEN
-        DO I = 1, 12
-          PREM1(I)  =  PREM1(I)  +  PREM(I)
-          RUNM1(I)  =  RUNM1(I)  +  RUNM(I)
-          ETM1(I)   =  ETM1(I)   +  ETM(I)
-          DRN1M1(I) =  DRN1M1(I) +  DRN1M(I)
-          DRN2M1(I) =  DRN2M1(I) +  DRN2M(I)
-          DRN3M1(I) =  DRN3M1(I) +  DRN3M(I)
-          DRN4M1(I) =  DRN4M1(I) +  DRN4M(I)
-          DRN5M1(I) =  DRN5M1(I) +  DRN5M(I)
-          RCR1M1(I) =  RCR1M1(I) +  RCR1M(I)
-          RCR2M1(I) =  RCR2M1(I) +  RCR2M(I)
-          RCR3M1(I) =  RCR3M1(I) +  RCR3M(I)
-          RCR4M1(I) =  RCR4M1(I) +  RCR4M(I)
-          RCR5M1(I) =  RCR5M1(I) +  RCR5M(I)
-          HED1M1(I) =  HED1M1(I) +  HED1M(I)
-          HED2M1(I) =  HED2M1(I) +  HED2M(I)
-          HED3M1(I) =  HED3M1(I) +  HED3M(I)
-          HED4M1(I) =  HED4M1(I) +  HED4M(I)
-          HED5M1(I) =  HED5M1(I) +  HED5M(I)
-          PRC1M1(I) =  PRC1M1(I) +  PRC1M(I)
-          PRC2M1(I) =  PRC2M1(I) +  PRC2M(I)
-          PRC3M1(I) =  PRC3M1(I) +  PRC3M(I)
-          PRC4M1(I) =  PRC4M1(I) +  PRC4M(I)
-          PRC5M1(I) =  PRC5M1(I) +  PRC5M(I)
-          PRC6M1(I) =  PRC6M1(I) +  PRC6M(I)
-          DO K = 1, 20
-            RCRIM1(K,I) =  RCRIM1(K,I) +  RCRIM(K,I)
-          END DO
-          PREM2(I)  =  PREM2(I)  +  PREM(I)  * PREM(I)
-          RUNM2(I)  =  RUNM2(I)  +  RUNM(I)  * RUNM(I)
-          ETM2(I)   =  ETM2(I)   +  ETM(I)   * ETM(I)
-          DRN1M2(I) =  DRN1M2(I) +  DRN1M(I) * DRN1M(I) 
-          DRN2M2(I) =  DRN2M2(I) +  DRN2M(I) * DRN2M(I) 
-          DRN3M2(I) =  DRN3M2(I) +  DRN3M(I) * DRN3M(I) 
-          DRN4M2(I) =  DRN4M2(I) +  DRN4M(I) * DRN4M(I) 
-          DRN5M2(I) =  DRN5M2(I) +  DRN5M(I) * DRN5M(I) 
-          RCR1M2(I) =  RCR1M2(I) +  RCR1M(I) * RCR1M(I)
-          RCR2M2(I) =  RCR2M2(I) +  RCR2M(I) * RCR2M(I)
-          RCR3M2(I) =  RCR3M2(I) +  RCR3M(I) * RCR3M(I)
-          RCR4M2(I) =  RCR4M2(I) +  RCR4M(I) * RCR4M(I)
-          RCR5M2(I) =  RCR5M2(I) +  RCR5M(I) * RCR5M(I)
-          HED1M2(I) =  HED1M2(I) +  HED1M(I) * HED1M(I) 
-          HED2M2(I) =  HED2M2(I) +  HED2M(I) * HED2M(I) 
-          HED3M2(I) =  HED3M2(I) +  HED3M(I) * HED3M(I) 
-          HED4M2(I) =  HED4M2(I) +  HED4M(I) * HED4M(I) 
-          HED5M2(I) =  HED5M2(I) +  HED5M(I) * HED5M(I) 
-          PRC1M2(I) =  PRC1M2(I) +  PRC1M(I) * PRC1M(I) 
-          PRC2M2(I) =  PRC2M2(I) +  PRC2M(I) * PRC2M(I) 
-          PRC3M2(I) =  PRC3M2(I) +  PRC3M(I) * PRC3M(I) 
-          PRC4M2(I) =  PRC4M2(I) +  PRC4M(I) * PRC4M(I) 
-          PRC5M2(I) =  PRC5M2(I) +  PRC5M(I) * PRC5M(I) 
-          PRC6M2(I) =  PRC6M2(I) +  PRC6M(I) * PRC6M(I) 
-          DO K = 1, 20
-            RCRIM2(K,I) =  RCRIM2(K,I) +  RCRIM(K,I) * RCRIM(K,I)
-          END DO
+
+      !=================================================================
+      ! SUBROUTINE: FILL_PY_OUTDAY
+      !
+      ! Packages the daily simulation results into a 3D array
+      ! (PY_OUTDAY) to be returned to Python via f2py.
+      !=================================================================
+      SUBROUTINE FILL_PY_OUTDAY (LMYR, SWE, NDVAR, PY_OUTDAY)
+
+      INTEGER, INTENT(IN) :: LMYR
+      INTEGER, INTENT(IN) :: NDVAR
+      DOUBLE PRECISION, INTENT(INOUT) :: PY_OUTDAY(LMYR, 367, NDVAR)
+
+      INTEGER :: WRITE_COL, K
+      DOUBLE PRECISION PRC1, PRC2, PRC3, PRC4, PRC5, PRC6,
+     &  DRN1, DRN2, DRN3, DRN4, DRN5, HED1, HED2, HED3, HED4, HED5,
+     &  RCR1, RCR2, RCR3, RCR4, RCR5, RCRI
+
+      COMMON /BLK4/ LAYER (21), LAYR (20), IPQ (20), ISOIL (20), LAY,
+     &  LAYSEG (67, 2), LSEG (67), LSEGS (20, 2), LRIN(20), LSIN(20)
+      COMMON /BLK8/ PRE (370), TMPF (366), RAD (366)
+      COMMON /BLK9/ PINF, ES1T, SMELT, GMRO, ADDRUN, OLDSNO, SNO, WF(7),
+     &  SSNO
+      COMMON /BLK10/ ETT, ESS, EP, ES, ET (67)
+      COMMON /BLK11/ ETO, XLAI, STAGE1, CONA, RAIN, RUN, ABST, EAJ, TS2
+      COMMON /BLK15/ PRC1, PRC2, PRC3, PRC4, PRC5, PRC6, DRN1, DRN2,
+     &  DRN3, DRN4, DRN5, HED1, HED2, HED3, HED4, HED5,
+     &  RCR1, RCR2, RCR3, RCR4, RCR5, RCRI(20)
+      COMMON /BLK16/ LD(5), LP(6), LPQ(5), LCASE(5), IYR, IDA, MO,
+     &  NSTEP(6), ND
+      COMMON /BLK20/ TSEG (7), Z (7), FCS (7), ST (7)
+      COMMON /BLK21/ TB, TO, TS, AVT, AMP, ABD, PHU, GS, CV,
+     &  RSD, DM, WFT (12), DD, DLAI, TSURF
+      COMMON /BLK27/ IFREZ, IDFS, IFCNT, KCNT, MXKCNT
+
+      ! Save layer number for 'head', 'drain' and 'leak' columns.
+      IF (IDA == 1) THEN
+        WRITE_COL = 9
+
+        PY_OUTDAY(IYR, 1, 1:WRITE_COL) = 0
+        WRITE_COL = WRITE_COL + 1
+
+        ! We follow the same logic as in SUBROUTINE OUTDAY
+        ! to assign layers.
+        DO K = 1, 5
+          IF (LP(K) > 0) THEN
+            IF (LAYER(LP(K)) > 2) THEN
+              ! Bottom layer is a barrier (Type 3 or 4)
+              IF (LAYER(LP(K)-1) <= 2) THEN
+                ! Layer above is a vertical percolation (Type 1)
+                ! or a lateral drainage layer (Type 2).
+                PY_OUTDAY(IYR, 1, WRITE_COL) = LP(K)
+                WRITE_COL = WRITE_COL + 1
+
+                PY_OUTDAY(IYR, 1, WRITE_COL) = LP(K) - 1
+                WRITE_COL = WRITE_COL + 1
+              ELSE
+                ! Layer above is a composite liner (Type 4).
+                PY_OUTDAY(IYR, 1, WRITE_COL) = LP(K) - 1
+                WRITE_COL = WRITE_COL + 1
+
+                PY_OUTDAY(IYR, 1, WRITE_COL) = LP(K) - 2
+                WRITE_COL = WRITE_COL + 1
+              END IF
+            ELSE
+              WRITE_COL = WRITE_COL + 2
+            END IF
+
+            PY_OUTDAY(IYR, 1, WRITE_COL) = LP(K)
+            WRITE_COL = WRITE_COL + 1
+          ELSE
+            WRITE_COL = WRITE_COL + 3
+          END IF
+
         END DO
+
+        IF (LP(6) > 0) PY_OUTDAY(IYR, 1, WRITE_COL) = LP(6)
+
+      End IF
+
+      ! Save daily rain in mm.
+      PY_OUTDAY(IYR, IDA + 1, 1) = PRE(IDA) * 25.4D0
+      ! Save surface runoff in mm.
+      PY_OUTDAY(IYR, IDA + 1, 2) = RUN * 25.4D0
+      ! Save surface evapotranspiration in mm.
+      PY_OUTDAY(IYR, IDA + 1, 3) = ETT * 25.4D0
+      ! Soil moisture in evaporative zone in cm/cm.
+      PY_OUTDAY(IYR, IDA + 1, 4) = SWE
+      ! Save total snow water equivalent in mm.
+      PY_OUTDAY(IYR, IDA + 1, 5) = SNO * 25.4D0
+
+      ! Save daily air temperature in deg C.
+      PY_OUTDAY(IYR, IDA + 1, 6) = (TMPF(IDA) - 32.0D0) / 1.8D0
+      ! Save soil temperature at the surface in deg C.
+      PY_OUTDAY(IYR, IDA + 1, 7) = TSURF
+      ! Save soil temperature at bottom of evaporative zone in deg C.
+      PY_OUTDAY(IYR, IDA + 1, 8) = TSEG(7)
+      ! Save if soil is frozen (1=Yes, 0=No).
+      PY_OUTDAY(IYR, IDA + 1, 9) = IFREZ
+
+      ! Save head, drain and leak daily values in mm.
+      IF (LP(1) > 0) THEN
+        PY_OUTDAY(IYR, IDA + 1, 10) = HED1 * 25.4D0
+        PY_OUTDAY(IYR, IDA + 1, 11) = (DRN1 + RCR1) * 25.4D0
+        PY_OUTDAY(IYR, IDA + 1, 12) = PRC1 * 25.4D0
       END IF
-      IF (IOM .EQ. 0) RETURN
-C
-C     PRINTS HEADING FOR MONTHLY RESULTS AND PRINTS
-C     MONTHLY PRECIPITATION, RUNOFF AND EVAPOTRANSPIRATION.
-C
-      WRITE (8, 6000)
-      IF (IU8 .EQ. 1) THEN
-        CALL OUTMO1
-      ELSE
-        CALL OUTMO2
+      IF (LP(2) > 0) THEN
+        PY_OUTDAY(IYR, IDA + 1, 13) = HED2 * 25.4D0
+        PY_OUTDAY(IYR, IDA + 1, 14) = (DRN2 + RCR2) * 25.4D0
+        PY_OUTDAY(IYR, IDA + 1, 15) = PRC2 * 25.4D0
       END IF
-      WRITE (8, 6110)
- 6000 FORMAT(1X//1X, 126('*'))
- 6110 FORMAT(1X, 126('*')//)
+      IF (LP(3) > 0) THEN
+        PY_OUTDAY(IYR, IDA + 1, 16) = HED3 * 25.4D0
+        PY_OUTDAY(IYR, IDA + 1, 17) = (DRN3 + RCR3) * 25.4D0
+        PY_OUTDAY(IYR, IDA + 1, 18) = PRC3 * 25.4D0
+      END IF
+      IF (LP(4) > 0) THEN
+        PY_OUTDAY(IYR, IDA + 1, 19) = HED4 * 25.4D0
+        PY_OUTDAY(IYR, IDA + 1, 20) = (DRN4 + RCR4) * 25.4D0
+        PY_OUTDAY(IYR, IDA + 1, 21) = PRC4 * 25.4D0
+      END IF
+      IF (LP(5) > 0) THEN
+        PY_OUTDAY(IYR, IDA + 1, 22) = HED5 * 25.4D0
+        PY_OUTDAY(IYR, IDA + 1, 23) = (DRN5 + RCR5) * 25.4D0
+        PY_OUTDAY(IYR, IDA + 1, 24) = PRC5 * 25.4D0
+      END IF
+      IF (LP(6) > 0) THEN
+        PY_OUTDAY(IYR, IDA + 1, 25) = PRC6 * 25.4D0
+      END IF
+
+      RETURN
+      END SUBROUTINE FILL_PY_OUTDAY
+
+
+      !=================================================================
+      ! SUBROUTINE: OUTMO
+      !
+      ! Print heading for monthly results and print
+      ! monthly precipitation, runoff and evapotranspiration.
+      !=================================================================
+      SUBROUTINE OUTMO
+
+      WRITE (8, '(1X, /, 1X, 79("*"))')
+      CALL OUTMO2
+      WRITE (8, '(1X, 79("*"), /)')
+
       RETURN
       END SUBROUTINE OUTMO
-C
-C
-C
-C     ************************ OUTMO1 *************************
-C
-C     SUBROUTINE OUTMO PRINTS MONTHLY TOTALS in INCHES.
-C
-      SUBROUTINE OUTMO1
-C
-      PARAMETER (MXYR = 100)
-      DOUBLE PRECISION RC(20)
-      COMMON /BLK3/ PORO (20), FC (20), WP (20), RC, SW (20),
-     1  RS (20), XLAMBD (20), BUB (20), THICK (20), SLOPE (20),
-     2  XLENG (20), CON (20), SUBIN (20), RECIR (20), PHOLE (20),
-     3  DEFEC (20), TRANS (20), EDEPTH, SUBINF, SEDEP, CORECT
-      COMMON /BLK4/ LAYER (21), LAYR (20), IPQ (20), ISOIL (20), LAY,
-     1  LAYSEG (67, 2), LSEG (67), LSEGS (20, 2), LRIN(20), LSIN(20)
-      COMMON /BLK12/ PRC1M (12), PRC2M (12), PRC3M (12),
-     1  PRC4M (12), PRC5M (12), PRC6M (12), DRN1M (12),
-     2  DRN2M (12), DRN3M (12), DRN4M (12), DRN5M (12),
-     3  PREM (12), RUNM (12), ETM (12), HED1M (12),
-     4  HED2M (12), HED3M (12), HED4M (12), HED5M (12),
-     5  RCRIM (20,12), SUBINM (20,12), RCR1M (12), 
-     6  RCR2M (12), RCR3M (12), RCR4M (12), RCR5M (12) 
-      COMMON /BLK16/ LD(5), LP(6), LPQ(5), LCASE(5), IYR, IDA, MO,
-     1  NSTEP(6), ND
-      COMMON /BLK32/ SHED1 (12), SHED2 (12), SHED3 (12), SHED4 (12),
-     1  SHED5 (12)
-      COMMON /BLK33/ JYEAR (MXYR)
-      DIMENSION MDAY(12)     
-C
-C     ACCUMULATES MONTHLY TOTALS FOR COMPUTING AVERAGES AND
-C       STANDARD DEVIATIONS.
-C
-C
-C     PRINTS HEADING FOR MONTHLY RESULTS AND PRINTS
-C     MONTHLY PRECIPITATION, RUNOFF AND EVAPOTRANSPIRATION.
-C
-      MDAY(1) = 31
-      MDAY(2) = 28
-      MDAY(3) = 31
-      MDAY(4) = 30
-      MDAY(5) = 31
-      MDAY(6) = 30
-      MDAY(7) = 31
-      MDAY(8) = 31
-      MDAY(9) = 30
-      MDAY(10) = 31
-      MDAY(11) = 30
-      MDAY(12) = 31
-      WRITE (8, 6011) JYEAR (IYR)
-      WRITE (8, 6020)
-C
-C    DETERMINES IF THE YEAR IS A LEAP YEAR.
-C
-      MND = LEAP (JYEAR(IYR), NT)
-C
-      MONTHE = 12
-      MONTHB = MONTHE - 11
-      MONTH6 = MONTHE - 6
-      MONTH7 = MONTHE - 5
-        WRITE (8, 6031) (PREM (J), J = MONTHB, MONTHE)
-        WRITE (8, 6041) (RUNM (J), J = MONTHB, MONTHE)
-        WRITE (8, 6051) (ETM (J), J = MONTHB, MONTHE)
-      DO 2010 K = 1, LP(1)
-          IF (LSIN(K) .GT. 0) THEN
-            DO 2011 J = 1, 12
-               SUBINM (K,J) = MDAY(J) * SUBIN(K)
- 2011       CONTINUE
-            IF (MND .EQ. 366) SUBINM(K,2) = SUBINM(K,2) + SUBIN(K)
-            WRITE(8,6076) (SUBINM(K,J), 
-     1      J=MONTHB,MONTH6), K, (SUBINM (K,J), J = MONTH7, MONTHE)
-          END IF 
-          IF (LRIN(K) .GT. 0) WRITE(8,6077) (RCRIM(K,J),
-     1    J=MONTHB,MONTH6), K, (RCRIM (K,J), J = MONTH7, MONTHE)
- 2010 CONTINUE
-        IF (LD(1) .GT. 0) THEN
-          WRITE (8, 6061) (DRN1M (J), J = MONTHB, MONTH6),
-     1    LD(1), (DRN1M (J), J = MONTH7, MONTHE)
-          IF (LAYR(LD(1)) .GT. 0) WRITE (8, 6066) (RCR1M (J), 
-     1    J = MONTHB, MONTH6), LD(1), (RCR1M (J), J = MONTH7, MONTHE)
-        END IF
-        WRITE (8, 6071) (PRC1M (J), J = MONTHB, MONTH6),
-     1   LP(1), (PRC1M (J), J = MONTH7, MONTHE)
-      IF (LP(2) .GT. 0) THEN
-        DO 2020 K = LP(1)+1, LP(2)
-          IF (LSIN(K) .GT. 0) THEN
-            DO 2021 J = 1, 12
-               SUBINM (K,J) = MDAY(J) * SUBIN(K)
- 2021       CONTINUE
-            IF (MND .EQ. 366) SUBINM(K,2) = SUBINM(K,2) + SUBIN(K)
-            WRITE(8,6076) (SUBINM(K,J), 
-     1      J=MONTHB,MONTH6), K, (SUBINM (K,J), J = MONTH7, MONTHE)
-          END IF 
-            IF (LRIN(K) .GT. 0) WRITE(8,6077) (RCRIM(K,J),
-     1      J=MONTHB,MONTH6), K, (RCRIM (K,J), J = MONTH7, MONTHE)
- 2020   CONTINUE
-          IF (LD(2) .GT. 0) THEN
-            WRITE (8, 6061) (DRN2M (J), J = MONTHB, MONTH6),
-     1      LD(2), (DRN2M (J), J = MONTH7, MONTHE)
-            IF (LAYR(LD(2)) .GT. 0) WRITE (8, 6066) (RCR2M (J), 
-     1      J = MONTHB, MONTH6), LD(2), (RCR2M (J), J = MONTH7, MONTHE)
-          END IF
-          WRITE (8, 6071) (PRC2M (J), J = MONTHB, MONTH6),
-     1     LP(2), (PRC2M (J), J = MONTH7, MONTHE)
-      END IF
-      IF (LP(3) .GT. 0) THEN
-        DO 2030 K = LP(2)+1, LP(3)
-          IF (LSIN(K) .GT. 0) THEN
-            DO 2031 J = 1, 12
-               SUBINM (K,J) = MDAY(J) * SUBIN(K)
- 2031       CONTINUE
-            IF (MND .EQ. 366) SUBINM(K,2) = SUBINM(K,2) + SUBIN(K)
-            WRITE(8,6076) (SUBINM(K,J), 
-     1      J=MONTHB,MONTH6), K, (SUBINM (K,J), J = MONTH7, MONTHE)
-          END IF 
-            IF (LRIN(K) .GT. 0) WRITE(8,6077) (RCRIM(K,J),
-     1      J=MONTHB,MONTH6), K, (RCRIM (K,J), J = MONTH7, MONTHE)
- 2030   CONTINUE
-          IF (LD(3) .GT. 0) THEN
-            WRITE (8, 6061) (DRN3M (J), J = MONTHB, MONTH6),
-     1      LD(3), (DRN3M (J), J = MONTH7, MONTHE)
-            IF (LAYR(LD(3)) .GT. 0) WRITE (8, 6066) (RCR3M (J), 
-     1      J=MONTHB,MONTH6), LD(3), (RCR3M (J), J=MONTH7,MONTHE)
-          END IF
-          WRITE (8, 6071) (PRC3M (J), J = MONTHB, MONTH6),
-     1     LP(3), (PRC3M (J), J = MONTH7, MONTHE)
-      END IF
-      IF (LP(4) .GT. 0) THEN
-        DO 2040 K = LP(3)+1, LP(4)
-          IF (LSIN(K) .GT. 0) THEN
-            DO 2041 J = 1, 12
-               SUBINM (K,J) = MDAY(J) * SUBIN(K)
- 2041       CONTINUE
-            IF (MND .EQ. 366) SUBINM(K,2) = SUBINM(K,2) + SUBIN(K)
-            WRITE(8,6076) (SUBINM(K,J), 
-     1      J=MONTHB,MONTH6), K, (SUBINM (K,J), J = MONTH7, MONTHE)
-          END IF 
-            IF (LRIN(K) .GT. 0) WRITE(8,6077) (RCRIM(K,J),
-     1      J=MONTHB,MONTH6), K, (RCRIM (K,J), J = MONTH7, MONTHE)
- 2040   CONTINUE
-          IF (LD(4) .GT. 0) THEN
-            WRITE (8, 6061) (DRN4M (J), J = MONTHB, MONTH6),
-     1      LD(4), (DRN4M (J), J = MONTH7, MONTHE)
-            IF (LAYR(LD(4)) .GT. 0) WRITE (8, 6066) (RCR4M (J), 
-     1      J = MONTHB, MONTH6), LD(4), (RCR4M (J), J = MONTH7, MONTHE)
-          END IF
-          WRITE (8, 6071) (PRC4M (J), J = MONTHB, MONTH6),
-     1     LP(4), (PRC4M (J), J = MONTH7, MONTHE)
-      END IF
-      IF (LP(5) .GT. 0) THEN
-        DO 2050 K = LP(4)+1, LP(5)
-          IF (LSIN(K) .GT. 0) THEN
-            DO 2051 J = 1, 12
-               SUBINM (K,J) = MDAY(J) * SUBIN(K)
- 2051       CONTINUE
-            IF (MND .EQ. 366) SUBINM(K,2) = SUBINM(K,2) + SUBIN(K)
-            WRITE(8,6076) (SUBINM(K,J), 
-     1      J=MONTHB,MONTH6), K, (SUBINM (K,J), J = MONTH7, MONTHE)
-          END IF 
-            IF (LRIN(K) .GT. 0) WRITE(8,6077) (RCRIM(K,J),
-     1      J=MONTHB,MONTH6), K, (RCRIM (K,J), J = MONTH7, MONTHE)
- 2050   CONTINUE
-          IF (LD(5) .GT. 0) THEN
-            WRITE (8, 6061) (DRN5M (J), J = MONTHB, MONTH6),
-     1      LD(5), (DRN5M (J), J = MONTH7, MONTHE)
-            IF (LAYR(LD(5)) .GT. 0) WRITE (8, 6066) (RCR5M (J), 
-     1      J = MONTHB, MONTH6), LD(5), (RCR5M (J), J = MONTH7, MONTHE)
-          END IF
-          WRITE (8, 6071) (PRC5M (J), J = MONTHB, MONTH6),
-     1     LP(5), (PRC5M (J), J = MONTH7, MONTHE)
-      END IF
-      IF (LP(6) .GT. 0) THEN
-        DO 2060 K = LP(5)+1, LP(6)
-          IF (LSIN(K) .GT. 0) THEN
-            DO 2061 J = 1, 12
-               SUBINM (K,J) = MDAY(J) * SUBIN(K)
- 2061       CONTINUE
-            IF (MND .EQ. 366) SUBINM(K,2) = SUBINM(K,2) + SUBIN(K)
-            WRITE(8,6076) (SUBINM(K,J), 
-     1      J=MONTHB,MONTH6), K, (SUBINM (K,J), J = MONTH7, MONTHE)
-          END IF 
-            IF (LRIN(K) .GT. 0) WRITE(8,6077) (RCRIM(K,J),
-     1      J=MONTHB,MONTH6), K, (RCRIM (K,J), J = MONTH7, MONTHE)
- 2060   CONTINUE
-          WRITE (8, 6071) (PRC6M (J), J = MONTHB, MONTH6),
-     1     LP(6), (PRC6M (J), J = MONTH7, MONTHE)
-      END IF
-      IF (LP(1) .GT. 0) THEN
-        IF (LAYER (LP(1)) .GT. 2) THEN
-          WRITE (8, 6081)
-          IF (LAYER(LP(1)-1) .LE. 2) THEN
-            WRITE (8, 6090) (HED1M (J), J = MONTHB, MONTH6),
-     1       LP(1), (HED1M (J), J = MONTH7, MONTHE)
-            WRITE (8, 6100) (SHED1 (J), J = 1, 6),
-     1       LP(1), (SHED1 (J), J = 7, 12)
-          ELSE
-            WRITE (8, 6090) (HED1M (J), J = MONTHB, MONTH6),
-     1       LP(1)-1, (HED1M (J), J = MONTH7, MONTHE)
-            WRITE (8, 6100) (SHED1 (J), J = 1, 6),
-     1       LP(1)-1, (SHED1 (J), J = 7, 12)
-          END IF
-        END IF
-      END IF
-      IF (LP(2) .GT. 0) THEN
-        IF (LAYER (LP(2)) .GT. 2) THEN
-          IF (LAYER(LP(2)-1) .LE. 2) THEN
-            WRITE (8, 6090) (HED2M (J), J = MONTHB, MONTH6),
-     1       LP(2), (HED2M (J), J = MONTH7, MONTHE)
-            WRITE (8, 6100) (SHED2 (J), J = 1, 6),
-     1       LP(2), (SHED2 (J), J = 7, 12)
-          ELSE
-            WRITE (8, 6090) (HED2M (J), J = MONTHB, MONTH6),
-     1       LP(2)-1, (HED2M (J), J = MONTH7, MONTHE)
-            WRITE (8, 6100) (SHED2 (J), J = 1, 6),
-     1       LP(2)-1, (SHED2 (J), J = 7, 12)
-          END IF
-        END IF
-      END IF
-      IF (LP(3) .GT. 0) THEN
-        IF (LAYER (LP(3)) .GT. 2) THEN
-          IF (LAYER(LP(3)-1) .LE. 2) THEN
-            WRITE (8, 6090) (HED3M (J), J = MONTHB, MONTH6),
-     1       LP(3), (HED3M (J), J = MONTH7, MONTHE)
-            WRITE (8, 6100) (SHED3 (J), J = 1, 6),
-     1       LP(3), (SHED3 (J), J = 7, 12)
-          ELSE
-            WRITE (8, 6090) (HED3M (J), J = MONTHB, MONTH6),
-     1       LP(3)-1, (HED3M (J), J = MONTH7, MONTHE)
-            WRITE (8, 6100) (SHED3 (J), J = 1, 6),
-     1       LP(3)-1, (SHED3 (J), J = 7, 12)
-          END IF
-        END IF
-      END IF
-      IF (LP(4) .GT. 0) THEN
-        IF (LAYER (LP(4)) .GT. 2) THEN
-          IF (LAYER(LP(4)-1) .LE. 2) THEN
-            WRITE (8, 6090) (HED4M (J), J = MONTHB, MONTH6),
-     1       LP(4), (HED4M (J), J = MONTH7, MONTHE)
-            WRITE (8, 6100) (SHED4 (J), J = 1, 6),
-     1       LP(4), (SHED4 (J), J = 7, 12)
-          ELSE
-            WRITE (8, 6090) (HED4M (J), J = MONTHB, MONTH6),
-     1       LP(4)-1, (HED4M (J), J = MONTH7, MONTHE)
-            WRITE (8, 6100) (SHED4 (J), J = 1, 6),
-     1       LP(4)-1, (SHED4 (J), J = 7, 12)
-          END IF
-        END IF
-      END IF
-      IF (LP(5) .GT. 0) THEN
-        IF (LAYER (LP(5)) .GT. 2) THEN
-          IF (LAYER(LP(5)-1) .LE. 2) THEN
-            WRITE (8, 6090) (HED5M (J), J = MONTHB, MONTH6),
-     1       LP(5), (HED5M (J), J = MONTH7, MONTHE)
-            WRITE (8, 6100) (SHED5 (J), J = 1, 6),
-     1       LP(5), (SHED5 (J), J = 7, 12)
-          ELSE
-            WRITE (8, 6090) (HED5M (J), J = MONTHB, MONTH6),
-     1       LP(5)-1, (HED5M (J), J = MONTH7, MONTHE)
-            WRITE (8, 6100) (SHED5 (J), J = 1, 6),
-     1       LP(5)-1, (SHED5 (J), J = 7, 12)
-          END IF
-        END IF
-      END IF
- 6011 FORMAT(1X/19X,'MONTHLY TOTALS (IN INCHES) FOR YEAR',I5/
-     1    1X,79('-'))
- 6020 FORMAT(1X,/33X,'JAN/JUL FEB/AUG MAR/SEP ',
-     1 'APR/OCT MAY/NOV JUN/DEC'/32X,6(' -------'))
- 6031   FORMAT(1X,/' PRECIPITATION         ',
-     1   10X,F5.2,5(3X,F5.2)/30X,6(3X,F5.2))
- 6041   FORMAT(1X/' RUNOFF         ',15X,
-     1   6(2X,F6.3)/31X,6(2X,F6.3))
- 6051   FORMAT(1X/' EVAPOTRANSPIRATION',12X,6(2X,F6.3)/1X,
-     1   5X,'        ',17X,6(2X,F6.3))
- 6076 FORMAT(1X/' SUBSURFACE INFLOW INTO  ',7X,6F8.4/3X,
-     1 'LAYER',I3,'         ',12X,6F8.4)
- 6066 FORMAT(1X,/' LATERAL DRAINAGE RECIRCULATED',2X,6F8.4/3X,
-     1 'FROM LAYER',I3,'         ',7X,6F8.4)
- 6061 FORMAT(1X,/' LATERAL DRAINAGE COLLECTED   ',2X,6F8.4/3X,
-     1 'FROM LAYER',I3,'         ',7X,6F8.4)
- 6071 FORMAT(1X/' PERCOLATION/LEAKAGE THROUGH   ',1X,6F8.4/3X,
-     1 'LAYER',I3,'         ',12X,6F8.4)
- 6077 FORMAT(1X,/' LATERAL DRAINAGE RECIRCULATED',2X,6F8.4/3X,
-     1 'INTO LAYER',I3,'         ',7X,6F8.4)
- 6081       FORMAT(1X//1X,79('-')/20X,
-     1       'MONTHLY SUMMARIES FOR DAILY HEADS (INCHES)'/1X,79('-')/)
- 6090 FORMAT(1X/' AVERAGE DAILY HEAD ON ',8X,6F8.3/3X,
-     1 'TOP OF LAYER',I3,'  ',11X,6F8.3)
- 6100 FORMAT(1X/' STD. DEVIATION OF DAILY ',6X,6(F8.3)/3X,
-     1 'HEAD ON TOP OF LAYER',I3,5X,6F8.3)
-      RETURN
-      END
-C
-C
-C
-C
-C     ************************ OUTMO2 *************************
-C
-C     SUBROUTINE OUTMO PRINTS MONTHLY TOTALS in MM and CM.
-C
+
+
+      !=================================================================
+      ! SUBROUTINE: OUTMO2
+      !
+      ! Print monthly totals for the simulation in mm and cm.
+      !=================================================================
       SUBROUTINE OUTMO2
-C
+
       PARAMETER (MXYR = 100)
       DOUBLE PRECISION RC(20)
       COMMON /BLK3/ PORO (20), FC (20), WP (20), RC, SW (20),
@@ -6719,14 +6289,14 @@ C
      2  DRN2M (12), DRN3M (12), DRN4M (12), DRN5M (12),
      3  PREM (12), RUNM (12), ETM (12), HED1M (12),
      4  HED2M (12), HED3M (12), HED4M (12), HED5M (12),
-     5  RCRIM (20,12), SUBINM (20,12), RCR1M (12), 
-     6  RCR2M (12), RCR3M (12), RCR4M (12), RCR5M (12) 
+     5  RCRIM (20,12), SUBINM (20,12), RCR1M (12),
+     6  RCR2M (12), RCR3M (12), RCR4M (12), RCR5M (12)
       COMMON /BLK16/ LD(5), LP(6), LPQ(5), LCASE(5), IYR, IDA, MO,
      1  NSTEP(6), ND
       COMMON /BLK32/ SHED1 (12), SHED2 (12), SHED3 (12), SHED4 (12),
      1  SHED5 (12)
       COMMON /BLK33/ JYEAR (MXYR)
-      DIMENSION MDAY(12)     
+      DIMENSION MDAY(12)
 C
 C     ACCUMULATES MONTHLY TOTALS FOR COMPUTING AVERAGES AND
 C       STANDARD DEVIATIONS.
@@ -6774,13 +6344,13 @@ C
      1    J=MONTHB,MONTH6), K, (RCRIM (K,J) * 25.4, J=MONTH7,MONTHE)
  2010 CONTINUE
         IF (LD(1) .GT. 0) THEN
-          WRITE (8, 6062) LD(1), (DRN1M (J) * 25.4, J=MONTHB,MONTH6), 
-     1    (DRN1M (J) * 25.4, J = MONTH7, MONTHE)
-          IF (LAYR(LD(1)) .GT. 0) WRITE (8, 6067) (RCR1M (J) * 25.4, 
+          WRITE (8, 6062) (DRN1M (J) * 25.4, J=MONTHB,MONTH6),
+     1    LD(1), (DRN1M (J) * 25.4, J = MONTH7, MONTHE)
+          IF (LAYR(LD(1)) .GT. 0) WRITE (8, 6067) (RCR1M (J) * 25.4,
      1    J=MONTHB,MONTH6), LD(1), (RCR1M (J) * 25.4, J=MONTH7,MONTHE)
-        END IF  
-        WRITE (8, 6072) LP(1), (PRC1M (J) * 25.4, J = MONTHB, MONTH6),
-     1   (PRC1M (J) * 25.4, J = MONTH7, MONTHE)
+        END IF
+        WRITE (8, 6072) (PRC1M (J) * 25.4, J = MONTHB, MONTH6),
+     1   LP(1), (PRC1M (J) * 25.4, J = MONTH7, MONTHE)
       IF (LP(2) .GT. 0) THEN
         DO 2020 K = LP(1)+1, LP(2)
           IF (LSIN(K) .GT. 0) THEN
@@ -6795,13 +6365,13 @@ C
      1      J=MONTHB,MONTH6), K, (RCRIM (K,J) * 25.4, J=MONTH7,MONTHE)
  2020   CONTINUE
           IF (LD(2) .GT. 0) THEN
-            WRITE (8, 6062) LD(2), (DRN2M (J) * 25.4, J=MONTHB,MONTH6), 
-     1      (DRN2M (J) * 25.4, J = MONTH7, MONTHE)
-            IF (LAYR(LD(2)) .GT. 0) WRITE (8, 6067) (RCR2M (J) * 25.4, 
+            WRITE (8, 6062) (DRN2M (J) * 25.4, J=MONTHB,MONTH6),
+     1      LD(2), (DRN2M (J) * 25.4, J = MONTH7, MONTHE)
+            IF (LAYR(LD(2)) .GT. 0) WRITE (8, 6067) (RCR2M (J) * 25.4,
      1      J=MONTHB,MONTH6), LD(2), (RCR2M(J) * 25.4, J=MONTH7,MONTHE)
-          END IF  
-          WRITE (8, 6072) LP(2), (PRC2M (J) * 25.4, J = MONTHB, MONTH6),
-     1     (PRC2M (J) * 25.4, J = MONTH7, MONTHE)
+          END IF
+          WRITE (8, 6072) (PRC2M (J) * 25.4, J = MONTHB, MONTH6),
+     1     LP(2), (PRC2M (J) * 25.4, J = MONTH7, MONTHE)
       END IF
       IF (LP(3) .GT. 0) THEN
         DO 2030 K = LP(2)+1, LP(3)
@@ -6817,13 +6387,13 @@ C
      1      J=MONTHB,MONTH6), K, (RCRIM (K,J) * 25.4, J=MONTH7,MONTHE)
  2030   CONTINUE
           IF (LD(3) .GT. 0) THEN
-            WRITE (8, 6062) LD(3), (DRN3M (J) * 25.4, J=MONTHB,MONTH6), 
-     1      (DRN3M (J) * 25.4, J = MONTH7, MONTHE)
-            IF (LAYR(LD(3)) .GT. 0) WRITE (8, 6067) (RCR3M (J) * 25.4, 
+            WRITE (8, 6062) (DRN3M (J) * 25.4, J=MONTHB,MONTH6),
+     1      LD(3), (DRN3M (J) * 25.4, J = MONTH7, MONTHE)
+            IF (LAYR(LD(3)) .GT. 0) WRITE (8, 6067) (RCR3M (J) * 25.4,
      1      J=MONTHB,MONTH6), LD(3), (RCR3M(J) * 25.4, J=MONTH7,MONTHE)
-          END IF  
-          WRITE (8, 6072) LP(3), (PRC3M (J) * 25.4, J = MONTHB, MONTH6),
-     1     (PRC3M (J) * 25.4, J = MONTH7, MONTHE)
+          END IF
+          WRITE (8, 6072) (PRC3M (J) * 25.4, J = MONTHB, MONTH6),
+     1     LP(3), (PRC3M (J) * 25.4, J = MONTH7, MONTHE)
       END IF
       IF (LP(4) .GT. 0) THEN
         DO 2040 K = LP(3)+1, LP(4)
@@ -6839,13 +6409,13 @@ C
      1      J=MONTHB,MONTH6), K, (RCRIM (K,J) * 25.4, J=MONTH7,MONTHE)
  2040   CONTINUE
           IF (LD(4) .GT. 0) THEN
-            WRITE (8, 6062) LD(4), (DRN4M (J) * 25.4, J=MONTHB,MONTH6), 
-     1      (DRN4M (J) * 25.4, J = MONTH7, MONTHE)
-            IF (LAYR(LD(4)) .GT. 0) WRITE (8, 6067) (RCR4M (J) * 25.4, 
+            WRITE (8, 6062) (DRN4M (J) * 25.4, J=MONTHB,MONTH6),
+     1      LD(4), (DRN4M (J) * 25.4, J = MONTH7, MONTHE)
+            IF (LAYR(LD(4)) .GT. 0) WRITE (8, 6067) (RCR4M (J) * 25.4,
      1      J=MONTHB,MONTH6), LD(4), (RCR4M(J) * 25.4, J=MONTH7,MONTHE)
-          END IF  
-          WRITE (8, 6072) LP(4), (PRC4M (J) * 25.4, J = MONTHB, MONTH6),
-     1     (PRC4M (J) * 25.4, J = MONTH7, MONTHE)
+          END IF
+          WRITE (8, 6072) (PRC4M (J) * 25.4, J = MONTHB, MONTH6),
+     1     LP(4), (PRC4M (J) * 25.4, J = MONTH7, MONTHE)
       END IF
       IF (LP(5) .GT. 0) THEN
         DO 2050 K = LP(4)+1, LP(5)
@@ -6861,13 +6431,13 @@ C
      1      J=MONTHB,MONTH6), K, (RCRIM (K,J) * 25.4, J=MONTH7,MONTHE)
  2050   CONTINUE
           IF (LD(5) .GT. 0) THEN
-            WRITE (8, 6062) LD(5), (DRN5M (J) * 25.4, J=MONTHB,MONTH6), 
-     1      (DRN5M (J) * 25.4, J = MONTH7, MONTHE)
-            IF (LAYR(LD(5)) .GT. 0) WRITE (8, 6067) (RCR5M (J) * 25.4, 
+            WRITE (8, 6062) (DRN5M (J) * 25.4, J=MONTHB,MONTH6),
+     1      LD(5), (DRN5M (J) * 25.4, J = MONTH7, MONTHE)
+            IF (LAYR(LD(5)) .GT. 0) WRITE (8, 6067) (RCR5M (J) * 25.4,
      1      J=MONTHB,MONTH6), LD(5), (RCR5M(J) * 25.4, J=MONTH7,MONTHE)
-          END IF  
-          WRITE (8, 6072) LP(5), (PRC5M (J) * 25.4, J = MONTHB, MONTH6),
-     1     (PRC5M (J) * 25.4, J = MONTH7, MONTHE)
+          END IF
+          WRITE (8, 6072) (PRC5M (J) * 25.4, J = MONTHB, MONTH6),
+     1     LP(5), (PRC5M (J) * 25.4, J = MONTH7, MONTHE)
       END IF
       IF (LP(6) .GT. 0) THEN
         DO 2060 K = LP(5)+1, LP(6)
@@ -6882,127 +6452,226 @@ C
             IF (LRIN(K) .GT. 0) WRITE(8,6065) (RCRIM(K,J) * 25.4,
      1      J=MONTHB,MONTH6), K, (RCRIM (K,J) * 25.4, J=MONTH7,MONTHE)
  2060   CONTINUE
-          WRITE (8, 6072) LP(6), (PRC6M (J) * 25.4, J = MONTHB, MONTH6),
-     1     (PRC6M (J), J = MONTH7, MONTHE)
+          WRITE (8, 6072) (PRC6M (J) * 25.4, J = MONTHB, MONTH6),
+     1     LP(6), (PRC6M (J), J = MONTH7, MONTHE)
       END IF
-c       IF (LP(1) .GT. 0) THEN
-c         IF (LAYER (LP(1)) .GT. 2) THEN
-c           WRITE (8, 6082)
-c           IF (LAYER(LP(1)-1) .LE. 2) THEN
-c             WRITE (8, 6090) (HED1M (J) * 2.54, J = MONTHB, MONTH6),
-c      1       LP(1), (HED1M (J) * 2.54, J = MONTH7, MONTHE)
-c             WRITE (8, 6100) (SHED1 (J) * 2.54, J = 1, 6),
-c      1       LP(1), (SHED1 (J) * 2.54, J = 7, 12)
-c           ELSE
-c             WRITE (8, 6090) (HED1M (J) * 2.54, J = MONTHB, MONTH6),
-c      1       LP(1)-1, (HED1M (J) * 2.54, J = MONTH7, MONTHE)
-c             WRITE (8, 6100) (SHED1 (J) * 2.54, J = 1, 6),
-c      1       LP(1)-1, (SHED1 (J) * 2.54, J = 7, 12)
-c           END IF
-c         END IF
-c       END IF
-c       IF (LP(2) .GT. 0) THEN
-c         IF (LAYER (LP(2)) .GT. 2) THEN
-c           IF (LAYER(LP(2)-1) .LE. 2) THEN
-c             WRITE (8, 6090) (HED2M (J) * 2.54, J = MONTHB, MONTH6),
-c      1       LP(2), (HED2M (J) * 2.54, J = MONTH7, MONTHE)
-c             WRITE (8, 6100) (SHED2 (J) * 2.54, J = 1, 6),
-c      1       LP(2), (SHED2 (J) * 2.54, J = 7, 12)
-c           ELSE
-c             WRITE (8, 6090) (HED2M (J) * 2.54, J = MONTHB, MONTH6),
-c      1       LP(2)-1, (HED2M (J) * 2.54, J = MONTH7, MONTHE)
-c             WRITE (8, 6100) (SHED2 (J) * 2.54, J = 1, 6),
-c      1       LP(2)-1, (SHED2 (J) * 2.54, J = 7, 12)
-c           END IF
-c         END IF
-c       END IF
-c       IF (LP(3) .GT. 0) THEN
-c         IF (LAYER (LP(3)) .GT. 2) THEN
-c           IF (LAYER(LP(3)-1) .LE. 2) THEN
-c             WRITE (8, 6090) (HED3M (J) * 2.54, J = MONTHB, MONTH6),
-c      1       LP(3), (HED3M (J) * 2.54, J = MONTH7, MONTHE)
-c             WRITE (8, 6100) (SHED3 (J) * 2.54, J = 1, 6),
-c      1       LP(3), (SHED3 (J) * 2.54, J = 7, 12)
-c           ELSE
-c             WRITE (8, 6090) (HED3M (J) * 2.54, J = MONTHB, MONTH6),
-c      1       LP(3)-1, (HED3M (J) * 2.54, J = MONTH7, MONTHE)
-c             WRITE (8, 6100) (SHED3 (J) * 2.54, J = 1, 6),
-c      1       LP(3)-1, (SHED3 (J) * 2.54, J = 7, 12)
-c           END IF
-c         END IF
-c       END IF
-c       IF (LP(4) .GT. 0) THEN
-c         IF (LAYER (LP(4)) .GT. 2) THEN
-c           IF (LAYER(LP(4)-1) .LE. 2) THEN
-c             WRITE (8, 6090) (HED4M (J) * 2.54, J = MONTHB, MONTH6),
-c      1       LP(4), (HED4M (J) * 2.54, J = MONTH7, MONTHE)
-c             WRITE (8, 6100) (SHED4 (J) * 2.54, J = 1, 6),
-c      1       LP(4), (SHED4 (J) * 2.54, J = 7, 12)
-c           ELSE
-c             WRITE (8, 6090) (HED4M (J) * 2.54, J = MONTHB, MONTH6),
-c      1       LP(4)-1, (HED4M (J) * 2.54, J = MONTH7, MONTHE)
-c             WRITE (8, 6100) (SHED4 (J) * 2.54, J = 1, 6),
-c      1       LP(4)-1, (SHED4 (J) * 2.54, J = 7, 12)
-c           END IF
-c         END IF
-c       END IF
-c       IF (LP(5) .GT. 0) THEN
-c         IF (LAYER (LP(5)) .GT. 2) THEN
-c           IF (LAYER(LP(5)-1) .LE. 2) THEN
-c             WRITE (8, 6090) (HED5M (J) * 2.54, J = MONTHB, MONTH6),
-c      1       LP(5), (HED5M (J) * 2.54, J = MONTH7, MONTHE)
-c             WRITE (8, 6100) (SHED5 (J) * 2.54, J = 1, 6),
-c      1       LP(5), (SHED5 (J) * 2.54, J = 7, 12)
-c           ELSE
-c             WRITE (8, 6090) (HED5M (J) * 2.54, J = MONTHB, MONTH6),
-c      1       LP(5)-1, (HED5M (J) * 2.54, J = MONTH7, MONTHE)
-c             WRITE (8, 6100) (SHED5 (J) * 2.54, J = 1, 6),
-c      1       LP(5)-1, (SHED5 (J) * 2.54, J = 7, 12)
-c           END IF
-c         END IF
-c       END IF
+      IF (LP(1) .GT. 0) THEN
+        IF (LAYER (LP(1)) .GT. 2) THEN
+          WRITE (8, 6082)
+          IF (LAYER(LP(1)-1) .LE. 2) THEN
+            WRITE (8, 6090) (HED1M (J) * 2.54, J = MONTHB, MONTH6),
+     1       LP(1), (HED1M (J) * 2.54, J = MONTH7, MONTHE)
+            WRITE (8, 6100) (SHED1 (J) * 2.54, J = 1, 6),
+     1       LP(1), (SHED1 (J) * 2.54, J = 7, 12)
+          ELSE
+            WRITE (8, 6090) (HED1M (J) * 2.54, J = MONTHB, MONTH6),
+     1       LP(1)-1, (HED1M (J) * 2.54, J = MONTH7, MONTHE)
+            WRITE (8, 6100) (SHED1 (J) * 2.54, J = 1, 6),
+     1       LP(1)-1, (SHED1 (J) * 2.54, J = 7, 12)
+          END IF
+        END IF
+      END IF
+      IF (LP(2) .GT. 0) THEN
+        IF (LAYER (LP(2)) .GT. 2) THEN
+          IF (LAYER(LP(2)-1) .LE. 2) THEN
+            WRITE (8, 6090) (HED2M (J) * 2.54, J = MONTHB, MONTH6),
+     1       LP(2), (HED2M (J) * 2.54, J = MONTH7, MONTHE)
+            WRITE (8, 6100) (SHED2 (J) * 2.54, J = 1, 6),
+     1       LP(2), (SHED2 (J) * 2.54, J = 7, 12)
+          ELSE
+            WRITE (8, 6090) (HED2M (J) * 2.54, J = MONTHB, MONTH6),
+     1       LP(2)-1, (HED2M (J) * 2.54, J = MONTH7, MONTHE)
+            WRITE (8, 6100) (SHED2 (J) * 2.54, J = 1, 6),
+     1       LP(2)-1, (SHED2 (J) * 2.54, J = 7, 12)
+          END IF
+        END IF
+      END IF
+      IF (LP(3) .GT. 0) THEN
+        IF (LAYER (LP(3)) .GT. 2) THEN
+          IF (LAYER(LP(3)-1) .LE. 2) THEN
+            WRITE (8, 6090) (HED3M (J) * 2.54, J = MONTHB, MONTH6),
+     1       LP(3), (HED3M (J) * 2.54, J = MONTH7, MONTHE)
+            WRITE (8, 6100) (SHED3 (J) * 2.54, J = 1, 6),
+     1       LP(3), (SHED3 (J) * 2.54, J = 7, 12)
+          ELSE
+            WRITE (8, 6090) (HED3M (J) * 2.54, J = MONTHB, MONTH6),
+     1       LP(3)-1, (HED3M (J) * 2.54, J = MONTH7, MONTHE)
+            WRITE (8, 6100) (SHED3 (J) * 2.54, J = 1, 6),
+     1       LP(3)-1, (SHED3 (J) * 2.54, J = 7, 12)
+          END IF
+        END IF
+      END IF
+      IF (LP(4) .GT. 0) THEN
+        IF (LAYER (LP(4)) .GT. 2) THEN
+          IF (LAYER(LP(4)-1) .LE. 2) THEN
+            WRITE (8, 6090) (HED4M (J) * 2.54, J = MONTHB, MONTH6),
+     1       LP(4), (HED4M (J) * 2.54, J = MONTH7, MONTHE)
+            WRITE (8, 6100) (SHED4 (J) * 2.54, J = 1, 6),
+     1       LP(4), (SHED4 (J) * 2.54, J = 7, 12)
+          ELSE
+            WRITE (8, 6090) (HED4M (J) * 2.54, J = MONTHB, MONTH6),
+     1       LP(4)-1, (HED4M (J) * 2.54, J = MONTH7, MONTHE)
+            WRITE (8, 6100) (SHED4 (J) * 2.54, J = 1, 6),
+     1       LP(4)-1, (SHED4 (J) * 2.54, J = 7, 12)
+          END IF
+        END IF
+      END IF
+      IF (LP(5) .GT. 0) THEN
+        IF (LAYER (LP(5)) .GT. 2) THEN
+          IF (LAYER(LP(5)-1) .LE. 2) THEN
+            WRITE (8, 6090) (HED5M (J) * 2.54, J = MONTHB, MONTH6),
+     1       LP(5), (HED5M (J) * 2.54, J = MONTH7, MONTHE)
+            WRITE (8, 6100) (SHED5 (J) * 2.54, J = 1, 6),
+     1       LP(5), (SHED5 (J) * 2.54, J = 7, 12)
+          ELSE
+            WRITE (8, 6090) (HED5M (J) * 2.54, J = MONTHB, MONTH6),
+     1       LP(5)-1, (HED5M (J) * 2.54, J = MONTH7, MONTHE)
+            WRITE (8, 6100) (SHED5 (J) * 2.54, J = 1, 6),
+     1       LP(5)-1, (SHED5 (J) * 2.54, J = 7, 12)
+          END IF
+        END IF
+      END IF
  6012  FORMAT(1X/22X,'MONTHLY TOTALS (MM) FOR YEAR',I5/
-     1  1X, 126('-'))
- 6020 FORMAT(1X, /34X, 'JAN', 5X, 'FEB', 5X, 'MAR',
-     1  5X, 'APR', 5X, 'MAY', 5X, 'JUN', 5X, 'JUL',
-     2  5X, 'AUG', 5X, 'SEP', 5X, 'OCT', 5X, 'NOV',
-     3  5X, 'DEC', /31X, 12(1X, '-------'))
- 6032 FORMAT(' PRECIPITATION', 17X, 12(1X, F7.3))
- 6042 FORMAT(' RUNOFF', 24X, 12(1X, F7.3))
- 6052 FORMAT(' EVAPOTRANSPIRATION', 12X, 12(1X, F7.3), /)
- 6062 FORMAT(' LAT. DRAINAGE IN LAYER', I3, 5X, 12(1X, F7.3))
- 6072 FORMAT(' PERCOLATION THROUGH LAYER', I3, 2X, 12(1X, F7.3), /)
-
+     1  1X,79('-'))
+ 6020 FORMAT(1X,/33X,'JAN/JUL FEB/AUG MAR/SEP ',
+     1 'APR/OCT MAY/NOV JUN/DEC'/32X,6(' -------'))
+ 6032   FORMAT(1X,/' PRECIPITATION         ',
+     1   10X,F5.1,5(3X,F5.1)/30X,6(3X,F5.1))
+ 6042   FORMAT(1X/' RUNOFF         ',15X,
+     1   6(2X,F6.2)/31X,6(2X,F6.2))
+ 6052   FORMAT(1X/' EVAPOTRANSPIRATION',12X,6(2X,F6.2)/1X,
+     1   5X,'        ',17X,6(2X,F6.2))
  6077 FORMAT(1X/' SUBSURFACE INFLOW INTO  ',7X,6F8.3/3X,
      1 'LAYER',I3,'         ',12X,6F8.3)
  6065 FORMAT(1X,/' LATERAL DRAINAGE RECIRCULATED',2X,6F8.3/3X,
      1 'INTO LAYER',I3,'         ',7X,6F8.3)
  6067 FORMAT(1X,/' LATERAL DRAINAGE RECIRCULATED',2X,6F8.3/3X,
      1 'FROM LAYER',I3,'         ',7X,6F8.3)
- 
- 6082 FORMAT(1X//1X,79('-')/22X,
+ 6062 FORMAT(1X,/' LATERAL DRAINAGE COLLECTED   ',2X,6F8.3/3X,
+     1 'FROM LAYER',I3,'         ',7X,6F8.3)
+ 6072 FORMAT(1X/' PERCOLATION/LEAKAGE THROUGH   ',1X,6F8.3/3X,
+     1 'LAYER',I3,'         ',12X,6F8.3)
+ 6082       FORMAT(1X//1X,79('-')/22X,
      1       'MONTHLY SUMMARIES FOR DAILY HEADS (CM)'/1X,79('-')/)
  6090 FORMAT(1X/' AVERAGE DAILY HEAD ON ',8X,6F8.3/3X,
      1 'TOP OF LAYER',I3,'  ',11X,6F8.3)
  6100 FORMAT(1X/' STD. DEVIATION OF DAILY ',6X,6(F8.3)/3X,
      1 'HEAD ON TOP OF LAYER',I3,5X,6F8.3)
+
       RETURN
-      END
-C
-C
-C      ************************* OUTYR ************************
-C
-C     SUBROUTINE OUTYR PRINTS THE ANNUAL TOTALS
-C     FOR A YEAR OF SIMULATION RESULTS.
-C
-      SUBROUTINE OUTYR (IOA, IOS, IU8)
-      
-      INTEGER, INTENT(IN) :: IOA
-      INTEGER, INTENT(IN) :: IOS
+      END SUBROUTINE OUTMO2
+
+      !=================================================================
+      ! SUBROUTINE: FILL_PY_OUTMO
+      !
+      ! Packages the monthly simulation results into a 3D array
+      ! (PY_OUTMO) to be returned to Python via f2py.
+      !
+      ! All water routing values (precipitation, runoff, ET, drainage,
+      ! and percolation) are converted from inches to millimeters.
+      !
+      ! Array Structure: PY_OUTMO(IYR, ROW, COL)
+      !   - IYR: The current year of the simulation.
+      !   - COL 1: Indicates the physical layer number associated
+      !            with the data (0 for surface/climatic data, -1
+      !            if unused/inactive).
+      !   - COL 2-13: The monthly totals (Jan to Dec) in mm.
+      !=================================================================
+      SUBROUTINE FILL_PY_OUTMO(LMYR, PY_OUTMO)
+
+      INTEGER, INTENT(IN) :: LMYR
+      REAL, INTENT(INOUT) :: PY_OUTMO(LMYR, 14, 13)
+
+      COMMON /BLK12/ PRC1M (12), PRC2M (12), PRC3M (12),
+     &  PRC4M (12), PRC5M (12), PRC6M (12), DRN1M (12),
+     &  DRN2M (12), DRN3M (12), DRN4M (12), DRN5M (12),
+     &  PREM (12), RUNM (12), ETM (12), HED1M (12),
+     &  HED2M (12), HED3M (12), HED4M (12), HED5M (12),
+     &  RCRIM (20,12), SUBINM (20,12), RCR1M (12),
+     &  RCR2M (12), RCR3M (12), RCR4M (12), RCR5M (12)
+      COMMON /BLK16/ LD(5), LP(6), LPQ(5), LCASE(5), IYR, IDA, MO,
+     &  NSTEP(6), ND
+
+      PY_OUTMO(IYR, :, 1) = -1.0
+
+      ! Write monthly outputs for climatic data and ground surface.
+      PY_OUTMO(IYR, 1, 1) = 0.0
+      PY_OUTMO(IYR, 1, 2:13) = PREM * 25.4
+
+      PY_OUTMO(IYR, 2, 1) = 0.0
+      PY_OUTMO(IYR, 2, 2:13) = RUNM * 25.4
+
+      PY_OUTMO(IYR, 3, 1) = 0.0
+      PY_OUTMO(IYR, 3, 2:13) = ETM  * 25.4
+
+      ! Write monthly outputs for FIRST subprofile.
+      IF (LD(1) > 0) THEN
+        PY_OUTMO(IYR, 4, 1) = LD(1)
+        PY_OUTMO(IYR, 4, 2:13) = DRN1M * 25.4
+      END IF
+      PY_OUTMO(IYR, 5, 1) = LP(1)
+      PY_OUTMO(IYR, 5, 2:13) = PRC1M * 25.4
+
+      ! Write monthly outputs for SECOND subprofile.
+      IF (LP(2) > 0) THEN
+        IF (LD(2) > 0) THEN
+          PY_OUTMO(IYR, 6, 1) = LD(2)
+          PY_OUTMO(IYR, 6, 2:13) = DRN2M * 25.4
+        END IF
+        PY_OUTMO(IYR, 7, 1) = LP(2)
+        PY_OUTMO(IYR, 7, 2:13) = PRC2M * 25.4
+      END IF
+
+      ! Write monthly outputs for THIRD subprofile.
+      IF (LP(3) > 0) THEN
+        IF (LD(3) > 0) THEN
+          PY_OUTMO(IYR, 8, 1) = LD(3)
+          PY_OUTMO(IYR, 8, 2:13) = DRN3M * 25.4
+        END IF
+        PY_OUTMO(IYR, 9, 1) = LP(3)
+        PY_OUTMO(IYR, 9, 2:13) = PRC3M * 25.4
+      END IF
+
+      ! Write monthly outputs for FOURTH subprofile.
+      IF (LP(4) > 0) THEN
+        IF (LD(4) > 0) THEN
+          PY_OUTMO(IYR, 10, 1) = LD(4)
+          PY_OUTMO(IYR, 10, 2:13) = DRN4M * 25.4
+        END IF
+        PY_OUTMO(IYR, 11, 1) = LP(4)
+        PY_OUTMO(IYR, 11, 2:13) = PRC4M * 25.4
+      END IF
+
+      ! Write monthly outputs for FIFTH subprofile.
+      IF (LP(5) > 0) THEN
+        IF (LD(5) > 0) THEN
+          PY_OUTMO(IYR, 12, 1) = LD(5)
+          PY_OUTMO(IYR, 12, 2:13) = DRN5M * 25.4
+        END IF
+        PY_OUTMO(IYR, 13, 1) = LP(5)
+        PY_OUTMO(IYR, 13, 2:13) = PRC5M * 25.4
+      END IF
+
+      ! Write monthly outputs for SIXTH subprofile.
+      IF (LP(6) > 0) THEN
+        PY_OUTMO(IYR, 14, 1) = LP(6)
+        PY_OUTMO(IYR, 14, 2:13) = PRC6M * 25.4
+      END IF
+
+      RETURN
+      END SUBROUTINE FILL_PY_OUTMO
+
+      !=================================================================
+      ! SUBROUTINE: OUTYR
+      !
+      ! Print the annual totals for a year of simulation results.
+      !=================================================================
+      SUBROUTINE OUTYR (IU8)
+
       INTEGER, INTENT(IN) :: IU8
 
       PARAMETER (MXYR = 100)
-C
+
       COMMON /BLK1/ IT4, IT7, IT13, IU4, IU7, IU13, IU11, IU10
       DOUBLE PRECISION RC(20)
       COMMON /BLK3/ PORO (20), FC (20), WP (20), RC, SW (20),
@@ -7019,22 +6688,14 @@ C
      2  DRN2M (12), DRN3M (12), DRN4M (12), DRN5M (12),
      3  PREM (12), RUNM (12), ETM (12), HED1M (12),
      4  HED2M (12), HED3M (12), HED4M (12), HED5M (12),
-     5  RCRIM (20,12), SUBINM (20,12), RCR1M (12), 
-     6  RCR2M (12), RCR3M (12), RCR4M (12), RCR5M (12) 
-      COMMON /BLK13/ PRC1A, PRC2A, PRC3A, PRC4A, PRC5A, PRC6A, 
+     5  RCRIM (20,12), SUBINM (20,12), RCR1M (12),
+     6  RCR2M (12), RCR3M (12), RCR4M (12), RCR5M (12)
+      COMMON /BLK13/ PRC1A, PRC2A, PRC3A, PRC4A, PRC5A, PRC6A,
      1  DRN1A, DRN2A, DRN3A, DRN4A, DRN5A, BAL, PREA, RUNA, ETA,
      2  STOR, RCR1A, RCR2A, RCR3A, RCR4A, RCR5A, RCRIA(20), HED1A,
      3  HED2A, HED3A, HED4A, HED5A, OSWULE, PSWULE, SUBINA(20)
       COMMON /BLK16/ LD(5), LP(6), LPQ(5), LCASE(5), IYR, IDA, MO,
      1  NSTEP(6), ND
-      COMMON /BLK24/ PRC1A2, PRC2A2, PRC3A2, PRC4A2, PRC5A2, PRC6A2,
-     1  DRN1A2, DRN2A2, DRN3A2, DRN4A2, DRN5A2, PREA2, RUNA2, ETA2,
-     2  STOR2, RCR1A2, RCR2A2, RCR3A2, RCR4A2, RCR5A2, RCRIA2(20),
-     3  HED1A2, HED2A2, HED3A2, HED4A2, HED5A2
-      COMMON /BLK25/ PRC1A1, PRC2A1, PRC3A1, PRC4A1, PRC5A1, PRC6A1,
-     1  DRN1A1, DRN2A1, DRN3A1, DRN4A1, DRN5A1, PREA1, RUNA1, ETA1,
-     2  STOR1, RCR1A1, RCR2A1, RCR3A1, RCR4A1, RCR5A1, RCRIA1(20),
-     3  HED1A1, HED2A1, HED3A1, HED4A1, HED5A1
       COMMON /BLK28/ WE, XNEGHS, XLIQW, TINDEX, STORGE, EXLAG(4), TWE
       COMMON /BLK33/ JYEAR (MXYR)
       DIMENSION TRCRIA(20), FRCRIA(20), TSUBIA(20), FSUBIA(20)
@@ -7056,65 +6717,7 @@ C
       HED3A =  HED3A / 12.0
       HED4A =  HED4A / 12.0
       HED5A =  HED5A / 12.0
-      IF (IOS .EQ. 1) THEN
-        PREA1  =  PREA1  +  PREA
-        RUNA1  =  RUNA1  +  RUNA
-        ETA1   =  ETA1   +  ETA
-        DRN1A1 =  DRN1A1 +  DRN1A
-        DRN2A1 =  DRN2A1 +  DRN2A
-        DRN3A1 =  DRN3A1 +  DRN3A
-        DRN4A1 =  DRN4A1 +  DRN4A
-        DRN5A1 =  DRN5A1 +  DRN5A
-        RCR1A1 =  RCR1A1 +  RCR1A
-        RCR2A1 =  RCR2A1 +  RCR2A
-        RCR3A1 =  RCR3A1 +  RCR3A
-        RCR4A1 =  RCR4A1 +  RCR4A
-        RCR5A1 =  RCR5A1 +  RCR5A
-        HED1A1 =  HED1A1 +  HED1A
-        HED2A1 =  HED2A1 +  HED2A
-        HED3A1 =  HED3A1 +  HED3A
-        HED4A1 =  HED4A1 +  HED4A
-        HED5A1 =  HED5A1 +  HED5A
-        PRC1A1 =  PRC1A1 +  PRC1A
-        PRC2A1 =  PRC2A1 +  PRC2A
-        PRC3A1 =  PRC3A1 +  PRC3A
-        PRC4A1 =  PRC4A1 +  PRC4A
-        PRC5A1 =  PRC5A1 +  PRC5A
-        PRC6A1 =  PRC6A1 +  PRC6A
-        STOR1  =  STOR1  +  STOR 
-        DO 1020 K = 1, 20
-          RCRIA1(K) =  RCRIA1(K) +  RCRIA(K)
- 1020   CONTINUE
-        PREA2  =  PREA2  +  PREA  * PREA
-        RUNA2  =  RUNA2  +  RUNA  * RUNA
-        ETA2   =  ETA2   +  ETA   * ETA
-        DRN1A2 =  DRN1A2 +  DRN1A * DRN1A 
-        DRN2A2 =  DRN2A2 +  DRN2A * DRN2A 
-        DRN3A2 =  DRN3A2 +  DRN3A * DRN3A 
-        DRN4A2 =  DRN4A2 +  DRN4A * DRN4A 
-        DRN5A2 =  DRN5A2 +  DRN5A * DRN5A 
-        RCR1A2 =  RCR1A2 +  RCR1A * RCR1A 
-        RCR2A2 =  RCR2A2 +  RCR2A * RCR2A 
-        RCR3A2 =  RCR3A2 +  RCR3A * RCR3A 
-        RCR4A2 =  RCR4A2 +  RCR4A * RCR4A 
-        RCR5A2 =  RCR5A2 +  RCR5A * RCR5A 
-        HED1A2 =  HED1A2 +  HED1A * HED1A 
-        HED2A2 =  HED2A2 +  HED2A * HED2A 
-        HED3A2 =  HED3A2 +  HED3A * HED3A 
-        HED4A2 =  HED4A2 +  HED4A * HED4A 
-        HED5A2 =  HED5A2 +  HED5A * HED5A 
-        PRC1A2 =  PRC1A2 +  PRC1A * PRC1A 
-        PRC2A2 =  PRC2A2 +  PRC2A * PRC2A 
-        PRC3A2 =  PRC3A2 +  PRC3A * PRC3A 
-        PRC4A2 =  PRC4A2 +  PRC4A * PRC4A 
-        PRC5A2 =  PRC5A2 +  PRC5A * PRC5A 
-        PRC6A2 =  PRC6A2 +  PRC6A * PRC6A 
-        STOR2  =  STOR2  +  STOR  * STOR
-        DO 1030 K = 1, 20
-          RCRIA2(K) =  RCRIA2(K) +  RCRIA(K) * RCRIA(K)
- 1030   CONTINUE
-      END IF
-      IF (IOA .EQ. 0) RETURN
+
 C
 C     CONVERTS RESULTS FROM INCHES TO CU. FT. AND TO
 C     PERCENT OF THE ANNUAL PRECIPITATION AND PRINTS
@@ -7184,77 +6787,77 @@ C
  1040   CONTINUE
       ELSE
         PREA   = PREA * 25.4
-        TPREA  = AREA * 10.0 * PREA 
+        TPREA  = AREA * 10.0 * PREA
         FPREA  = 100.0
         RUNA   = RUNA * 25.4
-        TRUNA  = AREA * 10.0 * RUNA  
+        TRUNA  = AREA * 10.0 * RUNA
         FRUNA  = RUNA * 100.0 / PREA
         ETA    = ETA * 25.4
-        TETA   = AREA * 10.0 * ETA  
+        TETA   = AREA * 10.0 * ETA
         FETA   = ETA * 100.0 / PREA
         PRC6A  = PRC6A * 25.4
-        TPRC6A = PRC6A * AREA * 10.0  
+        TPRC6A = PRC6A * AREA * 10.0
         FPRC6A = PRC6A * 100.0 / PREA
         PRC5A  = PRC5A * 25.4
-        TPRC5A = PRC5A * AREA * 10.0  
+        TPRC5A = PRC5A * AREA * 10.0
         FPRC5A = PRC5A * 100.0 / PREA
         PRC4A  = PRC4A * 25.4
-        TPRC4A = PRC4A * AREA * 10.0  
+        TPRC4A = PRC4A * AREA * 10.0
         FPRC4A = PRC4A * 100.0 / PREA
         PRC3A  = PRC3A * 25.4
-        TPRC3A = PRC3A * AREA * 10.0  
+        TPRC3A = PRC3A * AREA * 10.0
         FPRC3A = PRC3A * 100.0 / PREA
         PRC2A  = PRC2A * 25.4
-        TPRC2A = PRC2A * AREA * 10.0  
+        TPRC2A = PRC2A * AREA * 10.0
         FPRC2A = PRC2A * 100.0 / PREA
         PRC1A  = PRC1A * 25.4
-        TPRC1A = PRC1A * AREA * 10.0  
+        TPRC1A = PRC1A * AREA * 10.0
         FPRC1A = PRC1A * 100.0 / PREA
         DRN5A  = DRN5A * 25.4
-        TDRN5A = DRN5A * AREA * 10.0  
+        TDRN5A = DRN5A * AREA * 10.0
         FDRN5A = DRN5A * 100.0 / PREA
         DRN4A  = DRN4A * 25.4
-        TDRN4A = DRN4A * AREA * 10.0  
+        TDRN4A = DRN4A * AREA * 10.0
         FDRN4A = DRN4A * 100.0 / PREA
         DRN3A  = DRN3A * 25.4
-        TDRN3A = DRN3A * AREA * 10.0  
+        TDRN3A = DRN3A * AREA * 10.0
         FDRN3A = DRN3A * 100.0 / PREA
         DRN2A  = DRN2A * 25.4
-        TDRN2A = DRN2A * AREA * 10.0  
+        TDRN2A = DRN2A * AREA * 10.0
         FDRN2A = DRN2A * 100.0 / PREA
         DRN1A  = DRN1A * 25.4
-        TDRN1A = DRN1A * AREA * 10.0  
+        TDRN1A = DRN1A * AREA * 10.0
         FDRN1A = DRN1A * 100.0 / PREA
         RCR5A  = RCR5A * 25.4
-        TRCR5A = RCR5A * AREA * 10.0  
+        TRCR5A = RCR5A * AREA * 10.0
         FRCR5A = RCR5A * 100.0 / PREA
         RCR4A  = RCR4A * 25.4
-        TRCR4A = RCR4A * AREA * 10.0  
+        TRCR4A = RCR4A * AREA * 10.0
         FRCR4A = RCR4A * 100.0 / PREA
         RCR3A  = RCR3A * 25.4
-        TRCR3A = RCR3A * AREA * 10.0  
+        TRCR3A = RCR3A * AREA * 10.0
         FRCR3A = RCR3A * 100.0 / PREA
         RCR2A  = RCR2A * 25.4
-        TRCR2A = RCR2A * AREA * 10.0  
+        TRCR2A = RCR2A * AREA * 10.0
         FRCR2A = RCR2A * 100.0 / PREA
         RCR1A  = RCR1A * 25.4
-        TRCR1A = RCR1A * AREA * 10.0  
+        TRCR1A = RCR1A * AREA * 10.0
         FRCR1A = RCR1A * 100.0 / PREA
         BAL    = BAL * 25.4
-        TBAL   = AREA * 10.0 * BAL  
+        TBAL   = AREA * 10.0 * BAL
         FBAL   = BAL * 100.0 / PREA
         OLDSNO = OLDSNO * 25.4
-        TOSNO  = AREA * 10.0 * OLDSNO 
+        TOSNO  = AREA * 10.0 * OLDSNO
         FOSNO  = OLDSNO  * 100.0 / PREA
         SSNO   = SSNO * 25.4
-        TSNO   = AREA * 10.0 * SSNO 
+        TSNO   = AREA * 10.0 * SSNO
         FSNO   = SSNO  * 100.0 / PREA
         PSWULE = PSWULE * 25.4
-        TPSW   = PSWULE * AREA * 10.0  
+        TPSW   = PSWULE * AREA * 10.0
         OSWULE = OSWULE * 25.4
-        TOSW   = OSWULE * AREA * 10.0  
+        TOSW   = OSWULE * AREA * 10.0
         STOR   = STOR * 25.4
-        TSTOR  = AREA * 10.0 * STOR  
+        TSTOR  = AREA * 10.0 * STOR
         FSTOR  = STOR * 100.0 / PREA
         HED1A  = HED1A * 25.4
         HED2A  = HED2A * 25.4
@@ -7263,7 +6866,7 @@ C
         HED5A  = HED5A * 25.4
         DO 1050 K = 1, 20
           RCRIA(K) = RCRIA(K) * 25.4
-          TRCRIA(K) = RCRIA(K) * AREA * 10.0   
+          TRCRIA(K) = RCRIA(K) * AREA * 10.0
           FRCRIA(K) = RCRIA(K) * 100.0 / PREA
 C
 C    DETERMINES IF THE YEAR IS A LEAP YEAR.
@@ -7275,7 +6878,7 @@ C     COMPILER CORRECTIONS ABOVE
 C
           SUBINA(K) = MND * SUBIN(K)
           SUBINA(K) = SUBINA(K) * 25.4
-          TSUBIA(K) = SUBINA(K) * AREA * 10.0   
+          TSUBIA(K) = SUBINA(K) * AREA * 10.0
           FSUBIA(K) = SUBINA(K) * 100.0 / PREA
  1050   CONTINUE
       END IF
@@ -7294,102 +6897,102 @@ C
       IF (LP(1) .GT. 0) THEN
         DO 1061 K = 1, LP(1)
           IF (LSIN(K) .GT. 0) WRITE(8,6111) K, SUBINA(K), TSUBIA(K),
-     1      FSUBIA(K)      
+     1      FSUBIA(K)
           IF (LRIN(K) .GT. 0) WRITE(8,6121) K, RCRIA(K), TRCRIA(K),
-     1      FRCRIA(K)      
+     1      FRCRIA(K)
  1061   CONTINUE
-        IF (LD(1) .GT. 0) THEN 
+        IF (LD(1) .GT. 0) THEN
           WRITE(8,6041) LD(1), DRN1A, TDRN1A, FDRN1A
           IF (LAYR(LD(1)) .GT. 0) WRITE(8,6131) LD(1), RCR1A, TRCR1A,
      1     FRCR1A
         END IF
         WRITE(8,6051) LP(1), PRC1A, TPRC1A, FPRC1A
-        IF (LAYER (LP(1)) .GT. 2 .AND. LAYER (LP(1)-1) .LE. 2) 
+        IF (LAYER (LP(1)) .GT. 2 .AND. LAYER (LP(1)-1) .LE. 2)
      1    WRITE(8,6052)  LP(1), HED1A
-        IF (LAYER (LP(1)) .GT. 2 .AND. LAYER (LP(1)-1) .GT. 2) 
+        IF (LAYER (LP(1)) .GT. 2 .AND. LAYER (LP(1)-1) .GT. 2)
      1    WRITE(8,6052)  (LP(1)-1), HED1A
-      END IF 
+      END IF
       IF (LP(2) .GT. 0) THEN
         DO 1062 K = LP(1)+1, LP(2)
           IF (LSIN(K) .GT. 0) WRITE(8,6111) K, SUBINA(K), TSUBIA(K),
-     1      FSUBIA(K)      
+     1      FSUBIA(K)
           IF (LRIN(K) .GT. 0) WRITE(8,6121) K, RCRIA(K), TRCRIA(K),
-     1      FRCRIA(K)      
+     1      FRCRIA(K)
  1062   CONTINUE
-        IF (LD(2) .GT. 0) THEN 
+        IF (LD(2) .GT. 0) THEN
           WRITE(8,6041) LD(2), DRN2A, TDRN2A, FDRN2A
           IF (LAYR(LD(2)) .GT. 0) WRITE(8,6131) LD(2), RCR2A, TRCR2A,
      1     FRCR2A
         END IF
         WRITE(8,6051) LP(2), PRC2A, TPRC2A, FPRC2A
-        IF (LAYER (LP(2)) .GT. 2 .AND. LAYER (LP(2)-1) .LE. 2) 
+        IF (LAYER (LP(2)) .GT. 2 .AND. LAYER (LP(2)-1) .LE. 2)
      1    WRITE(8,6052)  LP(2), HED2A
-        IF (LAYER (LP(2)) .GT. 2 .AND. LAYER (LP(2)-1) .GT. 2) 
+        IF (LAYER (LP(2)) .GT. 2 .AND. LAYER (LP(2)-1) .GT. 2)
      1    WRITE(8,6052)  (LP(2)-1), HED2A
-      END IF 
+      END IF
       IF (LP(3) .GT. 0) THEN
         DO 1063 K = LP(2)+1, LP(3)
           IF (LSIN(K) .GT. 0) WRITE(8,6111) K, SUBINA(K), TSUBIA(K),
-     1      FSUBIA(K)      
+     1      FSUBIA(K)
           IF (LRIN(K) .GT. 0) WRITE(8,6121) K, RCRIA(K), TRCRIA(K),
-     1      FRCRIA(K)      
+     1      FRCRIA(K)
  1063   CONTINUE
-        IF (LD(3) .GT. 0) THEN 
+        IF (LD(3) .GT. 0) THEN
           WRITE(8,6041) LD(3), DRN3A, TDRN3A, FDRN3A
           IF (LAYR(LD(3)) .GT. 0) WRITE(8,6131) LD(3), RCR3A, TRCR3A,
      1     FRCR3A
         END IF
         WRITE(8,6051) LP(3), PRC3A, TPRC3A, FPRC3A
-        IF (LAYER (LP(3)) .GT. 2 .AND. LAYER (LP(3)-1) .LE. 2) 
+        IF (LAYER (LP(3)) .GT. 2 .AND. LAYER (LP(3)-1) .LE. 2)
      1    WRITE(8,6052)  LP(3), HED3A
-        IF (LAYER (LP(3)) .GT. 2 .AND. LAYER (LP(3)-1) .GT. 2) 
+        IF (LAYER (LP(3)) .GT. 2 .AND. LAYER (LP(3)-1) .GT. 2)
      1    WRITE(8,6052)  (LP(3)-1), HED3A
-      END IF 
+      END IF
       IF (LP(4) .GT. 0) THEN
         DO 1064 K = LP(3)+1, LP(4)
           IF (LSIN(K) .GT. 0) WRITE(8,6111) K, SUBINA(K), TSUBIA(K),
-     1      FSUBIA(K)      
+     1      FSUBIA(K)
           IF (LRIN(K) .GT. 0) WRITE(8,6121) K, RCRIA(K), TRCRIA(K),
-     1      FRCRIA(K)      
+     1      FRCRIA(K)
  1064   CONTINUE
-        IF (LD(4) .GT. 0) THEN 
+        IF (LD(4) .GT. 0) THEN
           WRITE(8,6041) LD(4), DRN4A, TDRN4A, FDRN4A
           IF (LAYR(LD(4)) .GT. 0) WRITE(8,6131) LD(4), RCR4A, TRCR4A,
      1     FRCR4A
         END IF
         WRITE(8,6051) LP(4), PRC4A, TPRC4A, FPRC4A
-        IF (LAYER (LP(4)) .GT. 2 .AND. LAYER (LP(4)-1) .LE. 2) 
+        IF (LAYER (LP(4)) .GT. 2 .AND. LAYER (LP(4)-1) .LE. 2)
      1    WRITE(8,6052)  LP(4), HED4A
-        IF (LAYER (LP(4)) .GT. 2 .AND. LAYER (LP(4)-1) .GT. 2) 
+        IF (LAYER (LP(4)) .GT. 2 .AND. LAYER (LP(4)-1) .GT. 2)
      1    WRITE(8,6052)  (LP(4)-1), HED4A
-      END IF 
+      END IF
       IF (LP(5) .GT. 0) THEN
         DO 1065 K = LP(4)+1, LP(5)
           IF (LSIN(K) .GT. 0) WRITE(8,6111) K, SUBINA(K), TSUBIA(K),
-     1      FSUBIA(K)      
+     1      FSUBIA(K)
           IF (LRIN(K) .GT. 0) WRITE(8,6121) K, RCRIA(K), TRCRIA(K),
-     1      FRCRIA(K)      
+     1      FRCRIA(K)
  1065   CONTINUE
-        IF (LD(5) .GT. 0) THEN 
+        IF (LD(5) .GT. 0) THEN
           WRITE(8,6041) LD(5), DRN5A, TDRN5A, FDRN5A
           IF (LAYR(LD(5)) .GT. 0) WRITE(8,6131) LD(5), RCR5A, TRCR5A,
      1     FRCR5A
         END IF
         WRITE(8,6051) LP(5), PRC5A, TPRC5A, FPRC5A
-        IF (LAYER (LP(5)) .GT. 2 .AND. LAYER (LP(5)-1) .LE. 2) 
+        IF (LAYER (LP(5)) .GT. 2 .AND. LAYER (LP(5)-1) .LE. 2)
      1    WRITE(8,6052)  LP(5), HED5A
-        IF (LAYER (LP(5)) .GT. 2 .AND. LAYER (LP(5)-1) .GT. 2) 
+        IF (LAYER (LP(5)) .GT. 2 .AND. LAYER (LP(5)-1) .GT. 2)
      1    WRITE(8,6052)  (LP(5)-1), HED5A
-      END IF 
+      END IF
       IF (LP(6) .GT. 0) THEN
         DO 1066 K = LP(5)+1, LP(6)
           IF (LSIN(K) .GT. 0) WRITE(8,6111) K, SUBINA(K), TSUBIA(K),
-     1      FSUBIA(K)      
+     1      FSUBIA(K)
           IF (LRIN(K) .GT. 0) WRITE(8,6121) K, RCRIA(K), TRCRIA(K),
-     1      FRCRIA(K)      
+     1      FRCRIA(K)
  1066   CONTINUE
         WRITE(8,6051) LP(6), PRC6A, TPRC6A, FPRC6A
-      END IF 
+      END IF
       WRITE (8, 6056) STOR, TSTOR, FSTOR
       WRITE (8, 6061) OSWULE, TOSW
       WRITE (8, 6071) PSWULE, TPSW
@@ -7442,1306 +7045,6 @@ C
      1  I3, 6X,F16.6,2X,F13.3,1X,F9.2)
       RETURN
       END SUBROUTINE OUTYR
-C
-C
-C      ********************* OUTAV *********************
-C
-      SUBROUTINE OUTAV (LMYR, IU8)
-C
-C    SUBROUTINE OUTAV COMPUTES AND PRINTS THE AVERAGED
-C    RESULTS FOR THE SIMULATION.
-
-      PARAMETER (MXYR = 100)
-
-      INTEGER, INTENT(IN) :: LMYR
-      INTEGER, INTENT(IN) :: IU8
-
-      COMMON /BLK1/ IT4, IT7, IT13, IU4, IU7, IU13, IU11, IU10
-      COMMON /BLK4/ LAYER (21), LAYR (20), IPQ (20), ISOIL (20), LAY,
-     1  LAYSEG (67, 2), LSEG (67), LSEGS (20, 2), LRIN(20), LSIN(20)
-      COMMON /BLK5/ AREA, FRUNOF, CN2, OCN2, SSLOPE, SLENG, SMX
-      COMMON /BLK12/ PRC1M (12), PRC2M (12), PRC3M (12),
-     1  PRC4M (12), PRC5M (12), PRC6M (12), DRN1M (12),
-     2  DRN2M (12), DRN3M (12), DRN4M (12), DRN5M (12),
-     3  PREM (12), RUNM (12), ETM (12), HED1M (12),
-     4  HED2M (12), HED3M (12), HED4M (12), HED5M (12),
-     5  RCRIM (20,12), SUBINM (20,12), RCR1M (12), 
-     6  RCR2M (12), RCR3M (12), RCR4M (12), RCR5M (12) 
-      COMMON /BLK13/ PRC1A, PRC2A, PRC3A, PRC4A, PRC5A, PRC6A, 
-     1  DRN1A, DRN2A, DRN3A, DRN4A, DRN5A, BAL, PREA, RUNA, ETA,
-     2  STOR, RCR1A, RCR2A, RCR3A, RCR4A, RCR5A, RCRIA(20), HED1A,
-     3  HED2A, HED3A, HED4A, HED5A, OSWULE, PSWULE, SUBINA(20)
-      COMMON /BLK16/ LD(5), LP(6), LPQ(5), LCASE(5), IYR, IDA, MO,
-     1  NSTEP(6), ND
-      COMMON /BLK22/ PRC1M2 (12), PRC2M2 (12), PRC3M2 (12),
-     1  PRC4M2 (12), PRC5M2 (12), PRC6M2 (12), DRN1M2 (12),
-     2  DRN2M2 (12), DRN3M2 (12), DRN4M2 (12), DRN5M2 (12),
-     3  PREM2 (12), RUNM2 (12), ETM2 (12), HED1M2 (12),
-     4  HED2M2 (12), HED3M2 (12), HED4M2 (12), HED5M2 (12),
-     5  RCRIM2 (20,12), RCR1M2 (12), RCR2M2 (12),
-     6  RCR3M2 (12), RCR4M2 (12), RCR5M2 (12)
-      COMMON /BLK23/ PRC1M1 (12), PRC2M1 (12), PRC3M1 (12),
-     1  PRC4M1 (12), PRC5M1 (12), PRC6M1 (12), DRN1M1 (12),
-     2  DRN2M1 (12), DRN3M1 (12), DRN4M1 (12), DRN5M1 (12),
-     3  PREM1 (12), RUNM1 (12), ETM1 (12), HED1M1 (12),
-     4  HED2M1 (12), HED3M1 (12), HED4M1 (12), HED5M1 (12),
-     5  RCRIM1 (20,12), RCR1M1 (12), RCR2M1 (12),
-     6  RCR3M1 (12), RCR4M1 (12), RCR5M1 (12)
-      COMMON /BLK24/ PRC1A2, PRC2A2, PRC3A2, PRC4A2, PRC5A2, PRC6A2,
-     1  DRN1A2, DRN2A2, DRN3A2, DRN4A2, DRN5A2, PREA2, RUNA2, ETA2,
-     2  STOR2, RCR1A2, RCR2A2, RCR3A2, RCR4A2, RCR5A2, RCRIA2(20),
-     3  HED1A2, HED2A2, HED3A2, HED4A2, HED5A2
-      COMMON /BLK25/ PRC1A1, PRC2A1, PRC3A1, PRC4A1, PRC5A1, PRC6A1,
-     1  DRN1A1, DRN2A1, DRN3A1, DRN4A1, DRN5A1, PREA1, RUNA1, ETA1,
-     2  STOR1, RCR1A1, RCR2A1, RCR3A1, RCR4A1, RCR5A1, RCRIA1(20),
-     3  HED1A1, HED2A1, HED3A1, HED4A1, HED5A1
-      COMMON /BLK33/ JYEAR (MXYR)
-      DIMENSION APRC1M (12), APRC2M (12), APRC3M (12), APRC4M (12), 
-     1  APRC5M (12), APRC6M (12), ADRN1M (12), ADRN2M (12), 
-     2  ADRN3M (12), ADRN4M (12), ADRN5M (12), APREM (12), 
-     3  ARUNM (12), AETM (12), ARCR1M (12), ARCR2M (12), 
-     4  ARCR3M (12), ARCR4M (12), ARCR5M (12), ARCRIM (20, 12),
-     5  AHED1M (12), AHED2M (12), AHED3M (12), AHED4M (12), AHED5M (12)
-      DIMENSION SPRC1M (12), SPRC2M (12), SPRC3M (12), SPRC4M (12), 
-     1  SPRC5M (12), SPRC6M (12), SDRN1M (12), SDRN2M (12), 
-     2  SDRN3M (12), SDRN4M (12), SDRN5M (12), SPREM (12), 
-     3  SRUNM (12), SETM (12), SRCR1M (12), SRCR2M (12), 
-     4  SRCR3M (12), SRCR4M (12), SRCR5M (12), SRCRIM (20, 12),
-     5  SHED1M (12), SHED2M (12), SHED3M (12), SHED4M (12), SHED5M (12)
-      DIMENSION ASUBIA (20), FASUBA (20), TASUBA (20),
-     1  ARCRIA (20), SRCRIA (20), FARCIA (20), TARCIA (20)
-C
-C    INITIALIZES STANDARD DEVIATIONS OF AVERAGED MONTHLY VARIABLES 
-C
-      DO 1000 M = 1, 12
-         SPREM (M) = 0.0
-         SRUNM (M) = 0.0
-         SETM (M) = 0.0
-         SPRC1M (M) = 0.0
-         SPRC2M (M) = 0.0
-         SPRC3M (M) = 0.0
-         SPRC4M (M) = 0.0
-         SPRC5M (M) = 0.0
-         SPRC6M (M) = 0.0
-         SDRN1M (M) = 0.0
-         SDRN2M (M) = 0.0
-         SDRN3M (M) = 0.0
-         SDRN4M (M) = 0.0
-         SDRN5M (M) = 0.0
-         SHED1M (M) = 0.0
-         SHED2M (M) = 0.0
-         SHED3M (M) = 0.0
-         SHED4M (M) = 0.0
-         SHED5M (M) = 0.0
-         SRCR1M (M) = 0.0
-         SRCR2M (M) = 0.0
-         SRCR3M (M) = 0.0
-         SRCR4M (M) = 0.0
-         SRCR5M (M) = 0.0
-         DO 1002 K = 1, 20
-           SRCRIM (K,M) = 0.0
- 1002    CONTINUE
- 1000 CONTINUE
-C
-C    COMPUTES AVERAGED MONTHLY VARIABLES IN INCHES.
-C
-      DO 1010 M = 1, 12
-        APREM (M)  =  PREM1 (M) / LMYR
-        ARUNM (M)  =  RUNM1 (M) / LMYR
-        AETM (M)   =   ETM1 (M) / LMYR
-        APRC1M (M) = PRC1M1 (M) / LMYR
-        APRC2M (M) = PRC2M1 (M) / LMYR
-        APRC3M (M) = PRC3M1 (M) / LMYR
-        APRC4M (M) = PRC4M1 (M) / LMYR
-        APRC5M (M) = PRC5M1 (M) / LMYR
-        APRC6M (M) = PRC6M1 (M) / LMYR
-        ADRN1M (M) = DRN1M1 (M) / LMYR
-        ADRN2M (M) = DRN2M1 (M) / LMYR
-        ADRN3M (M) = DRN3M1 (M) / LMYR
-        ADRN4M (M) = DRN4M1 (M) / LMYR
-        ADRN5M (M) = DRN5M1 (M) / LMYR
-        AHED1M (M) = HED1M1 (M) / LMYR
-        AHED2M (M) = HED2M1 (M) / LMYR
-        AHED3M (M) = HED3M1 (M) / LMYR
-        AHED4M (M) = HED4M1 (M) / LMYR
-        AHED5M (M) = HED5M1 (M) / LMYR
-        ARCR1M (M) = RCR1M1 (M) / LMYR
-        ARCR2M (M) = RCR2M1 (M) / LMYR
-        ARCR3M (M) = RCR3M1 (M) / LMYR
-        ARCR4M (M) = RCR4M1 (M) / LMYR
-        ARCR5M (M) = RCR5M1 (M) / LMYR
-        DO 1012 K = 1, 20
-          ARCRIM (K,M) = RCRIM1 (K,M) / LMYR
- 1012   CONTINUE
- 1010 CONTINUE
-      IF (LMYR .GT. 1) THEN      
-        DO 1040 M = 1, 12
-          SPREM (M)  = PREM2 (M)  - ((PREM1 (M)  * PREM1 (M)) / LMYR) 
-          SRUNM (M)  = RUNM2 (M)  - ((RUNM1 (M)  * RUNM1 (M)) / LMYR) 
-          SETM (M)   = ETM2 (M)   - ((ETM1 (M)   * ETM1 (M))  / LMYR)
-          SPRC1M (M) = PRC1M2 (M) - ((PRC1M1 (M) * PRC1M1 (M)) / LMYR)
-          SPRC2M (M) = PRC2M2 (M) - ((PRC2M1 (M) * PRC2M1 (M)) / LMYR)
-          SPRC3M (M) = PRC3M2 (M) - ((PRC3M1 (M) * PRC3M1 (M)) / LMYR)
-          SPRC4M (M) = PRC4M2 (M) - ((PRC4M1 (M) * PRC4M1 (M)) / LMYR)
-          SPRC5M (M) = PRC5M2 (M) - ((PRC5M1 (M) * PRC5M1 (M)) / LMYR)
-          SPRC6M (M) = PRC6M2 (M) - ((PRC6M1 (M) * PRC6M1 (M)) / LMYR)
-          SDRN1M (M) = DRN1M2 (M) - ((DRN1M1 (M) * DRN1M1 (M)) / LMYR)
-          SDRN2M (M) = DRN2M2 (M) - ((DRN2M1 (M) * DRN2M1 (M)) / LMYR)
-          SDRN3M (M) = DRN3M2 (M) - ((DRN3M1 (M) * DRN3M1 (M)) / LMYR)
-          SDRN4M (M) = DRN4M2 (M) - ((DRN4M1 (M) * DRN4M1 (M)) / LMYR)
-          SDRN5M (M) = DRN5M2 (M) - ((DRN5M1 (M) * DRN5M1 (M)) / LMYR)
-          SHED1M (M) = HED1M2 (M) - ((HED1M1 (M) * HED1M1 (M)) / LMYR)
-          SHED2M (M) = HED2M2 (M) - ((HED2M1 (M) * HED2M1 (M)) / LMYR)
-          SHED3M (M) = HED3M2 (M) - ((HED3M1 (M) * HED3M1 (M)) / LMYR)
-          SHED4M (M) = HED4M2 (M) - ((HED4M1 (M) * HED4M1 (M)) / LMYR)
-          SHED5M (M) = HED5M2 (M) - ((HED5M1 (M) * HED5M1 (M)) / LMYR)
-          SRCR1M (M) = RCR1M2 (M) - ((RCR1M1 (M) * RCR1M1 (M)) / LMYR)
-          SRCR2M (M) = RCR2M2 (M) - ((RCR2M1 (M) * RCR2M1 (M)) / LMYR)
-          SRCR3M (M) = RCR3M2 (M) - ((RCR3M1 (M) * RCR3M1 (M)) / LMYR)
-          SRCR4M (M) = RCR4M2 (M) - ((RCR4M1 (M) * RCR4M1 (M)) / LMYR)
-          SRCR5M (M) = RCR5M2 (M) - ((RCR5M1 (M) * RCR5M1 (M)) / LMYR)
-          IF (SPREM (M)  .LT. 0.0) SPREM (M)  = 0.0
-          IF (SRUNM (M)  .LT. 0.0) SRUNM (M)  = 0.0
-          IF (SETM (M)   .LT. 0.0) SETM (M)   = 0.0
-          IF (SPRC1M (M) .LT. 0.0) SPRC1M (M) = 0.0
-          IF (SPRC2M (M) .LT. 0.0) SPRC2M (M) = 0.0
-          IF (SPRC3M (M) .LT. 0.0) SPRC3M (M) = 0.0
-          IF (SPRC4M (M) .LT. 0.0) SPRC4M (M) = 0.0
-          IF (SPRC5M (M) .LT. 0.0) SPRC5M (M) = 0.0
-          IF (SPRC6M (M) .LT. 0.0) SPRC6M (M) = 0.0
-          IF (SDRN1M (M) .LT. 0.0) SDRN1M (M) = 0.0
-          IF (SDRN2M (M) .LT. 0.0) SDRN2M (M) = 0.0
-          IF (SDRN3M (M) .LT. 0.0) SDRN3M (M) = 0.0
-          IF (SDRN4M (M) .LT. 0.0) SDRN4M (M) = 0.0
-          IF (SDRN5M (M) .LT. 0.0) SDRN5M (M) = 0.0
-          IF (SHED1M (M) .LT. 0.0) SHED1M (M) = 0.0
-          IF (SHED2M (M) .LT. 0.0) SHED2M (M) = 0.0
-          IF (SHED3M (M) .LT. 0.0) SHED3M (M) = 0.0
-          IF (SHED4M (M) .LT. 0.0) SHED4M (M) = 0.0
-          IF (SHED5M (M) .LT. 0.0) SHED5M (M) = 0.0
-          IF (SRCR1M (M) .LT. 0.0) SRCR1M (M) = 0.0
-          IF (SRCR2M (M) .LT. 0.0) SRCR2M (M) = 0.0
-          IF (SRCR3M (M) .LT. 0.0) SRCR3M (M) = 0.0
-          IF (SRCR4M (M) .LT. 0.0) SRCR4M (M) = 0.0
-          IF (SRCR5M (M) .LT. 0.0) SRCR5M (M) = 0.0
-          DO 1020 K = 1, 20
-            SRCRIM(K,M) = RCRIM2(K,M) - ((RCRIM1(K,M)*RCRIM1(K,M))/LMYR)
-            IF (SRCRIM (K,M) .LT. 0.0) SRCRIM (K,M) = 0.0
-            SRCRIM(K,M) = SQRT(SRCRIM(K,M) / (LMYR - 1)) 
- 1020     CONTINUE
-          SPREM (M)  = SQRT(SPREM (M) / (LMYR - 1)) 
-          SRUNM (M)  = SQRT(SRUNM (M) / (LMYR - 1)) 
-          SETM (M)   = SQRT(SETM (M)  / (LMYR - 1)) 
-          SPRC1M (M) = SQRT(SPRC1M (M) / (LMYR - 1))
-          SPRC2M (M) = SQRT(SPRC2M (M) / (LMYR - 1))
-          SPRC3M (M) = SQRT(SPRC3M (M) / (LMYR - 1))
-          SPRC4M (M) = SQRT(SPRC4M (M) / (LMYR - 1))
-          SPRC5M (M) = SQRT(SPRC5M (M) / (LMYR - 1))
-          SPRC6M (M) = SQRT(SPRC6M (M) / (LMYR - 1))
-          SDRN1M (M) = SQRT(SDRN1M (M) / (LMYR - 1))
-          SDRN2M (M) = SQRT(SDRN2M (M) / (LMYR - 1))
-          SDRN3M (M) = SQRT(SDRN3M (M) / (LMYR - 1))
-          SDRN4M (M) = SQRT(SDRN4M (M) / (LMYR - 1))
-          SDRN5M (M) = SQRT(SDRN5M (M) / (LMYR - 1))
-          SHED1M (M) = SQRT(SHED1M (M) / (LMYR - 1))
-          SHED2M (M) = SQRT(SHED2M (M) / (LMYR - 1))
-          SHED3M (M) = SQRT(SHED3M (M) / (LMYR - 1))
-          SHED4M (M) = SQRT(SHED4M (M) / (LMYR - 1))
-          SHED5M (M) = SQRT(SHED5M (M) / (LMYR - 1))
-          SRCR1M (M) = SQRT(SRCR1M (M) / (LMYR - 1))
-          SRCR2M (M) = SQRT(SRCR2M (M) / (LMYR - 1))
-          SRCR3M (M) = SQRT(SRCR3M (M) / (LMYR - 1))
-          SRCR4M (M) = SQRT(SRCR4M (M) / (LMYR - 1))
-          SRCR5M (M) = SQRT(SRCR5M (M) / (LMYR - 1))
- 1040   CONTINUE       
-      END IF
-C
-C    INITIALIZES STANDARD DEVIATIONS OF AVERAGED ANNUAL VARIABLES.
-C
-      SPREA  = 0.0
-      SRUNA  = 0.0
-      SETA   = 0.0
-      SSTOR  = 0.0
-      SPRC1A = 0.0
-      SPRC2A = 0.0
-      SPRC3A = 0.0
-      SPRC4A = 0.0
-      SPRC5A = 0.0
-      SPRC6A = 0.0
-      SDRN1A = 0.0
-      SDRN2A = 0.0
-      SDRN3A = 0.0
-      SDRN4A = 0.0
-      SDRN5A = 0.0
-      SHED1A = 0.0
-      SHED2A = 0.0
-      SHED3A = 0.0
-      SHED4A = 0.0
-      SHED5A = 0.0
-      SRCR1A = 0.0
-      SRCR2A = 0.0
-      SRCR3A = 0.0
-      SRCR4A = 0.0
-      SRCR5A = 0.0
-      DO 1030 K = 1, 20
-        ASUBIA (K) = SUBINA (K)
-        SRCRIA (K) = 0.0
- 1030 CONTINUE
-C
-C    COMPUTES AVERAGED ANNUAL VARIABLES IN INCHES.
-C
-      APREA  = PREA1 / LMYR
-      ARUNA  = RUNA1 / LMYR
-      AETA   = ETA1 / LMYR
-      ASTOR  = STOR1 / LMYR
-      APRC1A = PRC1A1 / LMYR
-      APRC2A = PRC2A1 / LMYR
-      APRC3A = PRC3A1 / LMYR
-      APRC4A = PRC4A1 / LMYR
-      APRC5A = PRC5A1 / LMYR
-      APRC6A = PRC6A1 / LMYR
-      ADRN1A = DRN1A1 / LMYR
-      ADRN2A = DRN2A1 / LMYR
-      ADRN3A = DRN3A1 / LMYR
-      ADRN4A = DRN4A1 / LMYR
-      ADRN5A = DRN5A1 / LMYR
-      ARCR1A = RCR1A1 / LMYR
-      ARCR2A = RCR2A1 / LMYR
-      ARCR3A = RCR3A1 / LMYR
-      ARCR4A = RCR4A1 / LMYR
-      ARCR5A = RCR5A1 / LMYR
-      AHED1A = HED1A1 / LMYR
-      AHED2A = HED2A1 / LMYR
-      AHED3A = HED3A1 / LMYR
-      AHED4A = HED4A1 / LMYR
-      AHED5A = HED5A1 / LMYR
-      DO 1016 K = 1, 20
-         ARCRIA(K) = RCRIA1(K) / LMYR
- 1016 CONTINUE
-      IF (LMYR .GT. 1) THEN      
-        SPREA  = PREA2  - ((PREA1  * PREA1) / LMYR) 
-        SRUNA  = RUNA2  - ((RUNA1  * RUNA1) / LMYR) 
-        SETA   = ETA2   - ((ETA1   * ETA1)  / LMYR)
-        SSTOR  = STOR2  - ((STOR1  * STOR1) / LMYR)
-        SPRC1A = PRC1A2 - ((PRC1A1 * PRC1A1) / LMYR)
-        SPRC2A = PRC2A2 - ((PRC2A1 * PRC2A1) / LMYR)
-        SPRC3A = PRC3A2 - ((PRC3A1 * PRC3A1) / LMYR)
-        SPRC4A = PRC4A2 - ((PRC4A1 * PRC4A1) / LMYR)
-        SPRC5A = PRC5A2 - ((PRC5A1 * PRC5A1) / LMYR)
-        SPRC6A = PRC6A2 - ((PRC6A1 * PRC6A1) / LMYR)
-        SDRN1A = DRN1A2 - ((DRN1A1 * DRN1A1) / LMYR)
-        SDRN2A = DRN2A2 - ((DRN2A1 * DRN2A1) / LMYR)
-        SDRN3A = DRN3A2 - ((DRN3A1 * DRN3A1) / LMYR)
-        SDRN4A = DRN4A2 - ((DRN4A1 * DRN4A1) / LMYR)
-        SDRN5A = DRN5A2 - ((DRN5A1 * DRN5A1) / LMYR)
-        SRCR1A = RCR1A2 - ((RCR1A1 * RCR1A1) / LMYR)
-        SRCR2A = RCR2A2 - ((RCR2A1 * RCR2A1) / LMYR)
-        SRCR3A = RCR3A2 - ((RCR3A1 * RCR3A1) / LMYR)
-        SRCR4A = RCR4A2 - ((RCR4A1 * RCR4A1) / LMYR)
-        SRCR5A = RCR5A2 - ((RCR5A1 * RCR5A1) / LMYR)
-        SHED1A = HED1A2 - ((HED1A1 * HED1A1) / LMYR)
-        SHED2A = HED2A2 - ((HED2A1 * HED2A1) / LMYR)
-        SHED3A = HED3A2 - ((HED3A1 * HED3A1) / LMYR)
-        SHED4A = HED4A2 - ((HED4A1 * HED4A1) / LMYR)
-        SHED5A = HED5A2 - ((HED5A1 * HED5A1) / LMYR)
-        IF (SPREA  .LT. 0.0) SPREA  = 0.0
-        IF (SRUNA  .LT. 0.0) SRUNA  = 0.0
-        IF (SETA   .LT. 0.0) SETA   = 0.0
-        IF (SSTOR  .LT. 0.0) SSTOR  = 0.0
-        IF (SPRC1A .LT. 0.0) SPRC1A = 0.0
-        IF (SPRC2A .LT. 0.0) SPRC2A = 0.0
-        IF (SPRC3A .LT. 0.0) SPRC3A = 0.0
-        IF (SPRC4A .LT. 0.0) SPRC4A = 0.0
-        IF (SPRC5A .LT. 0.0) SPRC5A = 0.0
-        IF (SPRC6A .LT. 0.0) SPRC6A = 0.0
-        IF (SDRN1A .LT. 0.0) SDRN1A = 0.0
-        IF (SDRN2A .LT. 0.0) SDRN2A = 0.0
-        IF (SDRN3A .LT. 0.0) SDRN3A = 0.0
-        IF (SDRN4A .LT. 0.0) SDRN4A = 0.0
-        IF (SDRN5A .LT. 0.0) SDRN5A = 0.0
-        IF (SRCR1A .LT. 0.0) SRCR1A = 0.0
-        IF (SRCR2A .LT. 0.0) SRCR2A = 0.0
-        IF (SRCR3A .LT. 0.0) SRCR3A = 0.0
-        IF (SRCR4A .LT. 0.0) SRCR4A = 0.0
-        IF (SRCR5A .LT. 0.0) SRCR5A = 0.0
-        IF (SHED1A .LT. 0.0) SHED1A = 0.0
-        IF (SHED2A .LT. 0.0) SHED2A = 0.0
-        IF (SHED3A .LT. 0.0) SHED3A = 0.0
-        IF (SHED4A .LT. 0.0) SHED4A = 0.0
-        IF (SHED5A .LT. 0.0) SHED5A = 0.0
-        DO 1070 K = 1, 20
-          SRCRIA (K) = RCRIA2 (K) - ((RCRIA1 (K) * RCRIA1 (K)) / LMYR)
-          IF (SRCRIA (K) .LT. 0.0) SRCRIA (K) = 0.0
-          SRCRIA (K) = SQRT(SRCRIA (K) / (LMYR - 1))
- 1070   CONTINUE           
-        SPREA  = SQRT(SPREA / (LMYR - 1)) 
-        SRUNA  = SQRT(SRUNA / (LMYR - 1)) 
-        SETA   = SQRT(SETA / (LMYR - 1)) 
-        SSTOR  = SQRT(SSTOR / (LMYR - 1)) 
-        SPRC1A = SQRT(SPRC1A / (LMYR - 1))
-        SPRC2A = SQRT(SPRC2A / (LMYR - 1))
-        SPRC3A = SQRT(SPRC3A / (LMYR - 1))
-        SPRC4A = SQRT(SPRC4A / (LMYR - 1))
-        SPRC5A = SQRT(SPRC5A / (LMYR - 1))
-        SPRC6A = SQRT(SPRC6A / (LMYR - 1))
-        SDRN1A = SQRT(SDRN1A / (LMYR - 1))
-        SDRN2A = SQRT(SDRN2A / (LMYR - 1))
-        SDRN3A = SQRT(SDRN3A / (LMYR - 1))
-        SDRN4A = SQRT(SDRN4A / (LMYR - 1))
-        SDRN5A = SQRT(SDRN5A / (LMYR - 1))
-        SRCR1A = SQRT(SRCR1A / (LMYR - 1))
-        SRCR2A = SQRT(SRCR2A / (LMYR - 1))
-        SRCR3A = SQRT(SRCR3A / (LMYR - 1))
-        SRCR4A = SQRT(SRCR4A / (LMYR - 1))
-        SRCR5A = SQRT(SRCR5A / (LMYR - 1))
-        SHED1A = SQRT(SHED1A / (LMYR - 1))
-        SHED2A = SQRT(SHED2A / (LMYR - 1))
-        SHED3A = SQRT(SHED3A / (LMYR - 1))
-        SHED4A = SQRT(SHED4A / (LMYR - 1))
-        SHED5A = SQRT(SHED5A / (LMYR - 1))
-      END IF
-C
-C    COMPUTES AVERAGED ANNUAL VARIABLES IN CU. FT. AND IN
-C    PERCENT OF AVERAGE ANNUAL PRECIPITATION.
-C
-      IF(IU8 .EQ. 1) THEN
-        TAPREA = APREA  * AREA * 43560. / 12.0
-        FAPREA = 100.0
-        TARUNA = ARUNA  * AREA * 43560. / 12.0
-        FARUNA = ARUNA  * 100.0 / APREA
-        TAETA  = AETA   * AREA * 43560. / 12.0
-        FAETA  = AETA   * 100.0 / APREA
-        TASTOR = ASTOR  * AREA * 43560. / 12.0
-        FASTOR = ASTOR  * 100.0 / APREA
-        TAPC6A = APRC6A * AREA * 43560. / 12.0
-        FAPC6A = APRC6A * 100.0 / APREA
-        TAPC5A = APRC5A * AREA * 43560. / 12.0
-        FAPC5A = APRC5A * 100.0 / APREA
-        TAPC4A = APRC4A * AREA * 43560. / 12.0
-        FAPC4A = APRC4A * 100.0 / APREA
-        TAPC3A = APRC3A * AREA * 43560. / 12.0
-        FAPC3A = APRC3A * 100.0 / APREA
-        TAPC2A = APRC2A * AREA * 43560. / 12.0
-        FAPC2A = APRC2A * 100.0 / APREA
-        TAPC1A = APRC1A * AREA * 43560. / 12.0
-        FAPC1A = APRC1A * 100.0 / APREA
-        TADN5A = ADRN5A * AREA * 43560. / 12.0
-        FADN5A = ADRN5A * 100.0 / APREA
-        TADN4A = ADRN4A * AREA * 43560. / 12.0
-        FADN4A = ADRN4A * 100.0 / APREA
-        TADN3A = ADRN3A * AREA * 43560. / 12.0
-        FADN3A = ADRN3A * 100.0 / APREA
-        TADN2A = ADRN2A * AREA * 43560. / 12.0
-        FADN2A = ADRN2A * 100.0 / APREA
-        TADN1A = ADRN1A * AREA * 43560. / 12.0
-        FADN1A = ADRN1A * 100.0 / APREA
-        TARC5A = ARCR5A * AREA * 43560. / 12.0
-        FARC5A = ARCR5A * 100.0 / APREA
-        TARC4A = ARCR4A * AREA * 43560. / 12.0
-        FARC4A = ARCR4A * 100.0 / APREA
-        TARC3A = ARCR3A * AREA * 43560. / 12.0
-        FARC3A = ARCR3A * 100.0 / APREA
-        TARC2A = ARCR2A * AREA * 43560. / 12.0
-        FARC2A = ARCR2A * 100.0 / APREA
-        TARC1A = ARCR1A * AREA * 43560. / 12.0
-        FARC1A = ARCR1A * 100.0 / APREA
-        DO 1050 K = 1, 20
-          TASUBA (K) = ASUBIA (K) * AREA * 43560. / 12.0
-          TARCIA (K) = ARCRIA (K) * AREA * 43560. / 12.0
-          FASUBA (K) = ASUBIA (K) * 100.0 / APREA
-          FARCIA (K) = ARCRIA (K) * 100.0 / APREA
- 1050   CONTINUE
-      ELSE 
-        DO 1140 M = 1, 12
-          APREM (M)  = APREM (M)  * 25.4
-          ARUNM (M)  = ARUNM (M)  * 25.4
-          AETM (M)   = AETM (M)   * 25.4
-          APRC1M (M) = APRC1M (M) * 25.4
-          APRC2M (M) = APRC2M (M) * 25.4 
-          APRC3M (M) = APRC3M (M) * 25.4 
-          APRC4M (M) = APRC4M (M) * 25.4 
-          APRC5M (M) = APRC5M (M) * 25.4 
-          APRC6M (M) = APRC6M (M) * 25.4
-          ADRN1M (M) = ADRN1M (M) * 25.4
-          ADRN2M (M) = ADRN2M (M) * 25.4
-          ADRN3M (M) = ADRN3M (M) * 25.4
-          ADRN4M (M) = ADRN4M (M) * 25.4
-          ADRN5M (M) = ADRN5M (M) * 25.4
-          AHED1M (M) = AHED1M (M) * 2.54
-          AHED2M (M) = AHED2M (M) * 2.54
-          AHED3M (M) = AHED3M (M) * 2.54
-          AHED4M (M) = AHED4M (M) * 2.54
-          AHED5M (M) = AHED5M (M) * 2.54
-          ARCR1M (M) = ARCR1M (M) * 25.4
-          ARCR2M (M) = ARCR2M (M) * 25.4
-          ARCR3M (M) = ARCR3M (M) * 25.4
-          ARCR4M (M) = ARCR4M (M) * 25.4
-          ARCR5M (M) = ARCR5M (M) * 25.4
-          DO 1120 K = 1, 20        
-            SUBINM(K,M) = SUBINM(K,M) * 25.4
-            ARCRIM(K,M) = ARCRIM(K,M) * 25.4
-            SRCRIM(K,M) = SRCRIM(K,M) * 25.4
- 1120     CONTINUE                    
-          SPREM (M)  = SPREM (M)  * 25.4    
-          SRUNM (M)  = SRUNM (M)  * 25.4    
-          SETM (M)   = SETM (M)   * 25.4    
-          SPRC1M (M) = SPRC1M (M) * 25.4    
-          SPRC2M (M) = SPRC2M (M) * 25.4    
-          SPRC3M (M) = SPRC3M (M) * 25.4
-          SPRC4M (M) = SPRC4M (M) * 25.4
-          SPRC5M (M) = SPRC5M (M) * 25.4
-          SPRC6M (M) = SPRC6M (M) * 25.4
-          SDRN1M (M) = SDRN1M (M) * 25.4
-          SDRN2M (M) = SDRN2M (M) * 25.4
-          SDRN3M (M) = SDRN3M (M) * 25.4
-          SDRN4M (M) = SDRN4M (M) * 25.4
-          SDRN5M (M) = SDRN5M (M) * 25.4
-          SHED1M (M) = SHED1M (M) * 2.54
-          SHED2M (M) = SHED2M (M) * 2.54
-          SHED3M (M) = SHED3M (M) * 2.54
-          SHED4M (M) = SHED4M (M) * 2.54
-          SHED5M (M) = SHED5M (M) * 2.54
-          SRCR1M (M) = SRCR1M (M) * 25.4
-          SRCR2M (M) = SRCR2M (M) * 25.4
-          SRCR3M (M) = SRCR3M (M) * 25.4
-          SRCR4M (M) = SRCR4M (M) * 25.4
-          SRCR5M (M) = SRCR5M (M) * 25.4
- 1140   CONTINUE                   
-        APREA  = APREA  * 25.4 
-        ARUNA  = ARUNA  * 25.4 
-        AETA   = AETA   * 25.4 
-        ASTOR  = ASTOR  * 25.4 
-        APRC1A = APRC1A * 25.4 
-        APRC2A = APRC2A * 25.4 
-        APRC3A = APRC3A * 25.4 
-        APRC4A = APRC4A * 25.4 
-        APRC5A = APRC5A * 25.4 
-        APRC6A = APRC6A * 25.4 
-        ADRN1A = ADRN1A * 25.4 
-        ADRN2A = ADRN2A * 25.4 
-        ADRN3A = ADRN3A * 25.4 
-        ADRN4A = ADRN4A * 25.4 
-        ADRN5A = ADRN5A * 25.4 
-        ARCR1A = ARCR1A * 25.4 
-        ARCR2A = ARCR2A * 25.4 
-        ARCR3A = ARCR3A * 25.4 
-        ARCR4A = ARCR4A * 25.4 
-        ARCR5A = ARCR5A * 25.4 
-        AHED1A = AHED1A * 25.4 
-        AHED2A = AHED2A * 25.4 
-        AHED3A = AHED3A * 25.4 
-        AHED4A = AHED4A * 25.4 
-        AHED5A = AHED5A  
-        DO 1080 K = 1, 20 
-          ARCRIA (K) = ARCRIA (K) * 25.4
-          SRCRIA (K) = SRCRIA (K) * 25.4
- 1080   CONTINUE                        
-        SPREA  = SPREA  * 25.4
-        SRUNA  = SRUNA  * 25.4
-        SETA   = SETA   * 25.4
-        SPRC1A = SPRC1A * 25.4
-        SPRC2A = SPRC2A * 25.4
-        SPRC3A = SPRC3A * 25.4
-        SPRC4A = SPRC4A * 25.4
-        SPRC5A = SPRC5A * 25.4
-        SPRC6A = SPRC6A * 25.4
-        SDRN1A = SDRN1A * 25.4
-        SDRN2A = SDRN2A * 25.4
-        SDRN3A = SDRN3A * 25.4
-        SDRN4A = SDRN4A * 25.4
-        SDRN5A = SDRN5A * 25.4
-        SRCR1A = SRCR1A * 25.4
-        SRCR2A = SRCR2A * 25.4
-        SRCR3A = SRCR3A * 25.4
-        SRCR4A = SRCR4A * 25.4
-        SRCR5A = SRCR5A * 25.4
-        SHED1A = SHED1A * 25.4
-        SHED2A = SHED2A * 25.4
-        SHED3A = SHED3A * 25.4
-        SHED4A = SHED4A * 25.4
-        SHED5A = SHED5A * 25.4
-        TAPREA = APREA  * AREA * 10.0
-        FAPREA = 100.0  
-        TARUNA = ARUNA  * AREA * 10.0
-        FARUNA = ARUNA  * 100.0 / APREA
-        TAETA  = AETA   * AREA * 10.0
-        FAETA  = AETA   * 100.0 / APREA
-        TASTOR = ASTOR  * AREA * 10.0
-        FASTOR = ASTOR  * 100.0 / APREA
-        TAPC6A = APRC6A * AREA * 10.0
-        FAPC6A = APRC6A * 100.0 / APREA
-        TAPC5A = APRC5A * AREA * 10.0
-        FAPC5A = APRC5A * 100.0 / APREA
-        TAPC4A = APRC4A * AREA * 10.0
-        FAPC4A = APRC4A * 100.0 / APREA
-        TAPC3A = APRC3A * AREA * 10.0
-        FAPC3A = APRC3A * 100.0 / APREA
-        TAPC2A = APRC2A * AREA * 10.0
-        FAPC2A = APRC2A * 100.0 / APREA
-        TAPC1A = APRC1A * AREA * 10.0
-        FAPC1A = APRC1A * 100.0 / APREA
-        TADN5A = ADRN5A * AREA * 10.0
-        FADN5A = ADRN5A * 100.0 / APREA
-        TADN4A = ADRN4A * AREA * 10.0
-        FADN4A = ADRN4A * 100.0 / APREA
-        TADN3A = ADRN3A * AREA * 10.0
-        FADN3A = ADRN3A * 100.0 / APREA
-        TADN2A = ADRN2A * AREA * 10.0
-        FADN2A = ADRN2A * 100.0 / APREA
-        TADN1A = ADRN1A * AREA * 10.0
-        FADN1A = ADRN1A * 100.0 / APREA
-        TARC5A = ARCR5A * AREA * 10.0
-        FARC5A = ARCR5A * 100.0 / APREA
-        TARC4A = ARCR4A * AREA * 10.0
-        FARC4A = ARCR4A * 100.0 / APREA
-        TARC3A = ARCR3A * AREA * 10.0
-        FARC3A = ARCR3A * 100.0 / APREA
-        TARC2A = ARCR2A * AREA * 10.0
-        FARC2A = ARCR2A * 100.0 / APREA
-        TARC1A = ARCR1A * AREA * 10.0
-        FARC1A = ARCR1A * 100.0 / APREA
-        DO 1150 K = 1, 20
-          TASUBA (K) = ASUBIA (K) * AREA * 10.0
-          TARCIA (K) = ARCRIA (K) * AREA * 10.0
-          FASUBA (K) = ASUBIA (K) * 100.0 / APREA
-          FARCIA (K) = ARCRIA (K) * 100.0 / APREA
- 1150   CONTINUE
-      END IF
-C
-C    PRINTS HEADING FOR AVERAGE MONTHLY RESULTS AND PRINTS
-C    AVERAGED MONTHLY PRECIPITATION, RUNOFF AND
-C    EVAPOTRANSPIRATION.
-C
-      WRITE (8, 6000)
-      IF (IU8 .EQ. 1) THEN
-        WRITE (8, 6011) JYEAR (1), JYEAR (LMYR)
-      ELSE
-        WRITE (8, 6012) JYEAR (1), JYEAR (LMYR)
-      END IF
-        WRITE (8, 6020)
-        WRITE (8, 6030) (APREM (J), J = 1, 12)
-        WRITE (8, 6040) (SPREM (J), J = 1, 12)
-        WRITE (8, 6050) (ARUNM (J), J = 1, 12)
-        WRITE (8, 6060) (SRUNM (J), J = 1, 12)
-        WRITE (8, 6070) (AETM (J), J = 1, 12)
-        WRITE (8, 6080) (SETM (J), J = 1, 12)
-      DO 2010 K = 1, LP(1)
-          IF (LSIN(K) .GT. 0) WRITE(8,6170) K, (SUBINM(K,J), J = 1, 12)
-          IF (LRIN(K) .GT. 0) WRITE(8,6150) K, (ARCRIM(K,J), J = 1, 12)
-          IF (LRIN(K) .GT. 0) WRITE(8,6160) (SRCRIM(K,J), J = 1, 12)
- 2010 CONTINUE
-        IF (LD(1) .GT. 0) THEN
-          WRITE (8, 6090) LD(1), (ADRN1M (J), J = 1, 12)
-          WRITE (8, 6100) (SDRN1M (J), J = 1, 12)
-          IF (LAYR(LD(1)) .GT. 0) WRITE (8, 6130) LD(1), (ARCR1M (J),
-     1    J = 1, 12)
-          IF (LAYR(LD(1)) .GT. 0) WRITE (8,6140) (SRCR1M(J), J = 1, 12)
-        END IF
-        WRITE (8, 6110) LP(1), (APRC1M (J), J = 1, 12)
-        WRITE (8, 6120) (SPRC1M (J), J = 1, 12)
-      IF (LP(2) .GT. 0) THEN
-        DO 2020 K = LP(1)+1, LP(2)
-          IF (LSIN(K) .GT. 0) WRITE(8,6170) K, (SUBINM(K,J), J = 1, 12)
-          IF (LRIN(K) .GT. 0) WRITE(8,6150) K, (ARCRIM(K,J), J = 1, 12)
-          IF (LRIN(K) .GT. 0) WRITE(8,6160) (SRCRIM(K,J), J = 1, 12)
- 2020   CONTINUE
-        IF (LD(2) .GT. 0) THEN
-          WRITE (8, 6090) LD(2), (ADRN2M (J), J = 1, 12)
-          WRITE (8, 6100) (SDRN2M (J), J = 1, 12)
-          IF (LAYR(LD(2)) .GT. 0) WRITE (8, 6130) LD(2), (ARCR2M (J),
-     1    J = 1, 12)
-          IF (LAYR(LD(2)) .GT. 0) WRITE (8,6140) (SRCR2M(J), J = 1, 12)
-        END IF
-        WRITE (8, 6110) LP(2), (APRC2M (J), J = 1, 12)
-        WRITE (8, 6120) (SPRC2M (J), J = 1, 12)
-      END IF
-      IF (LP(3) .GT. 0) THEN
-        DO 2030 K = LP(2)+1, LP(3)
-          IF (LSIN(K) .GT. 0) WRITE(8,6170) K, (SUBINM(K,J), J = 1, 12)
-          IF (LRIN(K) .GT. 0) WRITE(8,6150) K, (ARCRIM(K,J), J = 1, 12)
-          IF (LRIN(K) .GT. 0) WRITE(8,6160) (SRCRIM(K,J), J = 1, 12)
- 2030   CONTINUE
-        IF (LD(3) .GT. 0) THEN
-          WRITE (8, 6090) LD(3), (ADRN3M (J), J = 1, 12)
-          WRITE (8, 6100) (SDRN3M (J), J = 1, 12)
-          IF (LAYR(LD(3)) .GT. 0) WRITE (8, 6130) LD(3), (ARCR3M (J),
-     1    J = 1, 12)
-          IF (LAYR(LD(3)) .GT. 0) WRITE (8,6140) (SRCR3M(J), J = 1, 12)
-        END IF
-        WRITE (8, 6110) LP(3), (APRC3M (J), J = 1, 12)
-        WRITE (8, 6120) (SPRC3M (J), J = 1, 12)
-      END IF
-      IF (LP(4) .GT. 0) THEN
-        DO 2040 K = LP(3)+1, LP(4)
-          IF (LSIN(K) .GT. 0) WRITE(8,6170) K, (SUBINM(K,J), J = 1, 12)
-          IF (LRIN(K) .GT. 0) WRITE(8,6150) K, (ARCRIM(K,J), J = 1, 12)
-          IF (LRIN(K) .GT. 0) WRITE(8,6160) (SRCRIM(K,J), J = 1, 12)
- 2040   CONTINUE
-        IF (LD(4) .GT. 0) THEN
-          WRITE (8, 6090) LD(4), (ADRN4M (J), J = 1, 12)
-          WRITE (8, 6100) (SDRN4M (J), J = 1, 12)
-          IF (LAYR(LD(4)) .GT. 0) WRITE (8, 6130) LD(4), (ARCR4M (J),
-     1    J = 1, 12)
-          IF (LAYR(LD(4)) .GT. 0) WRITE (8,6140) (SRCR4M(J), J = 1, 12)
-        END IF
-        WRITE (8, 6110) LP(4), (APRC4M (J), J = 1, 12)
-        WRITE (8, 6120) (SPRC4M (J), J = 1, 12)
-      END IF
-      IF (LP(5) .GT. 0) THEN
-        DO 2050 K = LP(4)+1, LP(5)
-          IF (LSIN(K) .GT. 0) WRITE(8,6170) K, (SUBINM(K,J), J = 1, 12)
-          IF (LRIN(K) .GT. 0) WRITE(8,6150) K, (ARCRIM(K,J), J = 1, 12)
-          IF (LRIN(K) .GT. 0) WRITE(8,6160) (SRCRIM(K,J), J = 1, 12)
- 2050   CONTINUE
-        IF (LD(5) .GT. 0) THEN
-          WRITE (8, 6090) LD(5), (ADRN5M (J), J = 1, 12)
-          WRITE (8, 6100) (SDRN5M (J), J = 1, 12)
-          IF (LAYR(LD(5)) .GT. 0) WRITE (8, 6130) LD(5), (ARCR5M (J),
-     1    J = 1, 12)
-          IF (LAYR(LD(5)) .GT. 0) WRITE (8,6140) (SRCR5M(J), J = 1, 12)
-        END IF
-        WRITE (8, 6110) LP(5), (APRC5M (J), J = 1, 12)
-        WRITE (8, 6120) (SPRC5M (J), J = 1, 12)
-      END IF
-      IF (LP(6) .GT. 0) THEN
-        DO 2060 K = LP(5)+1, LP(6)
-          IF (LSIN(K) .GT. 0) WRITE(8,6170) K, (SUBINM(K,J), J = 1, 12)
-          IF (LRIN(K) .GT. 0) WRITE(8,6150) K, (ARCRIM(K,J), J = 1, 12)
-          IF (LRIN(K) .GT. 0) WRITE(8,6160) (SRCRIM(K,J), J = 1, 12)
- 2060   CONTINUE
-        WRITE (8, 6110) LP(6), (APRC6M (J), J = 1, 12)
-        WRITE (8, 6120) (SPRC6M (J), J = 1, 12)
-      END IF
-      IF (LP(1) .GT. 0) THEN
-        IF (LAYER (LP(1)) .GT. 2) THEN
-          IF (IU8 .EQ. 1) THEN
-            WRITE (8, 6191)
-          ELSE
-            WRITE (8, 6192)
-          END IF
-          IF (LAYER (LP(1)-1) .LE. 2) THEN
-            WRITE (8, 6200) LP(1), (AHED1M (J), J = 1, 12)
-          ELSE
-            WRITE (8, 6200) (LP(1)-1), (AHED1M (J), J = 1, 12)
-          END IF
-          WRITE (8, 6210) (SHED1M (J), J = 1, 12)
-        END IF
-      END IF
-      IF (LP(2) .GT. 0) THEN
-        IF (LAYER (LP(2)) .GT. 2) THEN
-          IF (LAYER (LP(2)-1) .LE. 2) THEN
-            WRITE (8, 6200) LP(2), (AHED2M (J), J = 1, 12)
-          ELSE
-            WRITE (8, 6200) (LP(2)-1), (AHED2M (J), J = 1, 12)
-          END IF
-          WRITE (8, 6210) (SHED2M (J), J = 1, 12)
-        END IF
-      END IF
-      IF (LP(3) .GT. 0) THEN
-        IF (LAYER (LP(3)) .GT. 2) THEN
-          IF (LAYER (LP(3)-1) .LE. 2) THEN
-            WRITE (8, 6200) LP(3), (AHED3M (J), J = 1, 12)
-          ELSE
-            WRITE (8, 6200) (LP(3)-1), (AHED3M (J), J = 1, 12)
-          END IF
-          WRITE (8, 6210) (SHED3M (J), J = 1, 12)
-        END IF
-      END IF
-      IF (LP(4) .GT. 0) THEN
-        IF (LAYER (LP(4)) .GT. 2) THEN
-          IF (LAYER (LP(4)-1) .LE. 2) THEN
-            WRITE (8, 6200) LP(4), (AHED4M (J), J = 1, 12)
-          ELSE
-            WRITE (8, 6200) (LP(4)-1), (AHED4M (J), J = 1, 12)
-          END IF
-          WRITE (8, 6210) (SHED4M (J), J = 1, 12)
-        END IF
-      END IF
-      IF (LP(5) .GT. 0) THEN
-        IF (LAYER (LP(5)) .GT. 2) THEN
-          IF (LAYER (LP(5)-1) .LE. 2) THEN
-            WRITE (8, 6200) LP(5), (AHED5M (J), J = 1, 12)
-          ELSE
-            WRITE (8, 6200) (LP(5)-1), (AHED5M (J), J = 1, 12)
-          END IF
-          WRITE (8, 6210) (SHED5M (J), J = 1, 12)
-        END IF
-      END IF
-C
-C
- 6000 FORMAT(1X,3(/),1X,79('*'))
- 6011 FORMAT(1X/10X,'AVERAGE MONTHLY VALUES IN INCHES FOR YEARS',
-     1   I5,' THROUGH',I5/1X,79('-'))
- 6012 FORMAT(1X/13X,'AVERAGE MONTHLY VALUES (MM) FOR YEARS',
-     1   I5,' THROUGH',I5/1X,79('-'))
- 6020 FORMAT(1X/26X,'JAN/JUL  FEB/AUG  MAR/SEP  ',
-     1 'APR/OCT  MAY/NOV  JUN/DEC'/24X,6('  -------'))
- 6030 FORMAT('   PRECIPITATION'/3X,13('-')/4X,' TOTALS',13X,
-     1    1X,F7.2,5(2X,F7.2)/23X,6(2X,F7.2))
- 6040 FORMAT(1X/4X,' STD. DEVIATIONS',
-     1    5X,F7.2,5(2X,F7.2)/23X,6(2X,F7.2))
- 6050 FORMAT(1X/'   RUNOFF'/3X,6('-')/4X,' TOTALS',13X,
-     1   6(1X,F8.3)/24X,6(1X,F8.3))
- 6060 FORMAT(1X/4X,' STD. DEVIATIONS',4X,
-     1   6(1X,F8.3)/24X,6(1X,F8.3))
- 6070 FORMAT(1X/'   EVAPOTRANSPIRATION'/3X,18('-')/
-     1 4X,' TOTALS',13X,6(1X,F8.3)/24X,6(1X,F8.3))
- 6080 FORMAT(1X/4X,' STD. DEVIATIONS',4X,6(1X,F8.3)/
-     1 24X,6(1X,F8.3))
- 6090 FORMAT(1X/'   LATERAL DRAINAGE COLLECTED FROM',
-     1 ' LAYER',I3,/3X,40('-'),/4X,' TOTALS',14X,6F9.4/25X,6F9.4)
- 6100 FORMAT(1X/4X,' STD. DEVIATIONS',5X,6F9.4/25X,6F9.4)
- 6110 FORMAT(1X/'   PERCOLATION/LEAKAGE THROUGH',
-     1 ' LAYER',I3,/3X,36('-'),/4X,' TOTALS',14X,6F9.4/25X,6F9.4)
- 6120 FORMAT(1X/4X,' STD. DEVIATIONS',5X,6F9.4/25X,6F9.4)
- 6130 FORMAT(1X/'   LATERAL DRAINAGE RECIRCULATED FROM',
-     1 ' LAYER',I3,/3X,43('-'),/4X,' TOTALS',14X,6F9.4/25X,6F9.4)
- 6140 FORMAT(1X/4X,' STD. DEVIATIONS',5X,6F9.4/25X,6F9.4)
- 6150 FORMAT(1X/'   LATERAL DRAINAGE RECIRCULATED INTO',
-     1 ' LAYER',I3,/3X,43('-'),/4X,' TOTALS',14X,6F9.4/25X,6F9.4)
- 6160 FORMAT(1X/4X,' STD. DEVIATIONS',5X,6F9.4/25X,6F9.4)
- 6170 FORMAT(1X/'   SUBSURFACE INFLOW INTO',
-     1 ' LAYER',I3,/3X,31('-'),/4X,' TOTALS',14X,6F9.4/25X,6F9.4)
- 6180 FORMAT(1X/4X,' STD. DEVIATIONS',5X,6F9.4/25X,6F9.4)
- 6191 FORMAT(1X//1X,79('-')/16X,'AVERAGES OF MONTHLY AVERAGED DAILY ',
-     1 'HEADS (INCHES)'/1X,79('-')/)
- 6192 FORMAT(1X//1X,79('-')/18X,'AVERAGES OF MONTHLY AVERAGED DAILY ',
-     1 'HEADS (CM)'/1X,79('-')/)
- 6200 FORMAT(1X/'   DAILY AVERAGE HEAD ON TOP OF',
-     1 ' LAYER',I3,/3X,37('-'),/4X,' AVERAGES',12X,6F9.4/25X,6F9.4)
- 6210 FORMAT(1X/4X,' STD. DEVIATIONS',5X,6F9.4/25X,6F9.4)
-C
-C
-C
-C    WRITES HEADING FOR AVERAGE ANNUAL RESULTS AND PRINTS AVERAGE
-C    ANNUAL PRECIPITATION, RUNOFF AND EVAPOTRANSPIRATION.
-C
-      WRITE (8, 6330)
-      IF (IU8 .EQ. 1) THEN
-        WRITE (8, 6341) JYEAR (1), JYEAR (LMYR), APREA,
-     1    SPREA, TAPREA, FAPREA
-      ELSE
-        WRITE (8, 6342) JYEAR (1), JYEAR (LMYR), APREA,
-     1    SPREA, TAPREA, FAPREA
-      END IF
-      WRITE (8, 6350) ARUNA, SRUNA, TARUNA, FARUNA
-      WRITE (8, 6360) AETA, SETA, TAETA, FAETA
-C
-      IF (LP(1) .GT. 0) THEN
-        DO 1061 K = 1, LP(1)
-          IF (LSIN(K) .GT. 0) WRITE(8,6290) ASUBIA(K), 
-     1        TASUBA(K), FASUBA(K), K
-          IF (LRIN(K) .GT. 0) WRITE(8,6280) ARCRIA(K), SRCRIA(K),
-     1        TARCIA(K), FARCIA(K), K
- 1061   CONTINUE
-        IF (LD(1) .GT. 0) THEN
-          WRITE(8,6370) ADRN1A, SDRN1A, TADN1A, FADN1A, LD(1)
-          IF (LAYR(LD(1)) .GT. 0) WRITE(8,6270) ARCR1A, SRCR1A,
-     1       TARC1A, FARC1A, LD(1)
-        END IF
-        WRITE(8,6380) APRC1A, SPRC1A, TAPC1A, FAPC1A, LP(1)
-        IF (LAYER (LP(1)) .GT. 2) THEN
-          IF (LAYER (LP(1)-1) .GT. 2) THEN
-            WRITE(8,6300) AHED1A, SHED1A, (LP(1)-1)
-          ELSE
-            WRITE(8,6300) AHED1A, SHED1A, LP(1)
-          END IF 
-        END IF 
-      END IF
-      IF (LP(2) .GT. 0) THEN
-        DO 1062 K = LP(1)+1, LP(2)
-          IF (LSIN(K) .GT. 0) WRITE(8,6290) ASUBIA(K), 
-     1        TASUBA(K), FASUBA(K), K
-          IF (LRIN(K) .GT. 0) WRITE(8,6280) ARCRIA(K), SRCRIA(K),
-     1        TARCIA(K), FARCIA(K), K
- 1062   CONTINUE
-        IF (LD(2) .GT. 0) THEN
-          WRITE(8,6370) ADRN2A, SDRN2A, TADN2A, FADN2A, LD(2)
-          IF (LAYR(LD(2)) .GT. 0) WRITE(8,6270) ARCR2A, SRCR2A,
-     1       TARC2A, FARC2A, LD(2)
-        END IF
-        WRITE(8,6380) APRC2A, SPRC2A, TAPC2A, FAPC2A, LP(2)
-        IF (LAYER (LP(2)) .GT. 2) THEN
-          IF (LAYER (LP(2)-1) .GT. 2) THEN
-            WRITE(8,6300) AHED2A, SHED2A, (LP(2)-1)
-          ELSE
-            WRITE(8,6300) AHED2A, SHED2A, LP(2)
-          END IF 
-        END IF 
-      END IF
-      IF (LP(3) .GT. 0) THEN
-        DO 1063 K = LP(2)+1, LP(3)
-          IF (LSIN(K) .GT. 0) WRITE(8,6290) ASUBIA(K), 
-     1        TASUBA(K), FASUBA(K), K
-          IF (LRIN(K) .GT. 0) WRITE(8,6280) ARCRIA(K), SRCRIA(K),
-     1        TARCIA(K), FARCIA(K), K
- 1063   CONTINUE
-        IF (LD(3) .GT. 0) THEN
-          WRITE(8,6370) ADRN3A, SDRN3A, TADN3A, FADN3A, LD(3)
-          IF (LAYR(LD(3)) .GT. 0) WRITE(8,6270) ARCR3A, SRCR3A,
-     1       TARC3A, FARC3A, LD(3)
-        END IF
-        WRITE(8,6380) APRC3A, SPRC3A, TAPC3A, FAPC3A, LP(3)
-        IF (LAYER (LP(3)) .GT. 2) THEN
-          IF (LAYER (LP(3)-1) .GT. 2) THEN
-            WRITE(8,6300) AHED3A, SHED3A, (LP(3)-1)
-          ELSE
-            WRITE(8,6300) AHED3A, SHED3A, LP(3)
-          END IF 
-        END IF 
-      END IF
-      IF (LP(4) .GT. 0) THEN
-        DO 1064 K = LP(3)+1, LP(4)
-          IF (LSIN(K) .GT. 0) WRITE(8,6290) ASUBIA(K), 
-     1        TASUBA(K), FASUBA(K), K
-          IF (LRIN(K) .GT. 0) WRITE(8,6280) ARCRIA(K), SRCRIA(K),
-     1        TARCIA(K), FARCIA(K), K
- 1064   CONTINUE
-        IF (LD(4) .GT. 0) THEN
-          WRITE(8,6370) ADRN4A, SDRN4A, TADN4A, FADN4A, LD(4)
-          IF (LAYR(LD(4)) .GT. 0) WRITE(8,6270) ARCR4A, SRCR4A,
-     1       TARC4A, FARC4A, LD(4)
-        END IF
-        WRITE(8,6380) APRC4A, SPRC4A, TAPC4A, FAPC4A, LP(4)
-        IF (LAYER (LP(4)) .GT. 2) THEN
-          IF (LAYER (LP(4)-1) .GT. 2) THEN
-            WRITE(8,6300) AHED4A, SHED4A, (LP(4)-1)
-          ELSE
-            WRITE(8,6300) AHED4A, SHED4A, LP(4)
-          END IF 
-        END IF 
-      END IF
-      IF (LP(5) .GT. 0) THEN
-        DO 1065 K = LP(4)+1, LP(5)
-          IF (LSIN(K) .GT. 0) WRITE(8,6290) ASUBIA(K), 
-     1        TASUBA(K), FASUBA(K), K
-          IF (LRIN(K) .GT. 0) WRITE(8,6280) ARCRIA(K), SRCRIA(K),
-     1        TARCIA(K), FARCIA(K), K
- 1065   CONTINUE
-        IF (LD(5) .GT. 0) THEN
-          WRITE(8,6370) ADRN5A, SDRN5A, TADN5A, FADN5A, LD(5)
-          IF (LAYR(LD(5)) .GT. 0) WRITE(8,6270) ARCR5A, SRCR5A,
-     1       TARC5A, FARC5A, LD(5)
-        END IF
-        WRITE(8,6380) APRC5A, SPRC5A, TAPC5A, FAPC5A, LP(5)
-        IF (LAYER (LP(5)) .GT. 2) THEN
-          IF (LAYER (LP(5)-1) .GT. 2) THEN
-            WRITE(8,6300) AHED5A, SHED5A, (LP(5)-1)
-          ELSE
-            WRITE(8,6300) AHED5A, SHED5A, LP(5)
-          END IF 
-        END IF 
-      END IF
-      IF (LP(6) .GT. 0) THEN
-        DO 1066 K = LP(5)+1, LP(6)
-          IF (LSIN(K) .GT. 0) WRITE(8,6290) ASUBIA(K), 
-     1        TASUBA(K), FASUBA(K), K
-          IF (LRIN(K) .GT. 0) WRITE(8,6280) ARCRIA(K), SRCRIA(K),
-     1        TARCIA(K), FARCIA(K), K
- 1066   CONTINUE
-        WRITE(8,6380) APRC6A, SPRC6A, TAPC6A, FAPC6A, LP(6)
-      END IF
-      WRITE (8, 6385) ASTOR, SSTOR, TASTOR, FASTOR
-C
-      WRITE (8, 6390)
-C
- 6270 FORMAT(1X,/2X,'DRAINAGE RECIRCULATED',7X,
-     1  F11.5,1X,'(',F9.5,')',2X,F12.3,1X,F10.5/4X,'FROM LAYER',I3)
- 6280 FORMAT(1X,/2X,'DRAINAGE RECIRCULATED',7X,
-     1  F11.5,1X,'(',F9.5,')',2X,F12.3,1X,F10.5/4X,'INTO LAYER',I3)
- 6290 FORMAT(1X,/2X,'SUBSURFACE INFLOW INTO',6X,
-     1  F11.5,14X,F12.3,1X,F10.5/4X,'LAYER',I3)
- 6300 FORMAT(1X,/2X,'AVERAGE HEAD ON TOP    ',3X,
-     1  F11.3,1X,'(',F9.3,')'/4X,'OF LAYER',I3)
- 6330 FORMAT(1X/1X,79('*'),4(/),1X,79('*'))
- 6341 FORMAT(1X/6X,'AVERAGE ANNUAL TOTALS & (STD. DEVIATIONS) FOR',
-     1  ' YEARS',I5,' THROUGH',I5/1X,79('-')/37X,' INCHES ',10X,
-     2  ' CU. FEET ',6X,'PERCENT'/32X,19('-'),3X,13('-'),3X,
-     3  9('-')/2X,'PRECIPITATION',15X,F8.2,4X,'(',F8.3,')',
-     4  2X,F11.1,3X,F8.2)
- 6342 FORMAT(1X/6X,'AVERAGE ANNUAL TOTALS & (STD. DEVIATIONS) FOR',
-     1  ' YEARS',I5,' THROUGH',I5/1X,79('-')/37X,'   MM   ',11X,
-     2  'CU. METERS',5X,'PERCENT'/31X,20('-'),5X,11('-'),3X,
-     3  9('-')/2X,'PRECIPITATION',15X,F8.2,4X,'(',F8.3,')',
-     4  2X,F11.1,3X,F8.2)
- 6350 FORMAT(1X/2X,'RUNOFF',23X,F8.3,3X,'(',F8.4,')',3X,F11.2,3X,F8.3)
- 6360 FORMAT(1X/2X,'EVAPOTRANSPIRATION',11X,F8.3,3X,'(',F8.4,')',
-     1  3X,F11.2,3X,F8.3)
- 6370 FORMAT(1X,/2X,'LATERAL DRAINAGE COLLECTED',2X,
-     1  F11.5,1X,'(',F9.5,')',2X,F12.3,1X,F10.5/4X,'FROM LAYER',I3)
- 6380 FORMAT(1X/2X,'PERCOLATION/LEAKAGE THROUGH',1X,
-     1  F11.5,1X,'(',F9.5,')',2X,F12.3,2X,F10.5/4X,'LAYER',I3)
- 6385 FORMAT(1X/2X,'CHANGE IN WATER STORAGE',5X,F9.3,3X,'(',F8.4,')',
-     1  3X,F11.2,3X,F8.3)
- 6390 FORMAT(1X/1X,79('*'),3(/))
-      RETURN
-      END SUBROUTINE OUTAV
-C
-C
-C
-C      ************************ OUTPEK ************************
-C
-C     SUBROUTINE OUTPEK PRINTS PEAK DAILY RESULTS
-C     FOR THE SIMULATION.
-      SUBROUTINE OUTPEK (LMYR, IU8)
-C
-      PARAMETER (MXYR = 100)
-
-      INTEGER, INTENT(IN) :: LMYR
-      INTEGER, INTENT(IN) :: IU8
-
-      DOUBLE PRECISION ELKS, DPHED1, DPHED2, DPHED3, DPHED4, DPHED5      
-C
-      COMMON /BLK1/ IT4, IT7, IT13, IU4, IU7, IU13, IU11, IU10
-      DOUBLE PRECISION RC(20)
-      COMMON /BLK3/ PORO (20), FC (20), WP (20), RC, SW (20),
-     1  RS(20), XLAMBD(20), BUB(20), THICK(20), SLOPE(20),
-     2  XLENG(20), CON(20), SUBIN(20), RECIR(20), PHOLE(20),
-     3  DEFEC(20), TRANS(20), EDEPTH, SUBINF, SEDEP, CORECT
-      COMMON /BLK4/ LAYER (21), LAYR (20), IPQ (20), ISOIL (20), LAY,
-     1  LAYSEG (67, 2), LSEG (67), LSEGS(20, 2), LRIN(20), LSIN(20)
-      COMMON /BLK5/ AREA, FRUNOF, CN2, OCN2, SSLOPE, SLENG, SMX
-      COMMON /BLK14/ PPRC1, PPRC2, PPRC3, PPRC4, PPRC5, PPRC6, 
-     1  PDRN1, PDRN2, PDRN3, PDRN4, PDRN5, PPRE, PRUN, PSNO, PSW, DSW,
-     2  PHED1, PHED2, PHED3, PHED4, PHED5, PRCR1, PRCR2, PRCR3,
-     3  PRCR4, PRCR5, PRCRI(20)
-      COMMON /BLK16/ LD(5), LP(6), LPQ(5), LCASE(5), IYR, IDA, MO,
-     1  NSTEP(6), ND
-      COMMON /BLK33/ JYEAR (MXYR)
-      COMMON /BLK35/ NSEG1B, NSEG2B, NSEG3B, NSEG4B, NSEG5B,
-     1  NSEG1D, NSEG2D, NSEG3D, NSEG4D, NSEG5D
-      DIMENSION TPRCRI (20)
-C
-C     PRINTS HEADING,CONVERTS RESULTS FROM INCHES TO
-C     CU. FT., AND PRINTS PRECIPITATION AND RUNOFF.
-C
-      MND = 0
-      WRITE (8, 6000) CHAR(12)
-      WRITE (8, 6010) JYEAR (1), JYEAR (LMYR)
-      IF (IU8 .EQ. 1) THEN
-        TPPRE  = 43560. * AREA*PPRE/12.0
-        TPRUN  = 43560. * AREA*PRUN/12.0
-        TPPRC6 = 43560. * AREA*PPRC6/12.0
-        TPPRC5 = 43560. * AREA*PPRC5/12.0
-        TPPRC4 = 43560. * AREA*PPRC4/12.0
-        TPPRC3 = 43560. * AREA*PPRC3/12.0
-        TPPRC2 = 43560. * AREA*PPRC2/12.0
-        TPPRC1 = 43560. * AREA*PPRC1/12.0
-        TPDRN5 = 43560. * AREA*PDRN5/12.0
-        TPDRN4 = 43560. * AREA*PDRN4/12.0
-        TPDRN3 = 43560. * AREA*PDRN3/12.0
-        TPDRN2 = 43560. * AREA*PDRN2/12.0
-        TPDRN1 = 43560. * AREA*PDRN1/12.0
-        TPRCR5 = 43560. * AREA*PRCR5/12.0
-        TPRCR4 = 43560. * AREA*PRCR4/12.0
-        TPRCR3 = 43560. * AREA*PRCR3/12.0
-        TPRCR2 = 43560. * AREA*PRCR2/12.0
-        TPRCR1 = 43560. * AREA*PRCR1/12.0
-        TPSNO  = 43560. * AREA*PSNO/12.0
-        DO 1005 K = 1, 20
-          TPRCRI(K) = 43560. * AREA*PRCRI(K)/12.0
- 1005   CONTINUE
-        WRITE (8,6011)
-      ELSE
-        PPRE   = PPRE * 25.4
-        PRUN   = PRUN * 25.4
-        PPRC6  = PPRC6 * 25.4
-        PPRC5  = PPRC5 * 25.4
-        PPRC4  = PPRC4 * 25.4
-        PPRC3  = PPRC3 * 25.4
-        PPRC2  = PPRC2 * 25.4
-        PPRC1  = PPRC1 * 25.4
-        PDRN5  = PDRN5 * 25.4
-        PDRN4  = PDRN4 * 25.4
-        PDRN3  = PDRN3 * 25.4
-        PDRN2  = PDRN2 * 25.4
-        PDRN1  = PDRN1 * 25.4
-        PHED5  = PHED5 * 25.4
-        PHED4  = PHED4 * 25.4
-        PHED3  = PHED3 * 25.4
-        PHED2  = PHED2 * 25.4
-        PHED1  = PHED1 * 25.4
-        PRCR5 = PRCR5 * 25.4
-        PRCR4 = PRCR4 * 25.4
-        PRCR3 = PRCR3 * 25.4
-        PRCR2 = PRCR2 * 25.4
-        PRCR1 = PRCR1 * 25.4
-        PSNO   = PSNO * 25.4
-        DO 1006 K = 1, 20
-          PRCRI(K) = PRCRI(K) * 25.4
- 1006   CONTINUE
-        TPPRE  = AREA*PPRE * 10.0
-        TPRUN  = AREA*PRUN * 10.0
-        TPPRC6 = AREA*PPRC6 * 10.0
-        TPPRC5 = AREA*PPRC5 * 10.0
-        TPPRC4 = AREA*PPRC4 * 10.0
-        TPPRC3 = AREA*PPRC3 * 10.0
-        TPPRC2 = AREA*PPRC2 * 10.0
-        TPPRC1 = AREA*PPRC1 * 10.0
-        TPDRN5 = AREA*PDRN5 * 10.0
-        TPDRN4 = AREA*PDRN4 * 10.0
-        TPDRN3 = AREA*PDRN3 * 10.0
-        TPDRN2 = AREA*PDRN2 * 10.0
-        TPDRN1 = AREA*PDRN1 * 10.0
-        TPRCR5 = AREA*PRCR5 * 10.0
-        TPRCR4 = AREA*PRCR4 * 10.0
-        TPRCR3 = AREA*PRCR3 * 10.0
-        TPRCR2 = AREA*PRCR2 * 10.0
-        TPRCR1 = AREA*PRCR1 * 10.0
-        TPSNO  = AREA*PSNO * 10.0
-        DO 1008 K = 1, 20
-          TPRCRI(K) = AREA*PRCRI(K) * 10.0
- 1008   CONTINUE
-        WRITE (8,6012)
-      END IF
-      WRITE (8, 6020) PPRE, TPPRE
-      WRITE (8, 6030) PRUN, TPRUN
-      IF (LP(1) .GT. 0) THEN
-        DO 1010 L = 1, LP(1)
-          IF (LRIN(L) .GT. 0) WRITE (8, 6035) L, PRCRI(L), TPRCRI(L)
- 1010   CONTINUE
-        IF (LD(1) .GT. 0) THEN
-          WRITE (8, 6040) LD(1), PDRN1, TPDRN1
-          IF(RECIR(LD(1)) .GT. 0.0)WRITE(8,6045) LD(1), PRCR1, TPRCR1
-        END IF
-        WRITE (8, 6050) LP(1), PPRC1, TPPRC1
-        IF (LAYER (LP(1)) .GT. 2) THEN
-          IF (LAYER (LP(1)-1) .GT. 2) THEN
-            WRITE (8, 6060) (LP(1)-1), PHED1
-          ELSE
-            WRITE (8, 6060) LP(1), PHED1
-          END IF 
-          IF (LD(1) .GT. 0) THEN
-            LAYD = LAYSEG(NSEG1D,2)
-            DPHED1 = PHED1
-            IF(IU8 .EQ. 1) CALL LATKS (DPHED1, NSEG1B, NSEG1D, ELKS)
-            IF(IU8.NE.1) CALL LATKS (DPHED1/25.4, NSEG1B, NSEG1D, ELKS)
-            PDRN1 = PRCR1 + PDRN1
-            CALL MOUND (PDRN1, ELKS, LAYD, PMHED1, PLEN1, IU8)
-            MND = 1
-            IF (IU8 .EQ. 1) THEN
-              IF (LAYER (LP(1)-1) .GT. 2) THEN
-                WRITE (8, 6065) (LP(1)-1), PMHED1, LAYD, PLEN1
-              ELSE
-                WRITE (8, 6065) LP(1), PMHED1, LAYD, PLEN1
-              END IF
-            ELSE 
-              IF (LAYER (LP(1)-1) .GT. 2) THEN
-                WRITE (8, 6066) (LP(1)-1), PMHED1, LAYD, PLEN1
-              ELSE
-                WRITE (8, 6066) LP(1), PMHED1, LAYD, PLEN1
-              END IF
-            END IF 
-          END IF
-        END IF 
-      END IF
-      IF (LP(2) .GT. 0) THEN
-        DO 1020 L = LP(1)+1, LP(2)
-          IF (LRIN(L) .GT. 0) WRITE (8, 6035) L, PRCRI(L), TPRCRI(L)
- 1020   CONTINUE
-        IF (LD(2) .GT. 0) THEN
-          WRITE (8, 6040) LD(2), PDRN2, TPDRN2
-          IF(RECIR(LD(2)) .GT. 0.0)WRITE(8,6045) LD(2), PRCR2, TPRCR2
-        END IF
-        WRITE (8, 6050) LP(2), PPRC2, TPPRC2
-        IF (LAYER (LP(2)) .GT. 2) THEN
-          IF (LAYER (LP(2)-1) .GT. 2) THEN
-            WRITE (8, 6060) (LP(2)-1), PHED2
-          ELSE
-            WRITE (8, 6060) LP(2), PHED2
-          END IF 
-          IF (LD(2) .GT. 0) THEN
-            LAYD = LAYSEG(NSEG2D,2)
-            DPHED2 = PHED2
-            IF(IU8 .EQ. 1) CALL LATKS (DPHED2, NSEG2B, NSEG2D, ELKS)
-            IF(IU8.NE.1) CALL LATKS (DPHED2/25.4, NSEG2B, NSEG2D, ELKS)
-            PDRN2 = PRCR2 + PDRN2
-            CALL MOUND (PDRN2, ELKS, LAYD, PMHED2, PLEN2, IU8)
-            MND = 1
-            IF (IU8 .EQ. 1) THEN
-              IF (LAYER (LP(2)-1) .GT. 2) THEN
-                WRITE (8, 6065) (LP(2)-1), PMHED2, LAYD, PLEN2
-              ELSE
-                WRITE (8, 6065) LP(2), PMHED2, LAYD, PLEN2
-              END IF
-            ELSE 
-              IF (LAYER (LP(2)-1) .GT. 2) THEN
-                WRITE (8, 6066) (LP(2)-1), PMHED2, LAYD, PLEN2
-              ELSE
-                WRITE (8, 6066) LP(2), PMHED2, LAYD, PLEN2
-              END IF
-            END IF 
-          END IF
-        END IF 
-      END IF
-      IF (LP(3) .GT. 0) THEN
-        DO 1030 L = LP(2)+1, LP(3)
-          IF (LRIN(L) .GT. 0) WRITE (8, 6035) L, PRCRI(L), TPRCRI(L)
- 1030   CONTINUE
-        IF (LD(3) .GT. 0) THEN
-          WRITE (8, 6040) LD(3), PDRN3, TPDRN3
-          IF(RECIR(LD(3)) .GT. 0.0)WRITE(8,6045) LD(3), PRCR3, TPRCR3
-        END IF
-        WRITE (8, 6050) LP(3), PPRC3, TPPRC3
-        IF (LAYER (LP(3)) .GT. 2) THEN
-          IF (LAYER (LP(3)-1) .GT. 2) THEN
-            WRITE (8, 6060) (LP(3)-1), PHED3
-          ELSE
-            WRITE (8, 6060) LP(3), PHED3
-          END IF 
-          IF (LD(3) .GT. 0) THEN
-            LAYD = LAYSEG(NSEG3D,2)
-            DPHED3 = PHED3
-            IF(IU8 .EQ. 1) CALL LATKS (DPHED3, NSEG3B, NSEG3D, ELKS)
-            IF(IU8.NE.1) CALL LATKS (DPHED3/25.4, NSEG3B, NSEG3D, ELKS)
-            PDRN3 = PRCR3 + PDRN3
-            CALL MOUND (PDRN3, ELKS, LAYD, PMHED3, PLEN3, IU8)
-            MND = 1
-            IF (IU8 .EQ. 1) THEN
-              IF (LAYER (LP(3)-1) .GT. 2) THEN
-                WRITE (8, 6065) (LP(3)-1), PMHED3, LAYD, PLEN3
-              ELSE
-                WRITE (8, 6065) LP(3), PMHED3, LAYD, PLEN3
-              END IF
-            ELSE 
-              IF (LAYER (LP(3)-1) .GT. 2) THEN
-                WRITE (8, 6066) (LP(3)-1), PMHED3, LAYD, PLEN3
-              ELSE
-                WRITE (8, 6066) LP(3), PMHED3, LAYD, PLEN3
-              END IF
-            END IF 
-          END IF
-        END IF 
-      END IF
-      IF (LP(4) .GT. 0) THEN
-        DO 1040 L = LP(3)+1, LP(4)
-          IF (LRIN(L) .GT. 0) WRITE (8, 6035) L, PRCRI(L), TPRCRI(L)
- 1040   CONTINUE
-        IF (LD(4) .GT. 0) THEN
-          WRITE (8, 6040) LD(4), PDRN4, TPDRN4
-          IF(RECIR(LD(4)) .GT. 0.0)WRITE(8,6045) LD(4), PRCR4, TPRCR4
-        END IF
-        WRITE (8, 6050) LP(4), PPRC4, TPPRC4
-        IF (LAYER (LP(4)) .GT. 2) THEN
-          IF (LAYER (LP(4)-1) .GT. 2) THEN
-            WRITE (8, 6060) (LP(4)-1), PHED4
-          ELSE
-            WRITE (8, 6060) LP(4), PHED4
-          END IF 
-          IF (LD(4) .GT. 0) THEN
-            LAYD = LAYSEG(NSEG4D,2)
-            DPHED4 = PHED4
-            IF(IU8 .EQ. 1) CALL LATKS (DPHED4, NSEG4B, NSEG4D, ELKS)
-            IF(IU8.NE.1) CALL LATKS (DPHED4/25.4, NSEG4B, NSEG4D, ELKS)
-            PDRN4 = PRCR4 + PDRN4
-            CALL MOUND (PDRN4, ELKS, LAYD, PMHED4, PLEN4, IU8)
-            MND = 1
-            IF (IU8 .EQ. 1) THEN
-              IF (LAYER (LP(4)-1) .GT. 2) THEN
-                WRITE (8, 6065) (LP(4)-1), PMHED4, LAYD, PLEN4
-              ELSE
-                WRITE (8, 6065) LP(4), PMHED4, LAYD, PLEN4
-              END IF
-            ELSE 
-              IF (LAYER (LP(4)-1) .GT. 2) THEN
-                WRITE (8, 6066) (LP(4)-1), PMHED4, LAYD, PLEN4
-              ELSE
-                WRITE (8, 6066) LP(4), PMHED4, LAYD, PLEN4
-              END IF
-            END IF 
-          END IF
-        END IF 
-      END IF
-      IF (LP(5) .GT. 0) THEN
-        DO 1050 L = LP(4)+1, LP(5)
-          IF (LRIN(L) .GT. 0) WRITE (8, 6035) L, PRCRI(L), TPRCRI(L)
- 1050   CONTINUE
-        IF (LD(5) .GT. 0) THEN
-          WRITE (8, 6040) LD(5), PDRN5, TPDRN5
-          IF(RECIR(LD(5)) .GT. 0.0)WRITE(8,6045) LD(5), PRCR5, TPRCR5
-        END IF
-        WRITE (8, 6050) LP(5), PPRC5, TPPRC5
-        IF (LAYER (LP(5)) .GT. 2) THEN
-          IF (LAYER (LP(5)-1) .GT. 2) THEN
-            WRITE (8, 6060) (LP(5)-1), PHED5
-          ELSE
-            WRITE (8, 6060) LP(5), PHED5
-          END IF 
-          IF (LD(5) .GT. 0) THEN
-            LAYD = LAYSEG(NSEG5D,2)
-            DPHED5 = PHED5
-            IF(IU8 .EQ. 1) CALL LATKS (DPHED5, NSEG5B, NSEG5D, ELKS)
-            IF(IU8.NE.1) CALL LATKS (DPHED5/25.4, NSEG5B, NSEG5D, ELKS)
-            PDRN5 = PRCR5 + PDRN5
-            CALL MOUND (PDRN5, ELKS, LAYD, PMHED5, PLEN5, IU8)
-            MND = 1
-            IF (IU8 .EQ. 1) THEN
-              IF (LAYER (LP(5)-1) .GT. 2) THEN
-                WRITE (8, 6065) (LP(5)-1), PMHED5, LAYD, PLEN5
-              ELSE
-                WRITE (8, 6065) LP(5), PMHED5, LAYD, PLEN5
-              END IF
-            ELSE 
-              IF (LAYER (LP(5)-1) .GT. 2) THEN
-                WRITE (8, 6066) (LP(5)-1), PMHED5, LAYD, PLEN5
-              ELSE
-                WRITE (8, 6066) LP(5), PMHED5, LAYD, PLEN5
-              END IF
-            END IF 
-          END IF
-        END IF 
-      END IF
-      IF (LP(6) .GT. 0) THEN
-        DO 1060 L = LP(5)+1, LP(6)
-          IF (LRIN(L) .GT. 0) WRITE (8, 6035) L, PRCRI(L), TPRCRI(L)
- 1060   CONTINUE
-        WRITE (8, 6050) LP(6), PPRC6, TPPRC6
-      END IF
-C
-C     PRINTS SNOW AND VEGETATIVE SOIL WATER CONTENT.
-C
-      WRITE (8, 6070) PSNO, TPSNO
-      WRITE (8, 6080) PSW
-      WRITE (8, 6090) DSW
-      IF (MND .EQ. 1) WRITE (8, 6100)
-      WRITE (8, 6002)
- 6000 FORMAT(1X,A1/1X,78('*'))
- 6002 FORMAT(1X/1X,78('*'),4(/))
- 6010 FORMAT(1X/17X,'PEAK DAILY VALUES FOR YEARS',
-     1 I5,' THROUGH',I5/4X,72('-'))
- 6011   FORMAT(49X,'(INCHES)',6X,'(CU. FT.)'/48X,10('-'),3X,13('-'))
- 6012   FORMAT(51X,'(MM)',7X,'(CU. METERS)'/48X,10('-'),4X,12('-'))
- 6020 FORMAT(7X,'PRECIPITATION',24X,F10.2,4X,F14.3)
- 6030 FORMAT(1X/7X,'RUNOFF',31X,F11.3,4X,F14.4)
- 6035   FORMAT(1X/7X,'DRAINAGE RECIRCULATED INTO LAYER',
-     1    I3, 2X,F13.5,F17.5)
- 6040   FORMAT(1X/7X,'DRAINAGE COLLECTED FROM LAYER',
-     1    I3,5X,F13.5,F17.5)
- 6045   FORMAT(1X/7X,'DRAINAGE RECIRCULATED FROM LAYER',
-     1    I3,2X,F13.5,F17.5)
- 6050   FORMAT(1X/7X,'PERCOLATION/LEAKAGE THROUGH LAYER',I3,
-     1     3X,F12.6,F16.5)
- 6060   FORMAT(1X/7X,'AVERAGE HEAD ON TOP OF LAYER',I3,8X,F9.3)
- 6065   FORMAT(1X/7X,'MAXIMUM HEAD ON TOP OF LAYER',I3,8X,F9.3//
-     1            7X,'LOCATION OF MAXIMUM HEAD IN LAYER',I3/
-     2           13X,'(DISTANCE FROM DRAIN)    ',8X,F7.1,' FEET')   
- 6066   FORMAT(1X/7X,'MAXIMUM HEAD ON TOP OF LAYER',I3,8X,F9.3//
-     1            7X,'LOCATION OF MAXIMUM HEAD IN LAYER',I3/
-     2           13X,'(DISTANCE FROM DRAIN)    ',8X,F7.1,' METERS')   
- 6070 FORMAT(1X/7X,'SNOW WATER',26X,F11.2,4X,F15.4)
- 6080 FORMAT(1X//7X,'MAXIMUM VEG. ',
-     1 'SOIL WATER (VOL/VOL)',17X,F7.4)
- 6090 FORMAT(1X/7X,'MINIMUM VEG. SOIL WATER ',
-     1 '(VOL/VOL)',17X,F7.4)
- 6100 FORMAT(1X//8X,'***  Maximum heads are computed using McEnroe',
-     1 2H's,' equations.  ***'//13X,'Reference:  Maximum Saturated ',
-     2 'Depth over Landfill Liner'/25X,'by Bruce M. McEnroe, ',
-     3 'University of Kansas'/25X,'ASCE Journal of ',
-     4 'Environmental Engineering'/25X,'Vol. 119, No. 2, March 1993,',
-     5 ' pp. 262-270.'/)
-      RETURN
-      END SUBROUTINE OUTPEK
-
 C
 C
 C      ************************ OUTSW ************************

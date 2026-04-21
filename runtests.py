@@ -17,7 +17,7 @@ def main():
     """
     Run pytest tests.
     """
-    errno = pytest.main(['-x', 'pyhelp',  '-v', '-rw', '--durations=10',
+    errno = pytest.main(['-x', 'pyhelp',  '-vv', '-rw', '--durations=10',
                          '--cov=pyhelp'])
     if errno != 0:
         raise SystemExit(errno)

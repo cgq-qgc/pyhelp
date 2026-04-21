@@ -1,5 +1,5 @@
-numpy
-scipy
-pandas
+numpy>=1.26
+scipy>=1.9
+pandas>=2,<3
 h5py>=3
-matplotlib
+matplotlib>=3.6

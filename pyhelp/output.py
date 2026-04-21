@@ -21,6 +21,9 @@ import numpy as np
 import h5py
 from scipy.stats import linregress
 
+# ---- Local imports
+from pyhelp.utils import get_ticklabel_extents
+
 
 VARNAMES = ['precip', 'rechg', 'runoff', 'evapo',
             'subrun1', 'subrun2', 'perco']
@@ -299,8 +302,8 @@ class HelpOutput(object):
             text += f"{year_min:0.0f} - {year_max:0.0f}"
 
         fig.canvas.draw()
-        bbox_bottom, _ = ax.xaxis.get_ticklabel_extents(
-            fig.canvas.get_renderer())
+        bbox_bottom, _ = get_ticklabel_extents(
+            ax.xaxis, fig.canvas.get_renderer())
         y0 = ax.transAxes.inverted().transform(bbox_bottom)[0][1]
         offset = transforms.ScaledTranslation(0, -12/72, fig.dpi_scale_trans)
         ax.text(0, y0, text, transform=ax.transAxes + offset,
@@ -410,8 +413,8 @@ class HelpOutput(object):
             text += f"{year_min:0.0f} - {year_max:0.0f}"
 
         fig.canvas.draw()
-        bbox_bottom, _ = ax.xaxis.get_ticklabel_extents(
-            fig.canvas.get_renderer())
+        bbox_bottom, _ = get_ticklabel_extents(
+            ax.xaxis, fig.canvas.get_renderer())
         y0 = ax.transAxes.inverted().transform(bbox_bottom)[0][1]
         offset = transforms.ScaledTranslation(0, -6/72, fig.dpi_scale_trans)
         ax.text(0, y0, text, transform=ax.transAxes + offset,

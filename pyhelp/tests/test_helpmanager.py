@@ -8,10 +8,14 @@
 # -----------------------------------------------------------------------------
 
 # ---- Standard library imports
+import datetime
 import os
 import os.path as osp
 
 # ---- Third party imports
+import matplotlib
+matplotlib.use("Agg")
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -27,7 +31,8 @@ INPUT_FILES = {
     'airtemp': osp.join(EXAMPLE_FOLDER, 'airtemp_input_data.csv'),
     'precip': osp.join(EXAMPLE_FOLDER, 'precip_input_data.csv'),
     'solrad': osp.join(EXAMPLE_FOLDER, 'solrad_input_data.csv'),
-    'grid': osp.join(EXAMPLE_FOLDER, 'input_grid.csv')}
+    'grid': osp.join(EXAMPLE_FOLDER, 'input_grid.csv')
+    }
 
 
 # =============================================================================
@@ -63,15 +68,29 @@ def test_read_input_grid(helpm, output_file):
     assert is_string_dtype(helpm.grid['cid'])
 
 
-def test_calc_help_cells(helpm, output_file):
+@pytest.mark.parametrize(
+    'write_help_input_files, write_help_output_files',
+    [(True, True), (False, False)]
+    )
+def test_calc_help_cells(
+        helpm, output_file, write_help_input_files, write_help_output_files
+        ):
     """Test that the HelpManager is able to run water budget calculation."""
     cellnames = helpm.cellnames[:100]
 
-    helpm.calc_help_cells(output_file, cellnames, tfsoil=-3)
+    helpm.calc_help_cells(
+        output_file, cellnames, tfsoil=-3,
+        write_help_input_files=write_help_input_files,
+        write_help_output_files=write_help_output_files
+        )
+
     assert osp.exists(output_file)
 
     inputdir = osp.join(helpm.inputdir, 'd10d11_input_files')
-    assert len(os.listdir(inputdir)) == 98 * 2
+    assert osp.exists(inputdir) == write_help_input_files
+    if write_help_input_files:
+        assert len(os.listdir(inputdir)) == 98 * 2
+
     inputdir = osp.join(helpm.inputdir, 'D4_input_files')
     assert len(os.listdir(inputdir)) == 2
     inputdir = osp.join(helpm.inputdir, 'D7_input_files')
@@ -79,18 +98,187 @@ def test_calc_help_cells(helpm, output_file):
     inputdir = osp.join(helpm.inputdir, 'D13_input_files')
     assert len(os.listdir(inputdir)) == 1
 
+    outputdir = osp.join(helpm.inputdir, 'HELP30_output_files')
+    assert osp.exists(outputdir) == write_help_output_files
+    if write_help_output_files:
+        assert len(os.listdir(outputdir)) == 98
+
+    daily_outdir = osp.join(helpm.inputdir, 'Daily_output_files')
+    assert not osp.exists(daily_outdir)
+
     # Assert that the results are as expected.
     output = HelpOutput(output_file)
     area_yrly_avg = output.calc_area_yearly_avg()
     expected_results = {'precip': 11614.46,
-                        'perco': 2767.51,
-                        'evapo': 6034.42,
-                        'rechg': 1432.13,
-                        'runoff': 2334.89,
-                        'subrun1': 509.02,
-                        'subrun2': 1243.24}
-    for key in list(expected_results.keys()):
-        assert abs(np.sum(area_yrly_avg[key]) - expected_results[key]) < 1, key
+                        'perco': 2944.3917630257497,
+                        'evapo': 5799.136182561213,
+                        'rechg': 1517.1853161339995,
+                        'runoff': 2347.9944476222922,
+                        'subrun1': 557.2600310146595,
+                        'subrun2': 1340.911663276034}
+    for name, value in expected_results.items():
+        result = np.sum(area_yrly_avg[name])
+        assert abs(result - value) < 1, f'{name}: {result} vs {value}'
+
+
+def test_write_daily_output(helpm, output_file):
+    """
+    Test that daily output are saved as expected when
+    `write_daily_output` is set to `True`.
+    """
+    cellnames = helpm.cellnames[:100]
+
+    helpm.calc_help_cells(
+        output_file, cellnames, tfsoil=-3,
+        write_daily_output=True,
+        )
+
+    daily_outdir = osp.join(helpm.inputdir, 'Daily_output_files')
+    assert osp.exists(daily_outdir)
+    assert len(os.listdir(daily_outdir)) == 98
+
+    daily_data = pd.read_csv(
+        osp.join(daily_outdir, '37728.csv'),
+        index_col=0,
+        parse_dates=True
+        )
+
+    assert list(daily_data.columns) == [
+        'RAIN', 'RUNOFF', 'ET', 'E_ZONE_WATER', 'SNOW_SURF',
+        'TAIR', 'TSOIL_SURF', 'TSOIL_EDEPTH', 'FROZEN_SOIL',
+        'HEAD1_ON_LAY3', 'DRAIN1_FROM_LAY2', 'LEAK1_THROUGH_LAY3',
+        'HEAD2_ON_LAY5', 'DRAIN2_FROM_LAY4', 'LEAK2_THROUGH_LAY5'
+        ]
+
+    assert daily_data.index[0] == datetime.datetime(2000, 1, 1)
+    assert daily_data.index[-1] == datetime.datetime(2010, 12, 31)
+
+    expected_sums = {
+        'RAIN': 11567.8,
+        'RUNOFF': 2808.92,
+        'ET': 5360.22,
+        'DRAIN1_FROM_LAY2': 0.021887932775348,
+        'LEAK1_THROUGH_LAY3': 3434.3650609999995,
+        'DRAIN2_FROM_LAY4': 0.007417707112869499,
+        'LEAK2_THROUGH_LAY5': 3393.3356759,
+        }
+    for col, expected in expected_sums.items():
+        actual = daily_data[col].values.sum()
+        err = abs(expected - actual)
+        assert err < 1, f"Mismatch in col '{col}': {actual}"
+
+    expected_sums = {
+        'DRAIN1_FROM_LAY2': 0.021887932775348,
+        'DRAIN2_FROM_LAY4': 0.007417707112869499,
+        }
+    for col, expected in expected_sums.items():
+        actual = daily_data[col].values.sum()
+        err = abs(expected - actual)
+        assert err < 0.01, f"Mismatch in col '{col}': {actual}"
+
+    assert daily_data.FROZEN_SOIL.sum() == 1248
+
+    expected_means = {
+        'E_ZONE_WATER': 0.20217160278745647,
+        'SNOW_SURF': 30.35667496266799,
+        'TAIR': 5.921279243404678,
+        'TSOIL_SURF': 13.732954206072673,
+        'TSOIL_EDEPTH': 11.973404678944748
+        }
+    for col, expected in expected_means.items():
+        actual = daily_data[col].values.sum()
+        err = abs(expected == actual)
+        assert err < 0.1, f"Mismatch in col '{col}': {actual}"
+
+    expected_means = {
+        'HEAD1_ON_LAY3': 0.31265108013937287,
+        'HEAD2_ON_LAY5': 1.057890107018417,
+        }
+    for col, expected in expected_means.items():
+        actual = daily_data[col].values.sum()
+        err = abs(expected == actual)
+        assert err < 0.01, f"Mismatch in col '{col}': {actual}"
+
+
+def test_monthly_normals_in_weather_headers(helpm, output_file):
+    """
+    Test that monthly climate normals are correctly calculated and injected
+    into the 4th line of the D4 and D7 input files headers.
+
+    See cgq-qgc/pyhelp#127
+    """
+    # Generate the input files for the first cell
+    cellnames = helpm.cellnames[:1]
+    cellname = cellnames[0]
+
+    # -------------------------------------------------------------------------
+    # Test Precipitation (D4)
+    # -------------------------------------------------------------------------
+    d4_file = helpm.connect_tables['D4'][cellname]
+    d4_col_idx = helpm.connect_tables['precip'][cellname]
+
+    # Calculate the expected monthly normals directly from the pandas Series
+    precip = helpm.precip_data.iloc[:, d4_col_idx]
+
+    expected_d4_total = precip.resample("ME").sum()
+    expected_d4_normals = (
+        expected_d4_total.groupby(expected_d4_total.index.month)
+        .mean()
+        .sort_index()
+        .values
+        .round(2)
+        )
+
+    with open(d4_file, 'r') as f:
+        d4_lines = f.readlines()
+
+    assert len(d4_lines) == (37 * 11) + 4
+
+    # The 4th line (index 3) should contain the 12 normals
+    d4_normals_line = d4_lines[3].rstrip('\n')
+
+    # Format F6.2 for 12 values means the line must be exactly
+    # 72 characters long
+    assert len(d4_normals_line) == 72
+
+    # Parse the strings back into floats
+    d4_parsed_normals = [
+        float(d4_normals_line[i:i+6]) for i in range(0, 72, 6)]
+    assert len(d4_parsed_normals) == 12
+
+    # Assert they match our expected values.
+    assert np.max(np.abs(d4_parsed_normals - expected_d4_normals)) < 0.001
+
+    # -------------------------------------------------------------------------
+    # Test Air Temperature (D7)
+    # -------------------------------------------------------------------------
+    d7_file = helpm.connect_tables['D7'][cellname]
+    d7_col_idx = helpm.connect_tables['airtemp'][cellname]
+
+    # Calculate the expected monthly normals directly from the pandas Series
+    airtemp = helpm.airtemp_data.iloc[:, d7_col_idx]
+    expected_d7_normals = (
+        airtemp.groupby(airtemp.index.month)
+        .mean()
+        .round(2)
+        .values
+        )
+
+    with open(d7_file, 'r') as f:
+        d7_lines = f.readlines()
+
+    assert len(d7_lines) == (37 * 11) + 4
+
+    d7_normals_line = d7_lines[3].rstrip('\n')
+    assert len(d7_normals_line) == 72
+
+    d7_parsed_normals = [
+        float(d7_normals_line[i:i+6]) for i in range(0, 72, 6)]
+    assert len(d7_parsed_normals) == 12
+
+    # Assert they match our expected values.
+    max_abs_err = np.max(np.abs(d7_parsed_normals - expected_d7_normals))
+    assert max_abs_err < 0.001, max_abs_err
 
 
 @pytest.mark.parametrize('fig_title', [None, 'Exemple figure title'])
@@ -108,12 +296,17 @@ def test_plot_area_monthly_avg(output_dir, output_file, fig_title):
     assert osp.exists(figfilename)
 
     children = fig.axes[0].get_children()
-    assert (children[0].get_ydata().sum() - 1086.8448950125246) < 0.01  # precip
-    assert (children[1].get_ydata().sum() - 136.12068516893297) < 0.01  # rechg
-    assert (children[2].get_ydata().sum() - 226.9635476845988) < 0.01   # runoff
-    assert (children[3].get_ydata().sum() - 550.11140519815) < 0.01     # evapo
-    assert (children[4].get_ydata().sum() - 47.97935577404126) < 0.01   # subrun1
-    assert (children[5].get_ydata().sum() - 121.66539490800443) < 0.01  # subrun2
+    expected_values = {
+        'precip': 1086.8448950125246,
+        'rechg': 144.59660495818275,
+        'runoff': 228.3554850746950,
+        'evapo': 526.3448146870115,
+        'subrun1': 52.79497962998723,
+        'subrun2': 131.34891390581527
+        }
+    for i, (name, value) in enumerate(expected_values.items()):
+        result = children[i].get_ydata().sum()
+        assert abs(result - value) < 0.1, f'{name}: {result} vs {value}'
 
     if fig_title is None:
         assert fig._suptitle is None
@@ -140,12 +333,18 @@ def test_plot_area_yearly_series(output_dir, output_file, fig_title):
     children = fig.axes[0].get_children()
     for i in range(12):
         assert list(children[i].get_xdata()) == expected_xdata
-    assert (children[0].get_ydata().mean() - 1086.8448950125246) < 0.01   # precip
-    assert (children[2].get_ydata().mean() - 136.12068516893297) < 0.01   # rechg
-    assert (children[4].get_ydata().mean() - 226.9635476845988) < 0.01    # runoff
-    assert (children[6].get_ydata().mean() - 550.11140519815) < 0.01      # evapo
-    assert (children[8].get_ydata().mean() - 47.97935577404126) < 0.01    # subrun1
-    assert (children[10].get_ydata().mean() - 121.66539490800443) < 0.01  # subrun2
+
+    expected_values = {
+        'precip': 1086.8448950125246,
+        'rechg': 144.59660495818275,
+        'runoff': 228.3554850746950,
+        'evapo': 526.3448146870115,
+        'subrun1': 52.79497962998723,
+        'subrun2': 131.34891390581527
+        }
+    for i, (name, value) in enumerate(expected_values.items()):
+        result = children[i * 2].get_ydata().mean()
+        assert abs(result - value) < 0.1, f'{name}: {result} vs {value}'
 
     if fig_title is None:
         assert fig._suptitle is None
@@ -168,18 +367,18 @@ def test_plot_area_yearly_avg(output_dir, output_file, fig_title):
     assert osp.exists(figfilename)
 
     children = fig.axes[0].get_children()
-    assert (children[0].get_height() - 1086.8448950125246) < 0.01   # precip
-    assert children[1].get_text() == '1087\nmm/an'
-    assert (children[2].get_height() - 136.12068516893297) < 0.01   # rechg
-    assert children[3].get_text() == '136\nmm/an'
-    assert (children[4].get_height() - 226.9635476845988) < 0.01    # runoff
-    assert children[5].get_text() == '227\nmm/an'
-    assert (children[6].get_height() - 550.11140519815) < 0.01      # evapo
-    assert children[7].get_text() == '550\nmm/an'
-    assert (children[8].get_height() - 47.97935577404126) < 0.01    # subrun1
-    assert children[9].get_text() == '48\nmm/an'
-    assert (children[10].get_height() - 121.66539490800443) < 0.01  # subrun2
-    assert children[11].get_text() == '122\nmm/an'
+    expected_values = {
+        'precip': 1086.8448950125246,
+        'rechg': 144.59660495818275,
+        'runoff': 228.3554850746950,
+        'evapo': 526.3448146870115,
+        'subrun1': 52.79497962998723,
+        'subrun2': 131.34891390581527
+        }
+    for i, (name, value) in enumerate(expected_values.items()):
+        height = children[i * 2].get_height()
+        assert abs(height - value) < 0.1, f'{name}: {height} vs {value}'
+        assert children[i * 2 + 1].get_text() == f'{round(value)}\nmm/an'
 
     if fig_title is None:
         assert fig._suptitle is None
@@ -199,43 +398,43 @@ def test_calc_cells_yearly_avg(output_file):
     yearly_avg = output.calc_cells_yearly_avg()
     expected_results = {
         'precip': 1055.8597373343132,
-        'perco': 251.5843470406275,
-        'evapo': 548.5954285729573,
-        'rechg': 130.18263914385366,
-        'runoff': 212.26214164981408,
-        'subrun1': 46.26946108344004,
-        'subrun2': 113.02721698440918}
-    for varname in list(expected_results.keys()):
-        result = np.sum(yearly_avg[varname]) / len(yearly_avg[varname])
-        assert abs(result - expected_results[varname]) < 1, varname
+        'perco': 267.6719784568864,
+        'evapo': 527.1941984146556,
+        'rechg': 137.9259378303636,
+        'runoff': 213.45404069293568,
+        'subrun1': 50.6600028195145,
+        'subrun2': 121.90106029782129}
+    for name, value in expected_results.items():
+        result = np.mean(yearly_avg[name])
+        assert abs(result - value) < 1, f'{name}: {result} vs {value}'
 
     # Test calc_cells_yearly_avg with non null year_from and year_to argument.
     yearly_avg = output.calc_cells_yearly_avg(year_from=2003, year_to=2009)
     expected_results = {
         'precip': 1086.8448950125246,
-        'perco': 259.85654385728577,
-        'evapo': 550.11140519815,
-        'rechg': 136.12068516893297,
-        'runoff': 226.9635476845988,
-        'subrun1': 47.97935577404126,
-        'subrun2': 121.66539490800443}
-    for varname in list(expected_results.keys()):
-        result = np.sum(yearly_avg[varname]) / len(yearly_avg[varname])
-        assert abs(result - expected_results[varname]) < 1, varname
+        'perco': 277.51113515960424,
+        'evapo': 526.3448146870114,
+        'rechg': 144.59660495818272,
+        'runoff': 228.3554850746951,
+        'subrun1': 52.79497962998723,
+        'subrun2': 131.34891390581527}
+    for name, value in expected_results.items():
+        result = np.mean(yearly_avg[name])
+        assert abs(result - value) < 1, f'{name}: {result} vs {value}'
 
     # Test calc_cells_yearly_avg with year_from == year_to.
     yearly_avg = output.calc_cells_yearly_avg(year_from=2003, year_to=2003)
     expected_results = {
         'precip': 1144.4142919267927,
-        'perco': 324.15252048559057,
-        'evapo': 492.4243657442988,
-        'rechg': 148.72946963740077,
-        'runoff': 164.32582637467374,
-        'subrun1': 56.33706154407843,
-        'subrun2': 140.96849990912418}
-    for varname in list(expected_results.keys()):
-        result = np.sum(yearly_avg[varname]) / len(yearly_avg[varname])
-        assert abs(result - expected_results[varname]) < 1, varname
+        'perco': 336.00345882089516,
+        'evapo': 476.6673904049153,
+        'rechg': 156.26847950749251,
+        'runoff': 165.63211222926193,
+        'subrun1': 60.01800987070037,
+        'subrun2': 149.44863253173403}
+    for name, value in expected_results.items():
+        result = np.mean(yearly_avg[name])
+        assert abs(result - value) < 1, f'{name}: {result} vs {value}'
 
 
 def test_save_output_to_csv(output_dir, output_file):
@@ -262,13 +461,13 @@ def test_save_output_to_csv(output_dir, output_file):
     assert df.iloc[0]['lon_dd'] == output.data['lon_dd'][0]
 
     expected_results = {
-        'precip': 1055.86,
-        'perco': 251.59,
-        'evapo': 548.58,
-        'rechg': 130.19,
-        'runoff': 212.26,
-        'subrun1': 46.27,
-        'subrun2': 113.02}
+        'precip': 1055.859737334313,
+        'perco': 267.6719784568864,
+        'evapo': 527.1941984146556,
+        'rechg': 137.92593783036364,
+        'runoff': 213.45404069293568,
+        'subrun1': 50.6600028195145,
+        'subrun2': 121.90106029782127}
     for key in list(expected_results.keys()):
         result = df[key].sum() / len(df)
         expected_result = expected_results[key]
@@ -276,4 +475,4 @@ def test_save_output_to_csv(output_dir, output_file):
 
 
 if __name__ == '__main__':
-    pytest.main(['-x', __file__, '-v', '-rw'])
+    pytest.main(['-x', __file__, '-vv', '-rw'])

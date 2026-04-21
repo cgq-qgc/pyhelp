@@ -83,18 +83,26 @@ def _format_d10_singlecell(row):
     """
     nlayers = int(row['nlayer'])
     if nlayers == 0:
-        # This means this cell cannot be run in HELP.
+        # Skip cells with zero layers; these cannot be simulated with HELP.
         return None
     try:
         title = str(int(row['cid']))
     except ValueError:
+        # If cell ID is not an integer, use it as a string.
         title = str(row['cid'])
-    iu10 = 2
-    ipre = 0
-    irun = 1
-    osno = 0     # initial snow water
-    area = 6.25  # area projected on horizontal plane
-    frunof = 100
+
+    iu10 = 2      # Use SI unit system in D10 input file.
+    ipre = 0      # Let HELP initialize soil water content.
+    osno = 0      # Initial snow water (not used, set to zero).
+    area = 1      # Area projected on horizontal plane (hectares).
+    frunof = 100  # Fraction of area allowing runoff
+    irun = 1      # User provides a value for CN2 directly.
+
+    # Note that 'area' is only used by HELP to compute annual totals in water
+    # volume for each component of the water budget. This parameter does NOT
+    # affect values reported in 'water height equivalent,' which are the
+    # results of primary interest for our application.
+
     runof = float(row['CN'])
 
     d10dat = []
@@ -120,6 +128,11 @@ def _format_d10_singlecell(row):
     d10dat.append(['{0:>7.0f}'.format(runof)])
 
     # Format the layer properties.
+
+    # Because ipre = 0, HELP will internally initialize soil water content
+    # for each layer. Therefore, the 'sw' field does not need to be set in
+    # the D10 input and can remain empty.
+
     for i in range(nlayers):
         lay = str(i+1)
         layer = int(row['lay_type'+lay])
@@ -128,7 +141,7 @@ def _format_d10_singlecell(row):
         poro = float(row['poro'+lay])
         fc = float(row['fc'+lay])
         wp = float(row['wp'+lay])
-        sw = ''
+        sw = ''  # Leave empty; HELP will initialize if ipre = 0.
         rc = float(row['ksat'+lay])
         xleng = float(row['dist_dr'+lay])
         slope = float(row['slope'+lay])
@@ -152,22 +165,55 @@ def _format_d10_singlecell(row):
                        '{0:>6}'.format(sw) +
                        '{0:>16.14f}'.format(rc)])
 
-        recir = subin = phole = defec = ipq = trans = ''
-        layr = 0
-
         # READ (10, 5130) XLENG (J), SLOPE (J), RECIR (J), LAYR (J),
         #   SUBIN (J), PHOLE (J), DEFEC (J), IPQ (J), TRANS (J)
         # 5130 FORMAT(F7.0,2F6.0,I3,F13.0,2F7.0,I2,G14.6)
 
-        d10dat.append(['{0:>7.0f}'.format(xleng) +
-                       '{0:>6.2f}'.format(slope) +
-                       '{0:>6}'.format(recir) +
-                       '{0:>3}'.format(layr) +
-                       '{0:>13}'.format(subin) +
-                       '{0:>7}'.format(phole) +
-                       '{0:>7}'.format(defec) +
-                       '{0:>2}'.format(ipq) +
-                       '{0:>14}'.format(trans)])
+        # XLENG(J):
+        #     Drainage Length for layer J (The maximum distance
+        #     water must travel laterally to reach a drain or
+        #     collection pipe).
+        # SLOPE(J):
+        #     Slope of the layer (in percent). Used for computing
+        #     lateral drainage.
+        # RECIR(J):
+        #     Recirculation fraction (percentage of lateral drainage
+        #     from this layer that is recirculated back into the
+        #     landfill).
+        # LAYR(J):
+        #     Layer number receiving the recirculated water.
+        # SUBIN(J):
+        #     Subsurface inflow (steady flow of groundwater entering
+        #     this layer from outside the system).
+        # PHOLE(J):
+        #     Pinhole density (number of pinholes per acre/hectare
+        #     in a flexible membrane liner - FML).
+        # DEFEC(J):
+        #     Installation defects (number of installation defects
+        #     per acre/hectare in the FML).
+        # IPQ(J):
+        #     Placement quality index for the FML liner. (1 = Perfect,
+        #     2 = Excellent, 3 = Good, 4 = Poor, 5 = Bad, 6 = With
+        #     Geotextile).
+        # TRANS(J):
+        #     Transmissivity of the geotextile (if IPQ(J) == 6).
+
+        # Other than XLENG and SLOPE, all the other parameters are used
+        # for advanced landfill engineering features that are not
+        # used for purely natural groundwater recharge assessment.
+
+        recir = subin = phole = defec = ipq = trans = ''
+        layr = 0
+
+        d10dat.append(['{0:>7.0f}'.format(xleng) +  # XLENG
+                       '{0:>6.2f}'.format(slope) +  # SLOPE
+                       '{0:>6}'.format(recir) +     # RECIR
+                       '{0:>3}'.format(layr) +      # LAYR
+                       '{0:>13}'.format(subin) +    # SUBIN
+                       '{0:>7}'.format(phole) +     # PHOLE
+                       '{0:>7}'.format(defec) +     # DEFEC
+                       '{0:>2}'.format(ipq) +       # IPQ
+                       '{0:>14}'.format(trans)])    # TRANS
 
     return d10dat
 

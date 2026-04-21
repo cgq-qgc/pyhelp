@@ -22,18 +22,161 @@ import numpy as np
 # ---- Local Libraries Imports
 from pyhelp import HELP3O
 
-DEL_TEMPFILES = True
-
 
 # ---- Run HELP
 
 def run_help_singlecell(item):
     """Run HELP for a single cell."""
     cellname, outparam = item
-    HELP3O.run_simulation(*outparam)
-    results = read_monthly_help_output(outparam[5])
-    if DEL_TEMPFILES:
-        os.remove(outparam[5])
+
+    daily_fpath_out = outparam[-1]
+    outparam = outparam[:-1]
+    return_daily = int(daily_fpath_out not in (None, 0))
+
+    outmo, yr0, error_code, outday = HELP3O.run_simulation(
+        *outparam, fill_outday=return_daily
+        )
+
+    if error_code != 0:
+        raise RuntimeError(
+            f"Run simulation for cell {cellname} failed "
+            f"with error code {error_code}."
+            )
+
+    if return_daily == 1:
+        layers = outday[0, 0, :]
+
+        columns = [
+            'RAIN', 'RUNOFF',
+            'ET', 'E_ZONE_WATER', 'SNOW_SURF',
+            'TAIR', 'TSOIL_SURF', 'TSOIL_EDEPTH',
+            'FROZEN_SOIL',
+            ]
+
+        offset = len(columns)
+        for i in range(5):
+            columns.extend(
+                [f'HEAD{i+1}_ON_LAY{layers[i*3 + offset]:.0f}',
+                 f'DRAIN{i+1}_FROM_LAY{layers[i*3 + offset + 1]:.0f}',
+                 f'LEAK{i+1}_THROUGH_LAY{layers[i*3 + offset + 2]:.0f}']
+                )
+        i += 1
+        columns.extend(
+            [f'LEAK{i+1}_THROUGH_LAY{layers[i*3 + offset]:.0f}']
+            )
+
+        import pandas as pd
+        import datetime
+
+        outday[:, :, 0] = np.round(outday[:, :, 0], 1)  # RAIN
+        outday[:, :, 1] = np.round(outday[:, :, 1], 2)  # RUNOFF
+        outday[:, :, 2] = np.round(outday[:, :, 2], 2)  # ET
+        outday[:, :, 3] = np.round(outday[:, :, 3], 4)  # E_ZONE_WATER
+        outday[:, :, 4] = np.round(outday[:, :, 4], 2)  # SNOW_SURF
+
+        outday[:, :, 5] = np.round(outday[:, :, 5], 2)  # TAIR
+        outday[:, :, 6] = np.round(outday[:, :, 6], 2)  # TSOIL_SURF
+        outday[:, :, 7] = np.round(outday[:, :, 7], 2)  # TSOIL_EDEPTH
+
+        outday[:, :, 8] = np.round(outday[:, :, 8], 0)  # FROZEN_SOIL
+
+        df = pd.DataFrame(
+            outday[:, 1:, :].reshape(-1, outday.shape[2]),
+            columns=columns,
+            )
+
+        # Clean up NaN values.
+        df.replace(-999.0, np.nan, inplace=True)
+        df.dropna(axis=1, how='all', inplace=True)
+        df.dropna(axis=0, inplace=True)
+
+        # Set the Datetime Index.
+        nyear = outday.shape[0]
+        df.index = pd.date_range(
+            start=datetime.datetime(yr0, 1, 1),
+            end=datetime.datetime(yr0 + nyear - 1, 12, 31),
+            freq='D'
+        )
+        df.index.name = 'DATE'
+
+        # Create a dictionary of rounding rules by column name.
+        round_rules = {
+            'RAIN': 1,
+            'RUNOFF': 2,
+            'ET': 2,
+            'E_ZONE_WATER': 4,
+            'SNOW_SURF': 2,
+            'TAIR': 2,
+            'TSOIL_SURF': 2,
+            'TSOIL_EDEPTH': 2,
+            'FROZEN_SOIL': 0
+            }
+
+        # Add the dynamic HEAD columns to the rounding rules.
+        for col in df.columns:
+            if col.startswith('HEAD'):
+                round_rules[col] = 5
+
+        # Apply rounding rules.
+        df = df.round(round_rules)
+
+        # Format DRAIN and LEAK.
+
+        for col in df.columns:
+            if col.startswith(('DRAIN', 'LEAK')):
+                df[col] = [f"{x:.4g}" for x in df[col]]
+
+        df.to_csv(daily_fpath_out)
+
+    # Note that we are rounding of the output data intentionally to
+    # preserve the raw computational precision in the original Fortran code.
+    # See cgq-qgc/pyhelp#115.
+
+    dec = 3
+    nyears = outmo.shape[0]
+
+    results = {}
+    results['years'] = np.arange(nyears, dtype=int) + yr0
+    results['precip'] = np.round(outmo[:, 0, 1:], dec)
+    results['runoff'] = np.round(outmo[:, 1, 1:], dec)
+    results['evapo'] = np.round(outmo[:, 2, 1:], dec)
+
+    # Process shallow subsurface lateral drainage (in first subprofile).
+    lay = outmo[0, 3, 0]
+    if lay != -1:
+        assert np.all(outmo[:, 3, 0] == lay)
+        subrun1 = np.round(outmo[:, 3, 1:], dec)
+    else:
+        subrun1 = np.zeros((nyears, 12), dtype=outmo.dtype)
+
+    # Process deep subsurface lateral drainage (below first subprofile).
+    subrun2 = np.zeros((nyears, 12), dtype=outmo.dtype)
+    for row_idx in [5, 7, 9, 11]:
+        lay = outmo[0, row_idx, 0]
+        if lay == -1:
+            continue
+        assert np.all(outmo[:, row_idx, 0] == lay)
+        subrun2 += np.round(outmo[:, row_idx, 1:], dec)
+
+    # Process percolation (vertical flow in/out of first subprofile).
+    percol = np.round(outmo[:, 4, 1:], dec)
+
+    lay = outmo[0, 4, 0]
+    assert np.all(outmo[:, 4, 0] == lay)
+
+    # Find deep recharge row (vertical flow out of last subprofile).
+    for row_idx in [12, 10, 8, 6, 4]:
+        lay = outmo[0, row_idx, 0]
+        if lay != -1:
+            assert np.all(outmo[:, row_idx, 0] == lay)
+            rechg = np.round(outmo[:, row_idx, 1:], dec)
+            break
+
+    results['subrun1'] = subrun1
+    results['subrun2'] = subrun2
+    results['perco'] = percol
+    results['rechg'] = rechg
+
     return (cellname, results)
 
 

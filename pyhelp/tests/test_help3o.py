@@ -11,6 +11,7 @@
 # ---- Standard Library Imports
 import os
 import os.path as osp
+import copy
 
 
 # ---- Third party imports
@@ -35,23 +36,31 @@ def rca_params(rca_folder, tmp_path):
     daily_out = 0
     monthly_out = 1
     yearly_out = 0
-    summary_out = 0
     tfsoil = 32.0  # Must be in Fahrenheit
-    unit_system = 2  # IP if 1 else SI
     simu_nyear = 3
-    return (osp.join(rca_folder, 'RCRA.D4'),
+    fill_outday = 0
+
+    with open(osp.join(rca_folder, 'RCRA.D10'), 'r') as f:
+        raw_lines = f.read().splitlines()
+    d10_input = np.char.ljust(raw_lines, 80).astype('S80')
+
+    with open(osp.join(rca_folder, 'RCRA.D11'), 'r') as f:
+        raw_lines = f.read().splitlines()
+    d11_input = np.char.ljust(raw_lines, 80).astype('S80')
+
+    return [osp.join(rca_folder, 'RCRA.D4'),
             osp.join(rca_folder, 'RCRA.D7'),
             osp.join(rca_folder, 'RCRA.D13'),
-            osp.join(rca_folder, 'RCRA.D11'),
-            osp.join(rca_folder, 'RCRA.D10'),
+            d11_input,
+            d10_input,
             osp.join(tmp_path, 'NEW_RCA.OUT'),
             daily_out,
             monthly_out,
             yearly_out,
-            summary_out,
-            unit_system,
             simu_nyear,
-            tfsoil)
+            tfsoil,
+            fill_outday
+            ]
 
 
 # ---- Tests
@@ -59,8 +68,10 @@ def test_run_help3o(rca_params):
     """
     Test that the HELP3O extension run and create an output file as expected.
     """
-    HELP3O.run_simulation(*rca_params)
+    results, yr0, error_flag, _ = HELP3O.run_simulation(*rca_params)
+    assert error_flag == 0
     assert osp.exists(rca_params[5])
+    assert yr0 == 1
 
 
 def test_run_help_singlecell(rca_params):
@@ -69,8 +80,13 @@ def test_run_help_singlecell(rca_params):
     results are as expected.
     """
     cellname, results = run_help_singlecell(('rca', rca_params))
-    assert not osp.exists(rca_params[5])
+    assert osp.exists(rca_params[5]), rca_params[5]
     assert cellname == 'rca'
+
+    # Simulation results are in mm, but the expected values (from legacy HELP
+    # documentation/outputs) are in inches. We convert the results to compare
+    # against these imperial values. Note that 0.0393701 is the conversion
+    # factor from millimeters (mm) to inches.
 
     # Precipitations.
     precip = np.sum(results['precip'] * 0.0393701, axis=1)
@@ -107,4 +123,4 @@ def test_run_help_singlecell(rca_params):
 
 
 if __name__ == '__main__':
-    pytest.main(['-x', os.path.basename(__file__), '-v', '-rw'])
+    pytest.main(['-x', __file__, '-v', '-rw'])
