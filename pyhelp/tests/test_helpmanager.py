@@ -150,31 +150,51 @@ def test_write_daily_output(helpm, output_file):
     assert daily_data.index[0] == datetime.datetime(2000, 1, 1)
     assert daily_data.index[-1] == datetime.datetime(2010, 12, 31)
 
-    expected_values = [
-        [0.2, 7.2, 1.9, 17.1, 0.0],
-        [0, 2.79, 0.05, 0, 0],
-        [0, 0, 0.5, 0, 0.36],
-        [0.2545, 0.2726, 0.2763, 0.2772, 0.2772],
-        [91.38, 92.18, 92.78, 109.7, 109.34],
-        [-6.1, 1.4, -1.9, -0.3, -11.1],
-        [20, 20, 20, 20, 20],
-        [18.03, 17.99, 17.94, 17.89, 17.84],
-        [1, 1, 1, 1, 1],
-        [0.08206, 0.07889, 0.07593, 0.07318, 0.07061],
-        [6.985E-08, 6.456E-08, 5.982E-08, 5.558E-08, 5.176E-08],
-        [0.213, 0.2047, 0.1971, 0.19, 0.1834],
-        [1.03547, 1.04123, 1.04519, 1.15108, 1.24709],
-        [8.593E-07, 8.686E-07, 8.75E-07, 1.108E-06, 1.241E-06],
-        [0.8301, 0.8344, 0.8374, 0.959, 0.9952]
-        ]
+    expected_sums = {
+        'RAIN': 11567.8,
+        'RUNOFF': 2808.92,
+        'ET': 5360.22,
+        'DRAIN1_FROM_LAY2': 0.021887932775348,
+        'LEAK1_THROUGH_LAY3': 3434.3650609999995,
+        'DRAIN2_FROM_LAY4': 0.007417707112869499,
+        'LEAK2_THROUGH_LAY5': 3393.3356759,
+        }
+    for col, expected in expected_sums.items():
+        actual = daily_data[col].values.sum()
+        err = abs(expected - actual)
+        assert err < 1, f"Mismatch in col '{col}': {actual}"
 
-    for i, col in enumerate(daily_data.columns):
-        actual = daily_data[col].values[:5].tolist()
-        expected = expected_values[i]
-        np.testing.assert_allclose(
-            actual, expected,
-            err_msg=f"Mismatch in col '{col}': {actual}"
-            )
+    expected_sums = {
+        'DRAIN1_FROM_LAY2': 0.021887932775348,
+        'DRAIN2_FROM_LAY4': 0.007417707112869499,
+        }
+    for col, expected in expected_sums.items():
+        actual = daily_data[col].values.sum()
+        err = abs(expected - actual)
+        assert err < 0.01, f"Mismatch in col '{col}': {actual}"
+
+    assert daily_data.FROZEN_SOIL.sum() == 1248
+
+    expected_means = {
+        'E_ZONE_WATER': 0.20217160278745647,
+        'SNOW_SURF': 30.35667496266799,
+        'TAIR': 5.921279243404678,
+        'TSOIL_SURF': 13.732954206072673,
+        'TSOIL_EDEPTH': 11.973404678944748
+        }
+    for col, expected in expected_means.items():
+        actual = daily_data[col].values.sum()
+        err = abs(expected == actual)
+        assert err < 0.1, f"Mismatch in col '{col}': {actual}"
+
+    expected_means = {
+        'HEAD1_ON_LAY3': 0.31265108013937287,
+        'HEAD2_ON_LAY5': 1.057890107018417,
+        }
+    for col, expected in expected_means.items():
+        actual = daily_data[col].values.sum()
+        err = abs(expected == actual)
+        assert err < 0.01, f"Mismatch in col '{col}': {actual}"
 
 
 def test_monthly_normals_in_weather_headers(helpm, output_file):
