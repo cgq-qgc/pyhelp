@@ -80,30 +80,51 @@ def run_help_singlecell(item):
 
         outday[:, :, 8] = np.round(outday[:, :, 8], 0)  # FROZEN_SOIL
 
-        nyear = outday.shape[0]
-        date_range_index = pd.date_range(
-            start=datetime.datetime(yr0, 1, 1),
-            end=datetime.datetime(yr0 + nyear - 1, 12, 31),
-            freq='D'
-            )
-
         df = pd.DataFrame(
             outday[:, 1:, :].reshape(-1, outday.shape[2]),
             columns=columns,
             )
 
-        df[df == -999] = np.nan
-        df = df.dropna(axis=1, how='all')
-        df = df.dropna(axis=0)
+        # Clean up NaN values.
+        df.replace(-999.0, np.nan, inplace=True)
+        df.dropna(axis=1, how='all', inplace=True)
+        df.dropna(axis=0, inplace=True)
 
-        df.index = date_range_index
+        # Set the Datetime Index.
+        nyear = outday.shape[0]
+        df.index = pd.date_range(
+            start=datetime.datetime(yr0, 1, 1),
+            end=datetime.datetime(yr0 + nyear - 1, 12, 31),
+            freq='D'
+        )
         df.index.name = 'DATE'
 
+        # Create a dictionary of rounding rules by column name.
+        round_rules = {
+            'RAIN': 1,
+            'RUNOFF': 2,
+            'ET': 2,
+            'E_ZONE_WATER': 4,
+            'SNOW_SURF': 2,
+            'TAIR': 2,
+            'TSOIL_SURF': 2,
+            'TSOIL_EDEPTH': 2,
+            'FROZEN_SOIL': 0
+            }
+
+        # Add the dynamic HEAD columns to the rounding rules.
         for col in df.columns:
             if col.startswith('HEAD'):
-                df[col] = np.round(df[col], 5)
-            elif col.startswith(('DRAIN', 'LEAK')):
-                df[col] = df[col].map(lambda x: f"{x:.4g}")
+                round_rules[col] = 5
+
+        # Apply rounding rules.
+        df = df.round(round_rules)
+
+        # Format DRAIN and LEAK.
+
+        for col in df.columns:
+            if col.startswith(('DRAIN', 'LEAK')):
+                df[col] = [f"{x:.4g}" for x in df[col]]
 
         df.to_csv(daily_fpath_out)
 
