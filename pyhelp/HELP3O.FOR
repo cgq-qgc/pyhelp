@@ -3503,9 +3503,7 @@ C     GS = GS + TMPC/PHU
 
       ! Calculate the biomass/snow cover lag factor.
       BCV = CV / (CV + EXP (7.563 - (0.0001297*CV)))
-      IF ((SNO*25.4) > 120.) THEN
-         BCV = AMAX1 (1., BCV)
-      ELSE IF (SNO > 0.0) THEN
+      IF (SNO > 0.0) THEN
          XX = (SNO*25.4)/(SNO*25.4 + EXP (6.055 - (.3002*SNO*25.4)))
          BCV = AMAX1 (XX, BCV)
       END IF
