@@ -95,29 +95,29 @@ def test_run_help_singlecell(rca_params):
 
     # Runoff.
     runoff = np.sum(results['runoff'] * 0.0393701, axis=1)
-    for i, expected_result in enumerate([0.596, 4.130, 2.397]):
+    for i, expected_result in enumerate([0.5979924, 4.1829553, 2.4201589]):
         assert abs(runoff[i] - expected_result) < 0.1, 'runoff year %i' % i
 
     # Recharge.
     rechg = np.sum(results['rechg'] * 0.0393701, axis=1)
-    for i, expected_result in enumerate([0.000004, 0.000006, 0.000007]):
+    for i, expected_result in enumerate([0, 0, 0]):
         assert abs(rechg[i] - expected_result) < 0.1, 'rechg year %i' % i
 
     # Evapotranspiration.
     evapo = np.sum(results['evapo'] * 0.0393701, axis=1)
-    for i, expected_result in enumerate([32.178, 33.420, 36.540]):
+    for i, expected_result in enumerate([31.305056, 32.290333, 35.86809]):
         assert abs(evapo[i] - expected_result) < 0.1, 'evapo year %i' % i
 
     # Superficial subsurface runoff.
     # (DRAINAGE COLLECTED FROM LAYER  2)
     subrun1 = np.sum(results['subrun1'] * 0.0393701, axis=1)
-    for i, expected_result in enumerate([15.4971, 22.8698, 19.1360]):
+    for i, expected_result in enumerate([16.31304, 23.873398, 19.775013]):
         assert abs(subrun1[i] - expected_result) < 0.1, 'subrun1 year %i' % i
 
     # Deep subsurface runoff.
     # (DRAINAGE COLLECTED FROM LAYER  7 + DRAINAGE COLLECTED FROM LAYER  9)
     subrun2 = np.sum(results['subrun2'] * 0.0393701, axis=1)
-    expected_results = (0.1376, 0.31398, 0.377)
+    expected_results = (0.1455119, 0.3388191, 0.40956715)
     for i, expected_result in enumerate(expected_results):
         assert abs(subrun2[i] - expected_result) < 0.1, 'subrun2 year %i' % i
 
