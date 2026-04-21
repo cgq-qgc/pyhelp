@@ -31,19 +31,21 @@ def run_help_singlecell(item):
 
     daily_fpath_out = outparam[-1]
     outparam = outparam[:-1]
-    return_daily = daily_fpath_out not in (None, 0)
+    return_daily = int(daily_fpath_out not in (None, 0))
 
     outmo, yr0, error_code, outday = HELP3O.run_simulation(
         *outparam, fill_outday=return_daily
         )
+
     if error_code != 0:
         raise RuntimeError(
             f"Run simulation for cell {cellname} failed "
             f"with error code {error_code}."
             )
 
-    layers = outday[0, 0, :]
-    if return_daily:
+    if return_daily == 1:
+        layers = outday[0, 0, :]
+
         columns = [
             'RAIN', 'RUNOFF',
             'ET', 'E_ZONE_WATER', 'SNOW_SURF',
