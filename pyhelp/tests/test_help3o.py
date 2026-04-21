@@ -38,6 +38,7 @@ def rca_params(rca_folder, tmp_path):
     yearly_out = 0
     tfsoil = 32.0  # Must be in Fahrenheit
     simu_nyear = 3
+    fill_outday = 0
 
     with open(osp.join(rca_folder, 'RCRA.D10'), 'r') as f:
         raw_lines = f.read().splitlines()
@@ -57,7 +58,9 @@ def rca_params(rca_folder, tmp_path):
             monthly_out,
             yearly_out,
             simu_nyear,
-            tfsoil]
+            tfsoil,
+            fill_outday
+            ]
 
 
 # ---- Tests
@@ -65,7 +68,7 @@ def test_run_help3o(rca_params):
     """
     Test that the HELP3O extension run and create an output file as expected.
     """
-    results, yr0, error_flag = HELP3O.run_simulation(*rca_params)
+    results, yr0, error_flag, _ = HELP3O.run_simulation(*rca_params)
     assert error_flag == 0
     assert osp.exists(rca_params[5])
     assert yr0 == 1

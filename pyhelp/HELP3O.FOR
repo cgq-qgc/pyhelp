@@ -44,9 +44,11 @@
       SUBROUTINE run_simulation (fpath_precip, fpath_tasavg,
      &  fpath_solrad, d11_input, d10_nlines, d10_input, fpath_output,
      &  IOD, IOM, IOA,
-     &  LMYR, TFSOIL, PY_OUTMO, PY_JYEAR1, IERR
+     &  LMYR, TFSOIL, PY_OUTMO, PY_JYEAR1, IERR,
+     &  FILL_OUTDAY, PY_OUTDAY
      &  )
 
+      PARAMETER (NDVAR = 25)
       PARAMETER (MXYR = 100)
       PARAMETER (MAXMO = 12)
 
@@ -71,6 +73,10 @@
       INTEGER, INTENT(OUT) :: PY_JYEAR1
       INTEGER, INTENT(OUT) :: IERR
 
+      INTEGER, INTENT(IN) :: FILL_OUTDAY
+      DOUBLE PRECISION, INTENT(OUT) ::
+     &  PY_OUTDAY(LMYR, 367, FILL_OUTDAY*NDVAR)
+
       INTEGER :: IU8
       INTEGER :: IOF   ! Flag to write Output to file (1=Yes, 0=No)
       INTEGER :: NVAR  ! Number of output variables for OUTDAY
@@ -82,7 +88,8 @@
       DOUBLE PRECISION DSWUL, DTHICK, DRCUL, DBUBUL,
      &  DWPUL, DLAMUL, DRSUL, DUL, DFCUL, DSUBIN, DCHG, DRCRS
 
-      CHARACTER(len=1) :: ISTAR(2) = ['*', ' ']
+      CHARACTER(len=1) :: ISTAR(2)
+      DATA ISTAR /'*', ' '/
       CHARACTER(len=1) :: ASTAR, SSTAR
       CHARACTER(len=60) TITLE
 
@@ -186,13 +193,26 @@
       CALL SGMNT
 
       ! Determine the number of output variables (NVAR) for OUTDAY.
-      NVAR = 0
-      IF(LP(1) > 0) NVAR = 7
-      IF(LP(2) > 0) NVAR = 10
-      IF(LP(3) > 0) NVAR = 13
-      IF(LP(4) > 0) NVAR = 16
-      IF(LP(5) > 0) NVAR = 19
-      IF(LP(6) > 0) NVAR = 20
+      IF (LP(6) > 0) THEN
+        NVAR = 20
+      ELSE IF (LP(5) > 0) THEN
+        NVAR = 19
+      ELSE IF (LP(4) > 0) THEN
+        NVAR = 16
+      ELSE IF (LP(3) > 0) THEN
+        NVAR = 13
+      ELSE IF (LP(2) > 0) THEN
+        NVAR = 10
+      ELSE IF (LP(1) > 0) THEN
+        NVAR = 7
+      ELSE
+        NVAR = 0
+      END IF
+
+      ! Initialize the daily output array if applicable.
+      IF (FILL_OUTDAY == 1) THEN
+        PY_OUTDAY = -999.0
+      END IF
 
       ! Computes maximum storage retention parameter.
       C2 = CN2*CN2
@@ -430,7 +450,7 @@
           ! Compute snowfall and snowmelt and adjusts rain accordingly.
           CALL SNOW (IT)
 
-          ! ASTAR indicates freezing temperatures.
+          ! ASTAR indicates freezing air temperatures.
           ASTAR = ISTAR(IT)
 
           ! Compute runoff.
@@ -438,7 +458,8 @@
           IF (IFREZ .GT. 0) SMX = SMXF
           CALL RUNOFF
 
-          ! Compute soil temperature at bottom of each segment.
+          ! Compute daily soil temperatures (TSEG) at the bottom
+          ! of each of the seven evaporative-zone segments.
           CALL SOLT
 
          ! Computes surface and soil evaporation and potential plant
@@ -694,7 +715,11 @@ C
 
           ! Call subroutine outday if daily output is desired.
           IF (IOD == 1 .AND. IPRE >= 2) THEN
-            CALL OUTDAY (SWE, ASTAR, SSTAR, NVAR)
+            CALL OUTDAY(SWE, ASTAR, SSTAR, NVAR)
+          END IF
+
+          IF (FILL_OUTDAY == 1) THEN
+            CALL FILL_PY_OUTDAY(LMYR, SWE, NDVAR, PY_OUTDAY)
           END IF
 
           ! End of daily loop.
@@ -3454,8 +3479,8 @@ C     GS = GS + TMPC/PHU
       !=================================================================
       ! SUBROUTINE: SOLT
       !
-      ! Estimates daily average temperature at the bottom
-      ! of each soil layer
+      ! Estimate daily soil temperatures (TSEG) at the bottom
+      ! of each of the seven evaporative-zone segments.
       !=================================================================
       SUBROUTINE SOLT
 
@@ -3472,7 +3497,7 @@ C     GS = GS + TMPC/PHU
       IF(CV.LT.0.0)CV=0.0
       IF(CV.GT.20000.)CV=20000.
 
-      ! Calculate the Biomass/Snow Cover Factor.
+      ! Calculate the biomass/snow cover lag factor.
       BCV = CV / (CV + EXP (7.563 - (0.0001297*CV)))
       IF ((SNO*25.4) > 120.) THEN
          BCV = AMAX1 (1., BCV)
@@ -5946,9 +5971,13 @@ C
         DO K = 1, 5
           IF (LP(K) > 0) THEN
             IF (LAYER(LP(K)) > 2) THEN
+              ! Bottom layer is a barrier (Type 3 or 4)
               IF (LAYER(LP(K)-1) <= 2) THEN
+                ! Layer above is a vertical percolation (Type 1)
+                ! or a lateral drainage layer (Type 2).
                 WRITE (8, 6121) K, LP(K), K, LP(K)-1
               ELSE
+                ! Layer above is a composite liner (Type 4).
                 WRITE (8, 6121) K, LP(K)-1, K, LP(K)-2
               END IF
             END IF
@@ -6092,6 +6121,139 @@ C
 
 
       !=================================================================
+      ! SUBROUTINE: FILL_PY_OUTDAY
+      !
+      ! Packages the daily simulation results into a 3D array
+      ! (PY_OUTDAY) to be returned to Python via f2py.
+      !=================================================================
+      SUBROUTINE FILL_PY_OUTDAY (LMYR, SWE, NDVAR, PY_OUTDAY)
+
+      INTEGER, INTENT(IN) :: LMYR
+      INTEGER, INTENT(IN) :: NDVAR
+      DOUBLE PRECISION, INTENT(INOUT) :: PY_OUTDAY(LMYR, 367, NDVAR)
+
+      INTEGER :: WRITE_COL, K
+      DOUBLE PRECISION PRC1, PRC2, PRC3, PRC4, PRC5, PRC6,
+     &  DRN1, DRN2, DRN3, DRN4, DRN5, HED1, HED2, HED3, HED4, HED5,
+     &  RCR1, RCR2, RCR3, RCR4, RCR5, RCRI
+
+      COMMON /BLK4/ LAYER (21), LAYR (20), IPQ (20), ISOIL (20), LAY,
+     &  LAYSEG (67, 2), LSEG (67), LSEGS (20, 2), LRIN(20), LSIN(20)
+      COMMON /BLK8/ PRE (370), TMPF (366), RAD (366)
+      COMMON /BLK9/ PINF, ES1T, SMELT, GMRO, ADDRUN, OLDSNO, SNO, WF(7),
+     &  SSNO
+      COMMON /BLK10/ ETT, ESS, EP, ES, ET (67)
+      COMMON /BLK11/ ETO, XLAI, STAGE1, CONA, RAIN, RUN, ABST, EAJ, TS2
+      COMMON /BLK15/ PRC1, PRC2, PRC3, PRC4, PRC5, PRC6, DRN1, DRN2,
+     &  DRN3, DRN4, DRN5, HED1, HED2, HED3, HED4, HED5,
+     &  RCR1, RCR2, RCR3, RCR4, RCR5, RCRI(20)
+      COMMON /BLK16/ LD(5), LP(6), LPQ(5), LCASE(5), IYR, IDA, MO,
+     &  NSTEP(6), ND
+      COMMON /BLK20/ TSEG (7), Z (7), FCS (7), ST (7)
+      COMMON /BLK21/ TB, TO, TS, AVT, AMP, ABD, PHU, GS, CV,
+     &  RSD, DM, WFT (12), DD, DLAI, TSURF
+      COMMON /BLK27/ IFREZ, IDFS, IFCNT, KCNT, MXKCNT
+
+      ! Save layer number for 'head', 'drain' and 'leak' columns.
+      IF (IDA == 1) THEN
+        WRITE_COL = 9
+
+        PY_OUTDAY(IYR, 1, 1:WRITE_COL) = 0
+        WRITE_COL = WRITE_COL + 1
+
+        ! We follow the same logic as in SUBROUTINE OUTDAY
+        ! to assign layers.
+        DO K = 1, 5
+          IF (LP(K) > 0) THEN
+            IF (LAYER(LP(K)) > 2) THEN
+              ! Bottom layer is a barrier (Type 3 or 4)
+              IF (LAYER(LP(K)-1) <= 2) THEN
+                ! Layer above is a vertical percolation (Type 1)
+                ! or a lateral drainage layer (Type 2).
+                PY_OUTDAY(IYR, 1, WRITE_COL) = LP(K)
+                WRITE_COL = WRITE_COL + 1
+
+                PY_OUTDAY(IYR, 1, WRITE_COL) = LP(K) - 1
+                WRITE_COL = WRITE_COL + 1
+              ELSE
+                ! Layer above is a composite liner (Type 4).
+                PY_OUTDAY(IYR, 1, WRITE_COL) = LP(K) - 1
+                WRITE_COL = WRITE_COL + 1
+
+                PY_OUTDAY(IYR, 1, WRITE_COL) = LP(K) - 2
+                WRITE_COL = WRITE_COL + 1
+              END IF
+            ELSE
+              WRITE_COL = WRITE_COL + 2
+            END IF
+
+            PY_OUTDAY(IYR, 1, WRITE_COL) = LP(K)
+            WRITE_COL = WRITE_COL + 1
+          ELSE
+            WRITE_COL = WRITE_COL + 3
+          END IF
+
+        END DO
+
+        IF (LP(6) > 0) PY_OUTDAY(IYR, 1, WRITE_COL) = LP(6)
+
+      End IF
+
+      ! Save daily rain in mm.
+      PY_OUTDAY(IYR, IDA + 1, 1) = PRE(IDA) * 25.4D0
+      ! Save surface runoff in mm.
+      PY_OUTDAY(IYR, IDA + 1, 2) = RUN * 25.4D0
+      ! Save surface evapotranspiration in mm.
+      PY_OUTDAY(IYR, IDA + 1, 3) = ETT * 25.4D0
+      ! Soil moisture in evaporative zone in cm/cm.
+      PY_OUTDAY(IYR, IDA + 1, 4) = SWE
+      ! Save total snow water equivalent in mm.
+      PY_OUTDAY(IYR, IDA + 1, 5) = SNO * 25.4D0
+
+      ! Save daily air temperature in deg C.
+      PY_OUTDAY(IYR, IDA + 1, 6) = (TMPF(IDA) - 32.0D0) / 1.8D0
+      ! Save soil temperature at the surface in deg C.
+      PY_OUTDAY(IYR, IDA + 1, 7) = TSURF
+      ! Save soil temperature at bottom of evaporative zone in deg C.
+      PY_OUTDAY(IYR, IDA + 1, 8) = TSEG(7)
+      ! Save if soil is frozen (1=Yes, 0=No).
+      PY_OUTDAY(IYR, IDA + 1, 9) = IFREZ
+
+      ! Save head, drain and leak daily values in mm.
+      IF (LP(1) > 0) THEN
+        PY_OUTDAY(IYR, IDA + 1, 10) = HED1 * 25.4D0
+        PY_OUTDAY(IYR, IDA + 1, 11) = (DRN1 + RCR1) * 25.4D0
+        PY_OUTDAY(IYR, IDA + 1, 12) = PRC1 * 25.4D0
+      END IF
+      IF (LP(2) > 0) THEN
+        PY_OUTDAY(IYR, IDA + 1, 13) = HED2 * 25.4D0
+        PY_OUTDAY(IYR, IDA + 1, 14) = (DRN2 + RCR2) * 25.4D0
+        PY_OUTDAY(IYR, IDA + 1, 15) = PRC2 * 25.4D0
+      END IF
+      IF (LP(3) > 0) THEN
+        PY_OUTDAY(IYR, IDA + 1, 16) = HED3 * 25.4D0
+        PY_OUTDAY(IYR, IDA + 1, 17) = (DRN3 + RCR3) * 25.4D0
+        PY_OUTDAY(IYR, IDA + 1, 18) = PRC3 * 25.4D0
+      END IF
+      IF (LP(4) > 0) THEN
+        PY_OUTDAY(IYR, IDA + 1, 19) = HED4 * 25.4D0
+        PY_OUTDAY(IYR, IDA + 1, 20) = (DRN4 + RCR4) * 25.4D0
+        PY_OUTDAY(IYR, IDA + 1, 21) = PRC4 * 25.4D0
+      END IF
+      IF (LP(5) > 0) THEN
+        PY_OUTDAY(IYR, IDA + 1, 22) = HED5 * 25.4D0
+        PY_OUTDAY(IYR, IDA + 1, 23) = (DRN5 + RCR5) * 25.4D0
+        PY_OUTDAY(IYR, IDA + 1, 24) = PRC5 * 25.4D0
+      END IF
+      IF (LP(6) > 0) THEN
+        PY_OUTDAY(IYR, IDA + 1, 25) = PRC6 * 25.4D0
+      END IF
+
+      RETURN
+      END SUBROUTINE FILL_PY_OUTDAY
+
+
+      !=================================================================
       ! SUBROUTINE: OUTMO
       !
       ! Print heading for monthly results and print
@@ -6115,7 +6277,8 @@ C
       SUBROUTINE OUTMO2
 
       PARAMETER (MXYR = 100)
-      COMMON /BLK3/ PORO (20), FC (20), WP (20), RC (20), SW (20),
+      DOUBLE PRECISION RC(20)
+      COMMON /BLK3/ PORO (20), FC (20), WP (20), RC, SW (20),
      1  RS (20), XLAMBD (20), BUB (20), THICK (20), SLOPE (20),
      2  XLENG (20), CON (20), SUBIN (20), RECIR (20), PHOLE (20),
      3  DEFEC (20), TRANS (20), EDEPTH, SUBINF, SEDEP, CORECT

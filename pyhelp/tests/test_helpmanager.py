@@ -8,10 +8,14 @@
 # -----------------------------------------------------------------------------
 
 # ---- Standard library imports
+import datetime
 import os
 import os.path as osp
 
 # ---- Third party imports
+import matplotlib
+matplotlib.use("Agg")
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -99,6 +103,9 @@ def test_calc_help_cells(
     if write_help_output_files:
         assert len(os.listdir(outputdir)) == 98
 
+    daily_outdir = osp.join(helpm.inputdir, 'Daily_output_files')
+    assert not osp.exists(daily_outdir)
+
     # Assert that the results are as expected.
     output = HelpOutput(output_file)
     area_yrly_avg = output.calc_area_yearly_avg()
@@ -112,6 +119,85 @@ def test_calc_help_cells(
     for name, value in expected_results.items():
         result = np.sum(area_yrly_avg[name])
         assert abs(result - value) < 1, f'{name}: {result} vs {value}'
+
+
+def test_write_daily_output(helpm, output_file):
+    """
+    Test that daily output are saved as expected when
+    `write_daily_output` is set to `True`.
+    """
+    cellnames = helpm.cellnames[:100]
+
+    helpm.calc_help_cells(
+        output_file, cellnames, tfsoil=-3,
+        write_daily_output=True,
+        )
+
+    daily_outdir = osp.join(helpm.inputdir, 'Daily_output_files')
+    assert osp.exists(daily_outdir)
+    assert len(os.listdir(daily_outdir)) == 98
+
+    daily_data = pd.read_csv(
+        osp.join(daily_outdir, '37728.csv'),
+        index_col=0,
+        parse_dates=True
+        )
+
+    assert list(daily_data.columns) == [
+        'RAIN', 'RUNOFF', 'ET', 'E_ZONE_WATER', 'SNOW_SURF',
+        'TAIR', 'TSOIL_SURF', 'TSOIL_EDEPTH', 'FROZEN_SOIL',
+        'HEAD1_ON_LAY3', 'DRAIN1_FROM_LAY2', 'LEAK1_THROUGH_LAY3',
+        'HEAD2_ON_LAY5', 'DRAIN2_FROM_LAY4', 'LEAK2_THROUGH_LAY5'
+        ]
+
+    assert daily_data.index[0] == datetime.datetime(2000, 1, 1)
+    assert daily_data.index[-1] == datetime.datetime(2010, 12, 31)
+
+    expected_sums = {
+        'RAIN': 11567.8,
+        'RUNOFF': 2808.92,
+        'ET': 5360.22,
+        'DRAIN1_FROM_LAY2': 0.021887932775348,
+        'LEAK1_THROUGH_LAY3': 3434.3650609999995,
+        'DRAIN2_FROM_LAY4': 0.007417707112869499,
+        'LEAK2_THROUGH_LAY5': 3393.3356759,
+        }
+    for col, expected in expected_sums.items():
+        actual = daily_data[col].values.sum()
+        err = abs(expected - actual)
+        assert err < 1, f"Mismatch in col '{col}': {actual}"
+
+    expected_sums = {
+        'DRAIN1_FROM_LAY2': 0.021887932775348,
+        'DRAIN2_FROM_LAY4': 0.007417707112869499,
+        }
+    for col, expected in expected_sums.items():
+        actual = daily_data[col].values.sum()
+        err = abs(expected - actual)
+        assert err < 0.01, f"Mismatch in col '{col}': {actual}"
+
+    assert daily_data.FROZEN_SOIL.sum() == 1248
+
+    expected_means = {
+        'E_ZONE_WATER': 0.20217160278745647,
+        'SNOW_SURF': 30.35667496266799,
+        'TAIR': 5.921279243404678,
+        'TSOIL_SURF': 13.732954206072673,
+        'TSOIL_EDEPTH': 11.973404678944748
+        }
+    for col, expected in expected_means.items():
+        actual = daily_data[col].values.sum()
+        err = abs(expected == actual)
+        assert err < 0.1, f"Mismatch in col '{col}': {actual}"
+
+    expected_means = {
+        'HEAD1_ON_LAY3': 0.31265108013937287,
+        'HEAD2_ON_LAY5': 1.057890107018417,
+        }
+    for col, expected in expected_means.items():
+        actual = daily_data[col].values.sum()
+        err = abs(expected == actual)
+        assert err < 0.01, f"Mismatch in col '{col}': {actual}"
 
 
 def test_monthly_normals_in_weather_headers(helpm, output_file):
