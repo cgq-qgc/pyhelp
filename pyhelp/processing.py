@@ -8,6 +8,7 @@
 
 
 # ---- Standard Library Imports
+import datetime
 import os
 import os.path as osp
 from multiprocessing import Pool
@@ -18,6 +19,7 @@ import calendar
 
 # ---- Third Party imports
 import numpy as np
+import pandas as pd
 
 # ---- Local Libraries Imports
 from pyhelp import HELP3O
@@ -64,21 +66,6 @@ def run_help_singlecell(item):
         columns.extend(
             [f'LEAK{i+1}_THROUGH_LAY{layers[i*3 + offset]:.0f}']
             )
-
-        import pandas as pd
-        import datetime
-
-        outday[:, :, 0] = np.round(outday[:, :, 0], 1)  # RAIN
-        outday[:, :, 1] = np.round(outday[:, :, 1], 2)  # RUNOFF
-        outday[:, :, 2] = np.round(outday[:, :, 2], 2)  # ET
-        outday[:, :, 3] = np.round(outday[:, :, 3], 4)  # E_ZONE_WATER
-        outday[:, :, 4] = np.round(outday[:, :, 4], 2)  # SNOW_SURF
-
-        outday[:, :, 5] = np.round(outday[:, :, 5], 2)  # TAIR
-        outday[:, :, 6] = np.round(outday[:, :, 6], 2)  # TSOIL_SURF
-        outday[:, :, 7] = np.round(outday[:, :, 7], 2)  # TSOIL_EDEPTH
-
-        outday[:, :, 8] = np.round(outday[:, :, 8], 0)  # FROZEN_SOIL
 
         df = pd.DataFrame(
             outday[:, 1:, :].reshape(-1, outday.shape[2]),
