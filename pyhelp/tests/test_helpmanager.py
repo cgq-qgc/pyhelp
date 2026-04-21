@@ -13,6 +13,9 @@ import os
 import os.path as osp
 
 # ---- Third party imports
+import matplotlib
+matplotlib.use("Agg")
+
 import numpy as np
 import pandas as pd
 import pytest
