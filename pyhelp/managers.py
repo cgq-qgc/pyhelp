@@ -345,6 +345,7 @@ class HelpManager(object):
                         write_help_output_files: bool = False,
                         help_output_kwargs: dict = None,
                         write_daily_output: bool = False,
+                        ncores: int = None
                         ) -> HelpOutput:
         """
         Calcul the water budget for all eligible cells with HELP.
@@ -407,6 +408,12 @@ class HelpManager(object):
             `TSEG`), frost status, and layer-specific drainage/leakage
             metrics. Default is False. Note that enabling this will increase
             disk usage and execution time. See cgq-qgc/pyhelp#123 for details.
+        ncores : int, optional
+            The number of CPU cores to use for parallel processing of the HELP
+            cells. If `None` (the default), it will automatically utilize all
+            available logical CPU cores on the system. The value is strictly
+            bounded to a minimum of 1 to ensure at least one process is
+            spawned.
 
         Returns
         -------
@@ -494,7 +501,7 @@ class HelpManager(object):
             print(msg)
             print('-' * 25)
 
-        output_data = run_help_allcells(cellparams)
+        output_data = run_help_allcells(cellparams, ncores)
         output_data = self._post_process_output(output_data)
         help_output = HelpOutput(output_data)
         if path_to_hdf5:
