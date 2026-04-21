@@ -409,7 +409,11 @@ class HelpManager(object):
             metrics. Default is False. Note that enabling this will increase
             disk usage and execution time. See cgq-qgc/pyhelp#123 for details.
         ncores : int, optional
-            number of cores dedicated to the computation. The default is None.
+            The number of CPU cores to use for parallel processing of the HELP
+            cells. If `None` (the default), it will automatically utilize all
+            available logical CPU cores on the system. The value is strictly
+            bounded to a minimum of 1 to ensure at least one process is
+            spawned.
 
         Returns
         -------
@@ -497,7 +501,7 @@ class HelpManager(object):
             print(msg)
             print('-' * 25)
 
-        output_data = run_help_allcells(cellparams,ncores)
+        output_data = run_help_allcells(cellparams, ncores)
         output_data = self._post_process_output(output_data)
         help_output = HelpOutput(output_data)
         if path_to_hdf5:
