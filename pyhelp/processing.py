@@ -58,6 +58,7 @@ def run_help_singlecell(item):
                  f'DRAIN{i+1}_FROM_LAY{layers[i*3 + offset + 1]:.0f}',
                  f'LEAK{i+1}_THROUGH_LAY{layers[i*3 + offset + 2]:.0f}']
                 )
+        i += 1
         columns.extend(
             [f'LEAK{i+1}_THROUGH_LAY{layers[i*3 + offset]:.0f}']
             )
