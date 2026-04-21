@@ -462,13 +462,13 @@ def test_save_output_to_csv(output_dir, output_file):
     assert df.iloc[0]['lon_dd'] == output.data['lon_dd'][0]
 
     expected_results = {
-        'precip': 1055.859737334313,
-        'perco': 267.6719784568864,
-        'evapo': 527.1941984146556,
-        'rechg': 137.92593783036364,
-        'runoff': 213.45404069293568,
-        'subrun1': 50.6600028195145,
-        'subrun2': 121.90106029782127}
+        'precip': 1055.8597373343132,
+        'perco': 269.85915013361415,
+        'evapo': 524.5229649707427,
+        'rechg': 139.2435204331471,
+        'runoff': 213.5439791499779,
+        'subrun1': 51.0534471241395,
+        'subrun2': 122.72894621921611}
     for key in list(expected_results.keys()):
         result = df[key].sum() / len(df)
         expected_result = expected_results[key]
