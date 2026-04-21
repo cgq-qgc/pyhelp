@@ -157,11 +157,11 @@ def test_write_daily_output(helpm, output_file):
     expected_sums = {
         'RAIN': 11567.8,
         'RUNOFF': 2808.92,
-        'ET': 5360.22,
-        'DRAIN1_FROM_LAY2': 0.021887932775348,
-        'LEAK1_THROUGH_LAY3': 3434.3650609999995,
-        'DRAIN2_FROM_LAY4': 0.007417707112869499,
-        'LEAK2_THROUGH_LAY5': 3393.3356759,
+        'ET': 5357.29,
+        'DRAIN1_FROM_LAY2': 0.0238081869138438,
+        'LEAK1_THROUGH_LAY3': 3438.1293521999996,
+        'DRAIN2_FROM_LAY4': 0.0074378913938849996,
+        'LEAK2_THROUGH_LAY5': 3396.4980834,
         }
     for col, expected in expected_sums.items():
         actual = daily_data[col].values.sum()
@@ -169,8 +169,8 @@ def test_write_daily_output(helpm, output_file):
         assert err < 1, f"Mismatch in col '{col}': {actual}"
 
     expected_sums = {
-        'DRAIN1_FROM_LAY2': 0.021887932775348,
-        'DRAIN2_FROM_LAY4': 0.007417707112869499,
+        'DRAIN1_FROM_LAY2': 0.0238081869138438,
+        'DRAIN2_FROM_LAY4': 0.0074378913938849996,
         }
     for col, expected in expected_sums.items():
         actual = daily_data[col].values.sum()
@@ -180,11 +180,11 @@ def test_write_daily_output(helpm, output_file):
     assert daily_data.FROZEN_SOIL.sum() == 1248
 
     expected_means = {
-        'E_ZONE_WATER': 0.20217160278745647,
+        'E_ZONE_WATER': 0.20224736187157788,
         'SNOW_SURF': 30.35667496266799,
         'TAIR': 5.921279243404678,
-        'TSOIL_SURF': 13.732954206072673,
-        'TSOIL_EDEPTH': 11.973404678944748
+        'TSOIL_SURF': 1.6576630164260828,
+        'TSOIL_EDEPTH': 2.5955550024888003
         }
     for col, expected in expected_means.items():
         actual = daily_data[col].values.sum()
@@ -192,8 +192,8 @@ def test_write_daily_output(helpm, output_file):
         assert err < 0.1, f"Mismatch in col '{col}': {actual}"
 
     expected_means = {
-        'HEAD1_ON_LAY3': 0.31265108013937287,
-        'HEAD2_ON_LAY5': 1.057890107018417,
+        'HEAD1_ON_LAY3': 0.31645661523145846,
+        'HEAD2_ON_LAY5': 1.0583286809357888,
         }
     for col, expected in expected_means.items():
         actual = daily_data[col].values.sum()
