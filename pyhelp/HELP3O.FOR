@@ -2370,6 +2370,10 @@ C     COMPILER CORRECTIONS ABOVE
       TB = 5.
       TO = 20.
 
+      ! Setting TSURF to a dummy value so that it can be
+      ! properly initiated in the SOLT subroutine.
+      TSURF = -999
+
       ! Computing average yearly Temp, AVT; amplitude, AMP; and WFT.
       AVT = 0.
       TBB = 0.
