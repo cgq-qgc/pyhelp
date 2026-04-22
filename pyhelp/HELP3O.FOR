@@ -718,7 +718,7 @@ C
             CALL OUTDAY(SWE, ASTAR, SSTAR, NVAR)
           END IF
 
-          IF (FILL_OUTDAY == 1) THEN
+          IF (IPRE >= 2 .AND. FILL_OUTDAY == 1) THEN
             CALL FILL_PY_OUTDAY(LMYR, SWE, NDVAR, PY_OUTDAY)
           END IF
 
