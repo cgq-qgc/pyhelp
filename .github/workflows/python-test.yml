@@ -46,7 +46,8 @@ jobs:
 
     - name: Coverage
       if: matrix.python-version == '3.11'
-      run: |
-        codecov
-      env:
-        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      uses: codecov/codecov-action@v6
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        file: ./coverage.xml
+        fail_ci_if_error: true
