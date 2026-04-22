@@ -714,7 +714,7 @@ C
           CALL RECIRC (IMO)
 
           ! Call subroutine outday if daily output is desired.
-          IF (IOD == 1 .AND. IPRE >= 2) THEN
+          IF (IPRE >= 2 .AND. IOD == 1 .AND. IOF == 1) THEN
             CALL OUTDAY(SWE, ASTAR, SSTAR, NVAR)
           END IF
 
