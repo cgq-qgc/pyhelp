@@ -73,7 +73,8 @@ def test_read_input_grid(helpm, output_file):
     [(True, True), (False, False)]
     )
 def test_calc_help_cells(
-        helpm, output_file, write_help_input_files, write_help_output_files
+        helpm, output_file, write_help_input_files, write_help_output_files,
+        output_dir
         ):
     """Test that the HelpManager is able to run water budget calculation."""
     cellnames = helpm.cellnames[:100]
@@ -81,7 +82,8 @@ def test_calc_help_cells(
     helpm.calc_help_cells(
         output_file, cellnames, tfsoil=-3,
         write_help_input_files=write_help_input_files,
-        write_help_output_files=write_help_output_files
+        write_help_output_files=write_help_output_files,
+        help_output_kwargs={'IOD': 1, 'IOM': 1, 'IOA': 1},
         )
 
     assert osp.exists(output_file)
@@ -102,6 +104,9 @@ def test_calc_help_cells(
     assert osp.exists(outputdir) == write_help_output_files
     if write_help_output_files:
         assert len(os.listdir(outputdir)) == 98
+
+    # Make sure Fortran is not writing its input in a dummy file.
+    assert not osp.exists(osp.join(helpm.workdir, 'fort.8'))
 
     daily_outdir = osp.join(helpm.inputdir, 'Daily_output_files')
     assert not osp.exists(daily_outdir)
