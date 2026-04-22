@@ -9,8 +9,7 @@
 
 import os
 
-version_info = (0, 5, 0, 'rc1')
-__version__ = '.'.join(map(str, version_info))
+__version__ = '0.5.0rc1.post1'
 __appname__ = 'PyHELP'
 __namever__ = __appname__ + " " + __version__
 __date__ = '22/04/2026'
