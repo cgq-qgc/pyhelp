@@ -29,7 +29,7 @@ details.
 ## Installation
 [![pypi version](https://img.shields.io/pypi/v/pyhelp.svg)](https://pypi.org/project/pyhelp/)
 
-Pip Wheels are available for Python 3.7 to 3.9 on the Windows 64bits plateform. If you need to use PyHELP with a version of Python older than 3.7 or more recent than 3.9, or if you are working on Linux or macOS, you will have to build and install PyHELP from source.
+Pip Wheels are available for Python 3.11 to 3.13 on the Windows 64bits plateform. If you need to use PyHELP with a version of Python older than 3.11 or more recent than 3.13, or if you are working on Linux or macOS, you will have to build and install PyHELP from source.
 
 To install PyHELP, along with all its dependencies, simply run the following command in a terminal:
 
