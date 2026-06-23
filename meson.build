@@ -32,6 +32,13 @@ help3o_c = custom_target('help3o_c',
              ]
 )
 
+# Windows uses static libs directly
+# For other OS this is done in the CI
+link_args = []
+if host_machine.system() == 'windows'
+  link_args = ['-static-libgfortran', '-static-libgcc']
+endif
+
 # Build extension using the generated C wrapper AND the original Fortran file
 py.extension_module(
   'HELP3O',
@@ -40,7 +47,7 @@ py.extension_module(
   dependencies: py_dep,
   install: true,
   subdir: 'pyhelp',
-  link_args: ['-static', '-static-libgfortran', '-static-libgcc', '-lquadmath']
+  link_args: link_args
 )
 
 # Install all Python files.

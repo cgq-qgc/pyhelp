@@ -33,3 +33,20 @@ Homepage = "https://github.com/cgq-qgc/pyhelp"
 Repository = "https://github.com/cgq-qgc/pyhelp"
 
 [tool.meson-python.args]
+
+[tool.cibuildwheel]
+# PyPy has no working f2py; musllinux/Alpine needs a separate toolchain.
+skip = ["pp*", "*-musllinux*"]
+# f2py needs numpy + the meson toolchain present before each wheel build.
+before-build = "pip install meson-python meson ninja numpy"
+# Smoke-test the built wheel: import + exercise the compiled HELP3O extension.
+# --pyargs imports the *installed* pyhelp (with the compiled HELP3O) rather than
+# the source tree, which has no extension and would shadow it. Scoped to the
+# extension test; the full integration suite (which needs repo data files) runs
+# from source in python-test.yml.
+test-requires = "pytest"
+test-command = "python -m pytest --pyargs pyhelp.tests.test_help3o"
+
+[tool.cibuildwheel.linux]
+# manylinux_2_28 ships a recent-enough gfortran for f2py.
+manylinux-x86_64-image = "manylinux_2_28"

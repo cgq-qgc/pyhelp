@@ -38,6 +38,8 @@ parts/
 sdist/
 var/
 wheels/
+wheelhouse/
+buildir/
 *.egg-info/
 .installed.cfg
 *.egg
