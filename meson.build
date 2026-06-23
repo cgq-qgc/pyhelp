@@ -11,12 +11,20 @@ py = py_mod.find_installation(pure: false)
 py_dep = py.dependency()
 
 incdir_numpy = run_command(py,
-['-c', 'import numpy; import pathlib; import os; print(pathlib.Path(numpy.get_include()).relative_to(os.getcwd()))'],
+['-c', '''import os, numpy
+try:
+    print(os.path.relpath(numpy.get_include()))
+except Exception:
+    print(numpy.get_include())'''],
   check: true
   ).stdout().strip()
 
 incdir_f2py = run_command(py,
-    ['-c', 'import numpy.f2py; import pathlib; import os; print(pathlib.Path(numpy.f2py.get_include()).relative_to(os.getcwd()))'],
+    ['-c', '''import os, numpy.f2py
+try:
+    print(os.path.relpath(numpy.f2py.get_include()))
+except Exception:
+    print(numpy.f2py.get_include())'''],
     check : true
 ).stdout().strip()
 
