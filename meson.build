@@ -11,12 +11,12 @@ py = py_mod.find_installation(pure: false)
 py_dep = py.dependency()
 
 incdir_numpy = run_command(py,
-  ['-c', 'import numpy; print(numpy.get_include())'],
+['-c', 'import numpy; import pathlib; import os; print(pathlib.Path(numpy.get_include()).relative_to(os.getcwd()))'],
   check: true
   ).stdout().strip()
 
 incdir_f2py = run_command(py,
-    ['-c', 'import numpy.f2py; print(numpy.f2py.get_include())'],
+    ['-c', 'import numpy.f2py; import pathlib; import os; print(pathlib.Path(numpy.f2py.get_include()).relative_to(os.getcwd()))'],
     check : true
 ).stdout().strip()
 
@@ -24,7 +24,7 @@ inc_np = include_directories(incdir_numpy, incdir_f2py)
 
 # Generate the C wrapper using f2py
 help3o_c = custom_target('help3o_c',
-  input : 'pyhelp/HELP3O.FOR',
+  input : './pyhelp/HELP3O.FOR',
   output : ['HELP3Omodule.c', 'HELP3O-f2pywrappers.f'],
   command : [py, '-m', 'numpy.f2py', '@INPUT@', '-m', 'HELP3O',
              '--lower', '--build-dir', '@OUTDIR@',
