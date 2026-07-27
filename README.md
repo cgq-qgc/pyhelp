@@ -34,3 +34,39 @@ Pip Wheels are available for Python 3.11 to 3.13 on the Windows 64bits plateform
 To install PyHELP, along with all its dependencies, simply run the following command in a terminal:
 
 `python -m pip install pyhelp`
+
+### Building from source (Linux / macOS / development)
+
+On Linux and macOS, and when developing PyHELP, you need to build the compiled
+HELP3O extension from source. This requires a C and a **Fortran** compiler:
+
+- Debian/Ubuntu: `sudo apt install gfortran`
+- macOS: `brew install gcc`
+
+PyHELP supports Python 3.11 to 3.13 (Python 3.14 and newer are not yet
+supported), so make sure you work inside a virtual environment using one of
+these versions:
+
+```
+python3.12 -m venv .venv
+source .venv/bin/activate          # on Windows: .venv\Scripts\activate
+```
+
+Then install the build toolchain and PyHELP in editable mode:
+
+```
+pip install -r requirements-dev.txt
+pip install --no-build-isolation --editable .
+```
+
+`--no-build-isolation` makes meson-python install an import hook that
+**recompiles the HELP3O extension automatically** whenever the package is
+imported, so your changes to both the Python and the Fortran sources are picked
+up without reinstalling. To see the rebuild output, add
+`--config-settings=editable-verbose=true` to the editable install command.
+
+Run the test suite with:
+
+```
+python runtests.py
+```

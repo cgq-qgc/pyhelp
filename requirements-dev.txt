@@ -2,3 +2,11 @@ pytest
 pytest-cov
 sphinx
 wheel
+
+# Build toolchain for the compiled HELP3O Fortran extension.
+# Required in the active environment for a --no-build-isolation editable install
+# (meson-python recompiles the extension on import).
+meson-python
+meson
+ninja
+numpy

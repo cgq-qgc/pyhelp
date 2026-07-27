@@ -11,12 +11,20 @@ py = py_mod.find_installation(pure: false)
 py_dep = py.dependency()
 
 incdir_numpy = run_command(py,
-  ['-c', 'import numpy; print(numpy.get_include())'],
+['-c', '''import os, numpy
+try:
+    print(os.path.relpath(numpy.get_include()))
+except Exception:
+    print(numpy.get_include())'''],
   check: true
   ).stdout().strip()
 
 incdir_f2py = run_command(py,
-    ['-c', 'import numpy.f2py; print(numpy.f2py.get_include())'],
+    ['-c', '''import os, numpy.f2py
+try:
+    print(os.path.relpath(numpy.f2py.get_include()))
+except Exception:
+    print(numpy.f2py.get_include())'''],
     check : true
 ).stdout().strip()
 
@@ -24,13 +32,20 @@ inc_np = include_directories(incdir_numpy, incdir_f2py)
 
 # Generate the C wrapper using f2py
 help3o_c = custom_target('help3o_c',
-  input : 'pyhelp/HELP3O.FOR',
+  input : './pyhelp/HELP3O.FOR',
   output : ['HELP3Omodule.c', 'HELP3O-f2pywrappers.f'],
   command : [py, '-m', 'numpy.f2py', '@INPUT@', '-m', 'HELP3O',
              '--lower', '--build-dir', '@OUTDIR@',
              'only:', 'run_simulation', ':'
              ]
 )
+
+# Windows uses static libs directly
+# For other OS this is done in the CI
+link_args = []
+if host_machine.system() == 'windows'
+  link_args = ['-static-libgfortran', '-static-libgcc']
+endif
 
 # Build extension using the generated C wrapper AND the original Fortran file
 py.extension_module(
@@ -40,7 +55,7 @@ py.extension_module(
   dependencies: py_dep,
   install: true,
   subdir: 'pyhelp',
-  link_args: ['-static', '-static-libgfortran', '-static-libgcc', '-lquadmath']
+  link_args: link_args
 )
 
 # Install all Python files.
